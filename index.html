@@ -1,1 +1,2149 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02); 
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1); 
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2); 
+}
+
+body{
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+
+.sidebar{
+    width:80px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    flex-shrink:0;
+    transition:width 0.4s ease;
+    position:relative;
+    z-index:10;
+    backdrop-filter:blur(30px);
+    background:rgba(255,255,255,0.06);
+    border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+
+.sidebar.expanded{
+    width:240px;
+}
+
+.sidebar h2{
+    font-size:22px;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:1px;
+    margin-bottom:30px;
+    text-align:center;
+    cursor:pointer;
+    width:100%;
+    white-space:nowrap;
+    overflow:hidden;
+    transition:opacity 0.3s;
+    opacity:0;
+}
+
+.sidebar.expanded h2{
+    opacity:1;
+}
+
+.sidebar button{
+    width:calc(100% - 20px);
+    background:transparent;
+    border:none;
+    color:rgba(255,255,255,0.7);
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:12px 15px;
+    margin:5px 10px;
+    cursor:pointer;
+    border-radius:14px;
+    transition:all 0.3s;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.sidebar button img{
+    width:24px;
+    height:24px;
+    filter:invert(1) opacity(0.7);
+    flex-shrink:0;
+    transition:transform 0.3s, filter 0.3s;
+}
+
+.sidebar button span{
+    display:inline-block;
+    opacity:0;
+    transition:opacity 0.3s;
+    font-weight:600;
+}
+
+.sidebar.expanded button span{
+    opacity:1;
+}
+
+.sidebar button:hover img{
+    transform:scale(1.1);
+    filter:invert(1) opacity(1);
+}
+
+.sidebar button:hover{
+    background:rgba(255,255,255,0.1);
+    color:#fff;
+}
+
+/* ================= MAIN ================= */
+
+.main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transition:filter 0.3s;
+}
+
+.main.blur{
+    filter:blur(5px) brightness(0.7);
+}
+
+header{
+    height:70px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    flex-shrink:0;
+}
+
+header h1{
+    font-size:24px;
+    color:#fff;
+    font-weight:800;
+}
+
+.user-info {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ================= SEARCH ================= */
+
+.search-bar{
+    padding:15px 30px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    gap:15px;
+    align-items:center;
+    flex-shrink:0;
+}
+
+.search-bar input,
+.search-bar select,
+.modal input,
+.modal textarea,
+.modal select {
+    padding:12px 16px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    color:#fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.search-bar input:focus,
+.search-bar select:focus,
+.modal input:focus,
+.modal textarea:focus,
+.modal select:focus {
+    background:rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.search-bar input::placeholder,
+.modal input::placeholder,
+.modal textarea::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.search-bar input{
+    flex:1;
+}
+
+select option {
+    background: #111827;
+    color: #fff;
+}
+
+/* ================= KANBAN ================= */
+
+.kanban-container{
+    flex:1;
+    overflow-x:auto;
+    padding:20px 30px;
+}
+
+.kanban{
+    display:flex;
+    gap:20px;
+    min-width:max-content;
+    height:100%;
+}
+
+.column{
+    background:rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius:20px;
+    padding:15px;
+    min-width:320px;
+    max-height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    overflow-y:auto;
+    transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.column.drag-over {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.02);
+}
+
+.column h2{
+    margin-bottom:10px;
+    font-size:14px;
+    color:#fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    pointer-events: none; 
+}
+
+/* ================= CARDS ================= */
+
+.card{
+    display:flex;
+    background:rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border-radius:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.2);
+    cursor:pointer;
+    overflow:hidden;
+    transition:transform 0.2s, background 0.2s;
+    position:relative;
+    flex-direction:row;
+    width:100%;
+    min-height:200px;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+    background:rgba(255,255,255,0.1);
+}
+
+.card.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+.card .color-bar{
+    width:6px;
+    height:100%;
+    border-radius:16px 0 0 16px;
+}
+
+.card-content{
+    padding:20px;
+    padding-right: 180px; 
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    overflow:hidden;
+    min-width: 0;
+}
+
+.card h3{
+    font-size:18px;
+    margin-bottom:12px;
+    color:#fff;
+    font-weight: 700;
+    word-break: break-word; 
+}
+
+.card p{
+    font-size:13px;
+    color:rgba(255,255,255,0.7);
+    margin:5px 0;
+}
+
+.card p strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* CORES DOS CARDS */
+.lista-fria .color-bar{ background:#3b82f6; } 
+.dia-1 .color-bar{ background:#06b6d4; } 
+.dia-2 .color-bar{ background:#10b981; } 
+.dia-3 .color-bar{ background:#f59e0b; } 
+.dia-4 .color-bar{ background:#8b5cf6; } 
+.dia-5 .color-bar{ background:#ef4444; } 
+.em-negociacao .color-bar{ background:#eab308; } 
+.contrato-assinado .color-bar{ background:#0284c7; } 
+.fechado .color-bar{ background:#16a34a; } 
+
+/* ================= AÇÕES DOS CARDS (BOTÕES) ================= */
+
+.card-actions{
+    position:absolute;
+    top:15px;
+    right:15px;
+    display:flex;
+    flex-direction: column; 
+    align-items: flex-end;  
+    gap:8px;
+}
+
+.icon-actions{
+    display:flex;
+    gap:8px;
+}
+
+.icon-actions button{
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    cursor:pointer;
+    padding:6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+.icon-actions img{
+    width:16px;
+    height:16px;
+    filter:invert(1); 
+    opacity:0.8;
+    transition:opacity 0.2s;
+}
+
+.icon-actions button:hover{
+    background:rgba(255,255,255,0.2);
+}
+.icon-actions button:hover img{
+    opacity:1;
+}
+
+/* ================= MODAIS ================= */
+
+.modal-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    justify-content:center;
+    align-items:center;
+    z-index:50;
+}
+
+.modal{
+    background:#0f172a;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding:24px;
+    border-radius:24px;
+    min-width:320px;
+    max-width:500px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+    max-height:90vh;
+    overflow-y:auto;
+}
+
+.modal h3{
+    margin-bottom:20px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.modal .row{
+    margin-bottom:14px;
+}
+
+.modal input,
+.modal textarea,
+.modal select{
+    width:100%;
+}
+
+.modal textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+.modal .actions{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin-top:20px;
+}
+
+/* ================= BUTTONS ================= */
+
+.btn{
+    padding:10px 18px;
+    border-radius:12px;
+    border:0;
+    cursor:pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.btn.primary{
+    background:#fff;
+    color:#111827;
+}
+
+.btn.primary:hover:not(:disabled){
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+}
+
+.btn.primary:disabled{
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn.ghost{
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+}
+
+.btn.ghost:hover{
+    background:rgba(255,255,255,0.2);
+}
+
+.btn-green {
+    background: #10b981;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-green:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* ================= DINÂMICOS ================= */
+
+.processo-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.processo-row input{
+    flex:1;
+}
+
+/* ================= TOAST ================= */
+
+.toast{
+    position:fixed;
+    right:30px;
+    bottom:30px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color:#fff;
+    padding:12px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none;
+    z-index:9999;
+    font-weight: 500;
+}
+
+/* ================= DOCUMENTOS UPLOAD ================= */
+.docs-section {
+    border: 1px dashed rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+}
+.docs-section h4 {
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #fff;
+}
+.doc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.08);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 6px;
+    font-size: 13px;
+}
+.doc-item a {
+    color: #60a5fa;
+    text-decoration: none;
+    word-break: break-all;
+    flex: 1;
+}
+.doc-item a:hover {
+    text-decoration: underline;
+}
+.doc-item button {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: 0.2s;
+    margin-left: 10px;
+}
+.doc-item button:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.col-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.btn-robot {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+.btn-robot:hover {
+    background: rgba(255,255,255,0.2);
+}
+.btn-robot img {
+    width: 20px;
+    height: 20px;
+    filter: invert(1);
+    opacity: 0.9;
+}
+
+/* Fila de Disparo */
+.fila-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.fila-item span {
+    font-size: 14px;
+    font-weight: 500;
+}
+.btn-enviar-msg {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+</style>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    deleteDoc,
+    query,
+    where,
+    enableIndexedDbPersistence // <-- ADICIONADO: Importação do Cache Offline
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+import {
+    getAuth,
+    onAuthStateChanged,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+
+
+/* ================= CONFIGURAÇÃO DE DOCUMENTOS DO CLIENTE ================= */
+const DOCUMENTOS_CONFIG = [
+    // Obrigatórios
+    { id: 'procuracao', label: 'Procuração', obrigatorio: true },
+    { id: 'declaracao_hipossuficiencia', label: 'Declaração de hipossuficiência', obrigatorio: true },
+    { id: 'contrato', label: 'Contrato de honorários', obrigatorio: true },
+    { id: 'identidade', label: 'Documento de identificação', obrigatorio: true },
+    { id: 'comprovante_residencia', label: 'Comprovante de residência', obrigatorio: true },
+    { id: 'extratos_bancarios', label: 'Últimos 3 extratos bancários', obrigatorio: true },
+    { id: 'comprovante_renda', label: 'Últimos 3 comprovantes de renda', obrigatorio: true },
+    { id: 'imposto_renda', label: 'Última Declaração de Imposto de Renda e recibo de entrega', obrigatorio: true },
+    
+    // Complementares
+    { id: 'despesas_mensais', label: 'Comprovantes de despesas mensais', obrigatorio: false },
+    { id: 'faturas_cartao', label: 'Últimas 3 faturas do cartão de crédito', obrigatorio: false },
+    { id: 'peticao_inicial', label: 'Petição Inicial', obrigatorio: false },
+    { id: 'contrato_financiamento', label: 'Contrato de Financiamento', obrigatorio: false },
+    { id: 'outros', label: 'Outros', obrigatorio: false }
+];
+/* ========================================================================= */
+
+
+/* ================= FIREBASE ================= */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// <-- ADICIONADO: Habilita cache offline para economizar requisições e leituras
+enableIndexedDbPersistence(db).catch((err) => {
+    console.warn("Aviso de Cache Offline: ", err.message);
+});
+
+const auth = getAuth(app);
+let storage;
+
+try {
+    storage = getStorage(app);
+} catch (error) {
+    console.error("Storage indisponível:", error);
+}
+
+window.firebaseDB = db;
+
+/* ================= APP ================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const sidebar = document.querySelector(".sidebar");
+    const mainContent = document.querySelector(".main");
+
+    if(sidebar && mainContent){
+        sidebar.addEventListener('mouseenter', () => {
+            sidebar.classList.add('expanded');
+            mainContent.classList.add('blur');
+        });
+
+        sidebar.addEventListener('mouseleave', () => {
+            sidebar.classList.remove('expanded');
+            mainContent.classList.remove('blur');
+        });
+    }
+
+    const STATUS = [
+        'lista-fria',
+        'dia-1',
+        'dia-2',
+        'dia-3',
+        'dia-4',
+        'dia-5',
+        'em-negociacao',
+        'contrato-assinado',
+        'fechado'
+    ];
+
+    function atualizarContadores() {
+        STATUS.forEach(s => {
+            const col = document.getElementById(s);
+            if (col) {
+                const count = col.querySelectorAll('.card').length;
+                const totalEl = document.getElementById(`total-${s}`);
+                if (totalEl) {
+                    totalEl.innerText = count;
+                }
+            }
+        });
+    }
+
+    // <-- ADICIONADO: Atualiza apenas as métricas de "Cadastrados hoje" sem recarregar o HTML da coluna
+    function atualizarInfosHoje() {
+        if (!currentUser) return;
+        const hojeStr = new Date().toLocaleDateString('pt-BR');
+        
+        let cFria = 0, cDia1 = 0;
+        todosClientesCache.forEach(c => {
+            if (c.criadoPor === currentUser.email) {
+                if (c.status === 'lista-fria' && c.dataCadastro && new Date(c.dataCadastro).toLocaleDateString('pt-BR') === hojeStr) cFria++;
+                if (c.status === 'dia-1' && c.dataPipeline && new Date(c.dataPipeline).toLocaleDateString('pt-BR') === hojeStr) cDia1++;
+            }
+        });
+
+        const spanFria = document.querySelector('#lista-fria .col-header-actions span strong');
+        if (spanFria) spanFria.innerText = cFria;
+
+        const spanDia1 = document.querySelector('#dia-1 .col-header-actions span strong');
+        if (spanDia1) spanDia1.innerText = cDia1;
+    }
+
+    const cardsMap = {};
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const clientForm = document.getElementById('clientForm');
+
+    const inputNome = document.getElementById('inputNome');
+    const inputCPF = document.getElementById('inputCPF');
+    const inputObs = document.getElementById('inputObs');
+    const inputClasse = document.getElementById('inputClasse');
+    const inputValor = document.getElementById('inputValor');
+    const inputEstado = document.getElementById('inputEstado');
+
+    const btnAdd = document.getElementById('btnAdd');
+    const btnCancel = document.getElementById('btnCancel');
+    
+    if(btnAdd){
+        btnAdd.onclick = () => {
+            openModal(false);
+        };
+    }
+    
+    if(btnCancel){
+        btnCancel.onclick = () => {
+            closeModal();
+        };
+    }
+
+    const btnSair = document.getElementById('btnSair');
+    if (btnSair) {
+        btnSair.onclick = () => {
+            signOut(auth).then(() => {
+                window.location.href = "login.html";
+            }).catch((error) => {
+                showToast("Erro ao sair: " + error.message);
+            });
+        };
+    }
+
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+
+    const toastEl = document.getElementById('toast');
+    const coinSound = document.getElementById('coinSound');
+
+    const processosContainer = document.getElementById('processosContainer');
+    const telefonesContainer = document.getElementById('telefonesContainer');
+    const btnAddTelefone = document.getElementById('btnAddTelefone');
+
+    /* ================= VARIÁVEIS DOCUMENTOS ================= */
+    const inputFile = document.getElementById('inputSpecificFile');
+    const docsListContainer = document.getElementById('docsListContainer');
+    const uploadProgress = document.getElementById('uploadProgress');
+    
+    let currentDocs = {}; 
+    window.currentUploadDocId = null; 
+
+    let currentUser = null;
+    let todosClientesCache = []; 
+
+    /* ================= VARIÁVEIS AGENTE WHATSAPP ================= */
+    const btnAgente = document.getElementById('btnAgente');
+    const modalAgenteBackdrop = document.getElementById('modalAgenteBackdrop');
+    const btnFecharAgente = document.getElementById('btnFecharAgente');
+    const btnCarregarFila = document.getElementById('btnCarregarFila');
+    const agenteMensagem = document.getElementById('agenteMensagem');
+    const agenteFilaContainer = document.getElementById('agenteFilaContainer');
+    const agenteLista = document.getElementById('agenteLista');
+
+    /* ================= TOAST ================= */
+
+    function showToast(msg){
+        toastEl.innerText = msg;
+        toastEl.style.display = 'block';
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => {
+            toastEl.style.display = 'none';
+        },4500); 
+    }
+
+    /* ================= FORÇAR DOWNLOAD ================= */
+    window.forceDownload = async function(url, filename, event) {
+        if(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        showToast("Iniciando download...");
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        } catch (error) {
+            console.warn("Bloqueio de CORS. Abrindo em nova aba para download manual.", error);
+            window.open(url, '_blank');
+        }
+    };
+
+    /* ================= FIRESTORE ================= */
+
+    async function getClientes(){
+        if(!currentUser){
+            return [];
+        }
+        const q = query(
+            collection(db,"clientes"),
+            where("userId","==",currentUser.uid)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(docData => ({
+            id: docData.id,
+            ...docData.data()
+        }));
+    }
+
+    async function saveCliente(cliente){
+        if(!currentUser){
+            return;
+        }
+        cliente.userId = currentUser.uid;
+
+        if(cliente.id){
+            const docRef = doc(db,"clientes",cliente.id);
+            await setDoc(docRef,cliente);
+        }else{
+            const docRef = await addDoc(
+                collection(db,"clientes"),
+                cliente
+            );
+            cliente.id = docRef.id;
+        }
+    }
+
+    /* ================= AGENTE ================= */
+    if (btnAgente) {
+        btnAgente.onclick = () => {
+            modalAgenteBackdrop.style.display = 'flex';
+            agenteFilaContainer.style.display = 'none';
+            agenteLista.innerHTML = '';
+        };
+    }
+    if (btnFecharAgente) {
+        btnFecharAgente.onclick = () => {
+            modalAgenteBackdrop.style.display = 'none';
+        };
+    }
+    if (btnCarregarFila) {
+        btnCarregarFila.onclick = async () => {
+            const template = agenteMensagem.value.trim();
+            if (!template) {
+                showToast("Por favor, digite uma mensagem padrão.");
+                return;
+            }
+
+            btnCarregarFila.innerText = "Carregando...";
+            // <-- CORRIGIDO: Usa o cache local em vez de buscar todos os dados de novo (Zero leituras)
+            const clientes = todosClientesCache;
+            const listaFria = clientes.filter(c => c.status === 'lista-fria' && c.numeros);
+
+            btnCarregarFila.innerText = "Carregar Lista Fria";
+
+            if (listaFria.length === 0) {
+                showToast("Nenhum cliente com telefone na Lista Fria.");
+                agenteFilaContainer.style.display = 'none';
+                return;
+            }
+
+            agenteLista.innerHTML = '';
+            
+            listaFria.forEach(cliente => {
+                const numerosLimpos = cliente.numeros
+                    .split(',')
+                    .map(n => n.replace(/\D/g, ''))
+                    .filter(n => n !== '');
+                
+                if (numerosLimpos.length === 0) return;
+
+                const divFila = document.createElement('div');
+                divFila.className = 'fila-item';
+
+                const spanNome = document.createElement('span');
+                spanNome.innerText = cliente.nome + (numerosLimpos.length > 1 ? ` (${numerosLimpos.length} números)` : '');
+
+                const btnEnviar = document.createElement('button');
+                btnEnviar.className = 'btn btn-green btn-enviar-msg';
+                btnEnviar.innerHTML = numerosLimpos.length > 1 ? `Enviar para todos (${numerosLimpos.length}) ↗` : 'Enviar ↗';
+
+                btnEnviar.onclick = async () => {
+                    const mensagemFinal = template.replace(/{nome}/g, cliente.nome);
+                    numerosLimpos.forEach(num => {
+                        window.open(`https://wa.me/55${num}?text=${encodeURIComponent(mensagemFinal)}`, '_blank');
+                    });
+
+                    btnEnviar.innerHTML = '✓ Enviados';
+                    btnEnviar.style.background = '#4b5563'; 
+                    btnEnviar.disabled = true;
+
+                    try {
+                        const nowIso = new Date().toISOString();
+                        const docRef = doc(db, "clientes", cliente.id);
+                        await updateDoc(docRef, { 
+                            status: 'dia-1',
+                            dataPipeline: nowIso
+                        });
+                        
+                        // <-- CORRIGIDO: Atualiza o cache local
+                        const cacheCli = todosClientesCache.find(c => c.id === cliente.id);
+                        if(cacheCli) { cacheCli.status = 'dia-1'; cacheCli.dataPipeline = nowIso; }
+
+                        const cardNaTela = document.querySelector(`.card[data-id="${cliente.id}"]`);
+                        const colunaDia1 = document.getElementById('dia-1');
+                        if (cardNaTela && colunaDia1) {
+                            colunaDia1.appendChild(cardNaTela);
+                            cardNaTela.dataset.status = 'dia-1';
+                            cardNaTela.className = 'card dia-1'; 
+                            atualizarContadores();
+                        }
+                    } catch (error) {
+                        console.error("Erro ao mover para o Dia 1:", error);
+                    }
+                };
+
+                divFila.appendChild(spanNome);
+                divFila.appendChild(btnEnviar);
+                agenteLista.appendChild(divFila);
+            });
+
+            agenteFilaContainer.style.display = 'block';
+        };
+    }
+
+    /* ================= UPLOAD ESPECÍFICO ================= */
+
+    function renderDocsList() {
+        if (!docsListContainer) return;
+        docsListContainer.innerHTML = '';
+        
+        const reqDiv = document.createElement('div');
+        reqDiv.innerHTML = '<h5 style="color:#ef4444; margin: 10px 0 6px 0; font-size:12px;">Obrigatórios (Impedem Fechamento)</h5>';
+        
+        const compDiv = document.createElement('div');
+        compDiv.innerHTML = '<h5 style="color:#10b981; margin: 20px 0 6px 0; font-size:12px;">Complementares</h5>';
+        
+        DOCUMENTOS_CONFIG.forEach(docConf => {
+            const rowWrapper = document.createElement('div');
+            rowWrapper.style.cssText = 'background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:8px;';
+            
+            const headerRow = document.createElement('div');
+            headerRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center;';
+            
+            const label = document.createElement('span');
+            label.style.fontSize = '13px';
+            label.style.fontWeight = '500';
+            label.innerText = docConf.label;
+            if (docConf.obrigatorio) label.innerHTML += ' <span style="color:#ef4444">*</span>';
+            
+            const btnAnexar = document.createElement('button');
+            btnAnexar.type = 'button';
+            btnAnexar.innerText = 'Anexar';
+            btnAnexar.className = 'btn ghost';
+            btnAnexar.style.padding = '4px 10px';
+            btnAnexar.style.fontSize = '11px';
+            
+            btnAnexar.onclick = () => {
+                window.currentUploadDocId = docConf.id;
+                inputFile.click();
+            };
+            
+            headerRow.appendChild(label);
+            headerRow.appendChild(btnAnexar);
+            rowWrapper.appendChild(headerRow);
+            
+            const files = currentDocs[docConf.id] || [];
+            if (files.length > 0) {
+                const filesContainer = document.createElement('div');
+                filesContainer.style.marginTop = '8px';
+                
+                files.forEach((f, idx) => {
+                    const fRow = document.createElement('div');
+                    fRow.className = 'doc-item';
+                    fRow.innerHTML = `<a href="javascript:void(0)" onclick="window.forceDownload('${f.url}', '${f.name}', event)" title="Baixar">📄 ${f.name}</a>`;
+                    
+                    const btnRem = document.createElement('button');
+                    btnRem.type = 'button';
+                    btnRem.innerText = 'X';
+                    btnRem.onclick = () => {
+                        currentDocs[docConf.id].splice(idx, 1);
+                        renderDocsList();
+                    };
+                    fRow.appendChild(btnRem);
+                    filesContainer.appendChild(fRow);
+                });
+                rowWrapper.appendChild(filesContainer);
+            }
+            
+            if (docConf.obrigatorio) {
+                reqDiv.appendChild(rowWrapper);
+            } else {
+                compDiv.appendChild(rowWrapper);
+            }
+        });
+        
+        docsListContainer.appendChild(reqDiv);
+        docsListContainer.appendChild(compDiv);
+    }
+
+    inputFile.onchange = async (e) => {
+        if (!storage) {
+            showToast("Erro: Serviço de arquivos do Firebase não configurado");
+            return;
+        }
+
+        const files = Array.from(e.target.files);
+        if (!files.length || !currentUser) return;
+        
+        uploadProgress.style.display = 'block';
+        uploadProgress.style.color = '#f59e0b';
+        uploadProgress.innerText = `Enviando ${files.length} arquivo(s)... Aguarde.`;
+        
+        let errorOccurred = false;
+
+        try {
+            for (let file of files) {
+                try {
+                    const uniqueName = Date.now() + "_" + file.name;
+                    const storageRef = ref(storage, `documentos/${currentUser.uid}/${uniqueName}`);
+                    await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(storageRef);
+                    
+                    const docId = window.currentUploadDocId || 'outros';
+                    if (!currentDocs[docId]) currentDocs[docId] = [];
+                    currentDocs[docId].push({ name: file.name, url: url });
+
+                } catch (error) {
+                    console.error("Erro no upload:", error);
+                    errorOccurred = true;
+                    showToast("Erro ao enviar: " + file.name);
+                }
+            }
+        } finally {
+            if (errorOccurred) {
+                uploadProgress.style.color = '#ef4444';
+                uploadProgress.innerText = 'Erro ao salvar. Verifique permissões.';
+                setTimeout(() => { uploadProgress.style.display = 'none'; }, 5000);
+            } else {
+                uploadProgress.style.color = '#10b981';
+                uploadProgress.innerText = 'Upload concluído com sucesso!';
+                setTimeout(() => { uploadProgress.style.display = 'none'; }, 2000);
+            }
+            inputFile.value = ''; 
+            renderDocsList();
+        }
+    };
+
+    function getDiaPipeline(dataBaseIso) {
+        if (!dataBaseIso) return 1;
+        const created = new Date(dataBaseIso);
+        const now = new Date();
+        const diffMs = now.getTime() - created.getTime();
+        const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+        return diffDays + 1;
+    }
+
+    /* ================= MODAL ================= */
+
+    function openModal(edit = false, data = null){
+        modalBackdrop.style.display = 'flex';
+        document.getElementById('modalTitle').innerText = edit ? "Editar Cliente" : "Novo Cliente";
+        processosContainer.innerHTML = '';
+        telefonesContainer.innerHTML = '';
+
+        const infoExtra = document.getElementById('infoExtra');
+
+        if(edit && data){
+            inputNome.value = data.nome || "";
+            inputCPF.value = data.cpf || "";
+            inputObs.value = data.obs || "";
+            inputClasse.value = data.classe || "Outros";
+            inputValor.value = data.valor || "";
+            inputEstado.value = data.estado || "São Paulo";
+
+            const processos = data.processo ? data.processo.split(',').map(p => p.trim()) : [''];
+            processos.forEach(p => addProcessoField(p));
+
+            const telefones = data.numeros ? data.numeros.split(',').map(t => t.trim()) : [''];
+            telefones.forEach(t => addTelefoneField(t));
+
+            if (Array.isArray(data.documentos)) {
+                currentDocs = { outros: [...data.documentos] };
+            } else {
+                currentDocs = data.documentos ? JSON.parse(JSON.stringify(data.documentos)) : {};
+            }
+
+            clientForm.dataset.editId = data.id;
+
+            infoExtra.style.display = 'block';
+            const dataCadStr = data.dataCadastro ? new Date(data.dataCadastro).toLocaleString('pt-BR') : 'Desconhecida';
+            const dataBaseParaCalculo = data.dataPipeline || data.dataCadastro;
+            const diaCalc = getDiaPipeline(dataBaseParaCalculo);
+            let statusTexto = data.status === 'lista-fria' ? 'Aguardando Disparo' : (diaCalc > 5 ? '5+ (Funil Geral)' : diaCalc);
+            
+            if(data.status === 'em-negociacao') statusTexto = 'Em Negociação';
+            if(data.status === 'contrato-assinado') statusTexto = 'Contrato Assinado';
+            if(data.status === 'fechado') statusTexto = 'Fechado';
+
+            infoExtra.innerHTML = `
+                <p><strong>Data de criação:</strong> ${dataCadStr}</p>
+                <p><strong>Dia do pipeline:</strong> ${data.status === 'lista-fria' || data.status === 'em-negociacao' || data.status === 'contrato-assinado' || data.status === 'fechado' ? statusTexto : 'Dia ' + statusTexto}</p>
+                <p><strong>Criado por:</strong> ${data.criadoPor || '-'}</p>
+                ${data.fechadoPor ? `<p><strong>Fechado por:</strong> ${data.fechadoPor}</p>` : ''}
+            `;
+        }else{
+            addProcessoField();
+            addTelefoneField();
+
+            inputNome.value = "";
+            inputCPF.value = "";
+            inputObs.value = "";
+            inputClasse.value = "Outros";
+            inputValor.value = "";
+            inputEstado.value = "São Paulo";
+
+            currentDocs = {};
+
+            delete clientForm.dataset.editId;
+            infoExtra.style.display = 'none';
+        }
+
+        renderDocsList();
+    }
+
+    function closeModal(){
+        modalBackdrop.style.display = 'none';
+        uploadProgress.style.display = 'none';
+    }
+
+    /* ================= PROCESSOS ================= */
+    function addProcessoField(value = ""){
+        const row = document.createElement('div');
+        row.className = 'processo-row';
+        row.style.alignItems = 'flex-start'; 
+
+        const wrapper = document.createElement('div');
+        wrapper.style.flex = '1';
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+
+        const input = document.createElement('input');
+        input.className = 'inputProcesso';
+        input.placeholder = '0000000-00.0000.0.00.0000';
+        input.value = value;
+
+        const avisoMsg = document.createElement('span');
+        avisoMsg.style.color = '#ef4444';
+        avisoMsg.style.fontSize = '12px';
+        avisoMsg.style.display = 'none';
+        avisoMsg.style.marginTop = '4px';
+        avisoMsg.style.fontWeight = '600';
+
+        function checkDuplicidade() {
+            const val = input.value.trim();
+            if(!val) {
+                avisoMsg.style.display = 'none';
+                input.style.borderColor = 'rgba(255,255,255,0.1)';
+                return;
+            }
+            
+            const cleanVal = val.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            if(cleanVal === '') return;
+
+            const existe = todosClientesCache.some(c => {
+               if (clientForm.dataset.editId && c.id === clientForm.dataset.editId) return false;
+               if (!c.processo) return false;
+               const processosCadastrados = c.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+               return processosCadastrados.includes(cleanVal);
+            });
+            
+            if(existe) {
+                avisoMsg.textContent = 'Este processo já está cadastrado no sistema!';
+                avisoMsg.style.display = 'block';
+                input.style.borderColor = '#ef4444';
+            } else {
+                avisoMsg.style.display = 'none';
+                input.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+        }
+
+        input.addEventListener('input', checkDuplicidade);
+        wrapper.appendChild(input);
+        wrapper.appendChild(avisoMsg);
+
+        const btnAdd = document.createElement('button');
+        btnAdd.type = 'button';
+        btnAdd.className = 'btn ghost';
+        btnAdd.textContent = '+';
+        btnAdd.style.height = '42px'; 
+
+        btnAdd.onclick = () => { addProcessoField(); };
+
+        const btnRemove = document.createElement('button');
+        btnRemove.type = 'button';
+        btnRemove.className = 'btn ghost';
+        btnRemove.textContent = '-';
+        btnRemove.style.height = '42px';
+
+        btnRemove.onclick = () => { row.remove(); };
+
+        row.appendChild(wrapper);
+        row.appendChild(btnAdd);
+        row.appendChild(btnRemove);
+        processosContainer.appendChild(row);
+
+        if (value) {
+            setTimeout(checkDuplicidade, 100);
+        }
+    }
+
+    function addTelefoneField(value = ""){
+        const row = document.createElement('div');
+        row.className = 'processo-row';
+
+        const input = document.createElement('input');
+        input.className = 'inputTelefone';
+        input.placeholder = 'Telefone / WhatsApp';
+        input.value = value;
+
+        const btnAdd = document.createElement('button');
+        btnAdd.type = 'button';
+        btnAdd.className = 'btn ghost';
+        btnAdd.textContent = '+';
+        btnAdd.onclick = () => { addTelefoneField(); };
+
+        const btnRemove = document.createElement('button');
+        btnRemove.type = 'button';
+        btnRemove.className = 'btn ghost';
+        btnRemove.textContent = '-';
+        btnRemove.onclick = () => { row.remove(); };
+
+        row.appendChild(input);
+        row.appendChild(btnAdd);
+        row.appendChild(btnRemove);
+        telefonesContainer.appendChild(row);
+    }
+
+    btnAddTelefone.onclick = () => { addTelefoneField(); };
+
+    /* ================= GERAR CONTRATO ================= */
+    async function gerarContrato(cliente) {
+        showToast("Gerando contrato...");
+        try {
+            const response = await fetch('./contrato-template.html');
+            if (!response.ok) throw new Error("Template não encontrado.");
+            let template = await response.text();
+
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const processoStr = cliente.processo ? cliente.processo.split(',')[0].trim() : "Não informado";
+            
+            let valorFormatado = "R$ 0,00";
+            if (cliente.valor) {
+                if (!isNaN(cliente.valor) && !cliente.valor.toString().includes(',')) {
+                    valorFormatado = parseFloat(cliente.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                } else {
+                    valorFormatado = cliente.valor.toString().toLowerCase().includes('r$') ? cliente.valor : 'R$ ' + cliente.valor;
+                }
+            }
+
+            template = template.replace(/{{nome}}/g, cliente.nome);
+            template = template.replace(/{{cpf}}/g, cliente.cpf || '___________');
+            template = template.replace(/{{estado}}/g, cliente.estado || '___________');
+            template = template.replace(/{{classe}}/g, cliente.classe || '___________');
+            template = template.replace(/{{processo}}/g, processoStr);
+            template = template.replace(/{{valor}}/g, valorFormatado);
+            template = template.replace(/{{dataAtual}}/g, dataAtual);
+
+            const blob = new Blob(['\ufeff', template], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Contrato_${cliente.nome.replace(/\s+/g, '_')}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast("Contrato gerado com sucesso!");
+
+        } catch (error) {
+            console.error(error);
+            showToast("Erro ao gerar o contrato! Arquivo não encontrado.");
+        }
+    }
+
+    /* ================= CARDS ================= */
+
+    function criarCard(cliente){
+        const status = cliente.status || 'lista-fria';
+        const col = document.getElementById(status);
+
+        if(!col) return;
+
+        const card = document.createElement('div');
+        card.className = `card ${status}`;
+        card.dataset.id = cliente.id;
+        card.dataset.status = status;
+        card.dataset.nome = cliente.nome.toLowerCase();
+        card.dataset.cpf = (cliente.cpf || '').toLowerCase();
+        card.dataset.processo = (cliente.processo || '').toLowerCase();
+        
+        let totalDocsLength = 0;
+        if (Array.isArray(cliente.documentos)) {
+            totalDocsLength = cliente.documentos.length;
+        } else if (cliente.documentos) {
+            Object.values(cliente.documentos).forEach(arr => totalDocsLength += arr.length);
+        }
+        card.dataset.hasDocs = totalDocsLength > 0 ? 'true' : 'false';
+
+        card.draggable = true;
+
+        const colorBar = document.createElement('div');
+        colorBar.className = 'color-bar';
+        card.appendChild(colorBar);
+
+        /* ACTIONS */
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'card-actions';
+        
+        const iconActions = document.createElement('div');
+        iconActions.className = 'icon-actions';
+
+        const btnContrato = document.createElement('button');
+        btnContrato.title = "Baixar Contrato (Word)";
+        btnContrato.onclick = (e) => { e.stopPropagation(); gerarContrato(cliente); };
+        btnContrato.innerHTML = '<img src="https://img.icons8.com/ios-glyphs/30/000000/document.png"/>';
+
+        const btnCall = document.createElement('button');
+        btnCall.title = "Ligar";
+        btnCall.onclick = (e) => {
+            e.stopPropagation();
+            const num = cliente.numeros ? cliente.numeros.split(',')[0].trim() : '';
+            if(num) window.open(`tel:${num.replace(/\D/g,'')}`);
+        };
+        btnCall.innerHTML = '<img src="https://img.icons8.com/ios-glyphs/30/000000/phone.png"/>';
+
+        const btnWa = document.createElement('button');
+        btnWa.title = "WhatsApp";
+        btnWa.onclick = async (e) => {
+            e.stopPropagation();
+            const num = cliente.numeros ? cliente.numeros.split(',')[0].trim() : '';
+            if(num) window.open(`https://wa.me/55${num.replace(/\D/g,'')}`,'_blank');
+
+            if (cliente.status === 'lista-fria') {
+                try {
+                    const nowIso = new Date().toISOString();
+                    const docRef = doc(db, "clientes", cliente.id);
+                    await updateDoc(docRef, { status: 'dia-1', dataPipeline: nowIso });
+                    
+                    // <-- CORRIGIDO: Atualiza o cache local
+                    const cacheCli = todosClientesCache.find(c => c.id === cliente.id);
+                    if(cacheCli) { cacheCli.status = 'dia-1'; cacheCli.dataPipeline = nowIso; }
+
+                    const colunaDia1 = document.getElementById('dia-1');
+                    if (colunaDia1) {
+                        colunaDia1.appendChild(card);
+                        card.dataset.status = 'dia-1';
+                        card.className = 'card dia-1'; 
+                        atualizarContadores();
+                    }
+                } catch (error) {}
+            }
+        };
+        btnWa.innerHTML = '<img src="https://img.icons8.com/ios-glyphs/30/000000/whatsapp.png"/>';
+
+        iconActions.appendChild(btnContrato);
+        iconActions.appendChild(btnCall);
+        iconActions.appendChild(btnWa);
+
+        if (status === 'lista-fria') {
+            const btnExcluir = document.createElement('button');
+            btnExcluir.title = "Excluir Card";
+            btnExcluir.innerHTML = '<img src="https://img.icons8.com/ios-glyphs/30/000000/trash.png"/>';
+            btnExcluir.onclick = async (e) => {
+                e.stopPropagation();
+                if (window.confirm("Tem certeza que deseja excluir o card?")) {
+                    try {
+                        await deleteDoc(doc(db, "clientes", cliente.id));
+                        showToast("Card excluído!");
+                        card.remove(); 
+                        
+                        // <-- CORRIGIDO: Remove do cache local para manter a busca correta
+                        todosClientesCache = todosClientesCache.filter(c => c.id !== cliente.id);
+                        atualizarContadores();
+                        atualizarInfosHoje();
+                    } catch (error) {}
+                }
+            };
+            iconActions.appendChild(btnExcluir);
+        }
+        actionsDiv.appendChild(iconActions);
+
+        if (status !== 'em-negociacao' && status !== 'contrato-assinado' && status !== 'fechado') {
+            const btnNegociacao = document.createElement('button');
+            btnNegociacao.title = "Mover para Em Negociação";
+            btnNegociacao.style.cssText = 'background:#facc15; color:#422006; font-weight:bold; font-size:11px; padding:6px 12px; border:none; border-radius:6px; cursor:pointer;';
+            btnNegociacao.innerText = 'Em Negociação';
+            
+            btnNegociacao.onclick = async (e) => {
+                e.stopPropagation();
+                try {
+                    const nowIso = new Date().toISOString();
+                    await updateDoc(doc(db, "clientes", cliente.id), { 
+                        status: 'em-negociacao', dataEmNegociacao: nowIso
+                    });
+                    
+                    // <-- CORRIGIDO: Atualiza o cache local
+                    const cacheCli = todosClientesCache.find(c => c.id === cliente.id);
+                    if(cacheCli) { cacheCli.status = 'em-negociacao'; cacheCli.dataEmNegociacao = nowIso; }
+
+                    const coluna = document.getElementById('em-negociacao');
+                    if (coluna) {
+                        coluna.appendChild(card);
+                        card.dataset.status = 'em-negociacao';
+                        card.className = 'card em-negociacao'; 
+                        btnNegociacao.style.display = 'none'; 
+                        atualizarContadores();
+                    }
+                } catch (error) {}
+            };
+            actionsDiv.appendChild(btnNegociacao);
+        }
+        card.appendChild(actionsDiv);
+
+        /* CONTENT */
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'card-content';
+        const primeiroProcesso = cliente.processo ? cliente.processo.split(',')[0].trim() : '-';
+        const diaCalc = getDiaPipeline(cliente.dataPipeline || cliente.dataCadastro);
+        
+        let textoPipeline = '';
+        if(cliente.status === 'lista-fria') textoPipeline = 'Aguardando disparo';
+        else if (cliente.status === 'em-negociacao') textoPipeline = `Negociação (Dia ${getDiaPipeline(cliente.dataEmNegociacao || cliente.dataPipeline || cliente.dataCadastro)})`;
+        else if (cliente.status === 'contrato-assinado') textoPipeline = `Contrato (Dia ${getDiaPipeline(cliente.dataContratoAssinado || cliente.dataCadastro)})`;
+        else textoPipeline = `Dia ${diaCalc}`;
+
+        let valorCardFormatado = "0,00";
+        if (cliente.valor) {
+            if (!isNaN(cliente.valor) && !cliente.valor.toString().includes(',')) {
+                valorCardFormatado = parseFloat(cliente.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else valorCardFormatado = cliente.valor;
+        }
+
+        contentDiv.innerHTML = `
+            <h3>${cliente.nome}</h3>
+            <p><strong>CPF:</strong> ${cliente.cpf || '-'}</p>
+            <p><strong>Classe:</strong> ${cliente.classe || '-'}</p>
+            <p><strong>Estado:</strong> ${cliente.estado || '-'}</p>
+            <p><strong>Processo:</strong> ${primeiroProcesso}</p>
+            <p><strong>Valor:</strong> R$ ${valorCardFormatado}</p>
+            <p><strong>Pipeline:</strong> ${textoPipeline}</p>
+        `;
+
+        let arrayParaDisplay = [];
+        if (Array.isArray(cliente.documentos)) {
+            arrayParaDisplay = cliente.documentos.map(d => ({...d, label: 'Outros'}));
+        } else if (cliente.documentos) {
+            Object.keys(cliente.documentos).forEach(docId => {
+                const conf = DOCUMENTOS_CONFIG.find(c => c.id === docId);
+                const labelName = conf ? conf.label : 'Doc';
+                cliente.documentos[docId].forEach(d => {
+                    arrayParaDisplay.push({...d, label: labelName});
+                });
+            });
+        }
+
+        if (arrayParaDisplay.length > 0) {
+            const docsDiv = document.createElement('div');
+            docsDiv.style.marginTop = "12px";
+            docsDiv.innerHTML = `<p style="font-weight: 600; color: #fff; margin-bottom: 5px;">Documentos Anexos:</p>`;
+            
+            arrayParaDisplay.forEach(arquivo => {
+                const link = document.createElement('a');
+                link.href = "javascript:void(0)";
+                link.style.cssText = "display:block; font-size:13px; color:#60a5fa; text-decoration:none; margin:4px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+                
+                link.innerHTML = `<span style="color:#9ca3af; font-size:10px;">[${arquivo.label}]</span> 📄 ${arquivo.name}`;
+                
+                link.onclick = (e) => { e.stopPropagation(); window.forceDownload(arquivo.url, arquivo.name, e); };
+                docsDiv.appendChild(link);
+            });
+            contentDiv.appendChild(docsDiv);
+        }
+
+        card.appendChild(contentDiv);
+        card.onclick = () => { openModal(true, cliente); };
+        addDragEvents(card);
+        col.appendChild(card);
+        cardsMap[cliente.id] = card;
+    }
+
+
+    /* ================= RENDER ================= */
+    async function render(){
+        const clientes = await getClientes();
+        todosClientesCache = clientes; 
+
+        let countListaFriaHoje = 0;
+        let countDia1Hoje = 0;
+        let countResgatados = 0;
+        const hojeStr = new Date().toLocaleDateString('pt-BR');
+        
+        if (currentUser) {
+            countListaFriaHoje = clientes.filter(c => {
+                if (!c.dataCadastro || c.status !== 'lista-fria') return false;
+                return new Date(c.dataCadastro).toLocaleDateString('pt-BR') === hojeStr && c.criadoPor === currentUser.email;
+            }).length;
+
+            countDia1Hoje = clientes.filter(c => {
+                if (!c.dataPipeline || c.status !== 'dia-1') return false;
+                return new Date(c.dataPipeline).toLocaleDateString('pt-BR') === hojeStr && c.criadoPor === currentUser.email;
+            }).length;
+
+            countResgatados = clientes.filter(c => c.resgatado === true || c.resgatadoFunil === true || c.resgatadoFunilGeral === true).length;
+        }
+
+        const resgatadosText = document.getElementById('countResgatadosText');
+        if (resgatadosText) resgatadosText.innerText = countResgatados;
+
+        STATUS.forEach(status => {
+            const col = document.getElementById(status);
+            if (status === 'lista-fria') {
+                col.innerHTML = `
+                    <div class="col-header-actions">
+                        <div style="display:flex; flex-direction:column;">
+                            <h2 style="margin-bottom:2px;">LISTA FRIA (<span id="total-${status}">0</span>)</h2>
+                            <span style="font-size: 11px; font-weight: normal; color: rgba(255,255,255,0.6);">Cadastrados hoje: <strong style="color:#fff;">${countListaFriaHoje}</strong></span>
+                        </div>
+                        <button class="btn-robot" title="Ativar Robô" onclick="document.getElementById('btnAgente').click()">
+                            <img src="https://img.icons8.com/ios-glyphs/30/000000/bot.png" alt="Robô"/>
+                        </button>
+                    </div>`;
+            } else if (status === 'dia-1') {
+                col.innerHTML = `
+                    <div class="col-header-actions">
+                        <div style="display:flex; flex-direction:column;">
+                            <h2 style="margin-bottom:2px;">EM NEGOCIAÇÃO (DIA 1) (<span id="total-${status}">0</span>)</h2>
+                            <span style="font-size: 11px; font-weight: normal; color: rgba(255,255,255,0.6);">Chamados hoje: <strong style="color:#fff;">${countDia1Hoje}</strong></span>
+                        </div>
+                    </div>`;
+            } else if (status === 'dia-2') { col.innerHTML = `<h2>EM NEGOCIAÇÃO (DIA 2) (<span id="total-${status}">0</span>)</h2>`;
+            } else if (status === 'em-negociacao') { col.innerHTML = `<h2>EM NEGOCIAÇÃO (<span id="total-${status}">0</span>)</h2>`;
+            } else { col.innerHTML = `<h2>${status.replace('-', ' ').toUpperCase()} (<span id="total-${status}">0</span>)</h2>`; }
+        });
+
+        for(const k in cardsMap){ delete cardsMap[k]; }
+
+        for(const cliente of clientes){
+            if (!cliente.dataCadastro) cliente.dataCadastro = new Date().toISOString();
+
+            if (cliente.status === 'lista-fria') { criarCard(cliente); continue; }
+            if (cliente.status === 'em-negociacao') {
+                if (!cliente.dataEmNegociacao) {
+                    cliente.dataEmNegociacao = new Date().toISOString();
+                    updateDoc(doc(db, "clientes", cliente.id), { dataEmNegociacao: cliente.dataEmNegociacao });
+                }
+                if (getDiaPipeline(cliente.dataEmNegociacao) > 10) {
+                    cliente.status = 'funil-geral'; updateDoc(doc(db, "clientes", cliente.id), { status: 'funil-geral' });
+                } else criarCard(cliente);
+                continue; 
+            }
+            if (cliente.status === 'contrato-assinado') {
+                if (getDiaPipeline(cliente.dataContratoAssinado || cliente.dataCadastro) > 30) {
+                    cliente.status = 'funil-geral'; updateDoc(doc(db, "clientes", cliente.id), { status: 'funil-geral' });
+                } else criarCard(cliente);
+                continue; 
+            }
+            if (cliente.status === 'fechado' || cliente.status === 'funil-geral') {
+                if (cliente.status !== 'funil-geral') criarCard(cliente);
+                continue; 
+            }
+
+            const diaCalc = getDiaPipeline(cliente.dataPipeline || cliente.dataCadastro);
+            if (diaCalc > 5) {
+                if (cliente.status !== 'funil-geral') {
+                    cliente.status = 'funil-geral'; updateDoc(doc(db, "clientes", cliente.id), { status: 'funil-geral' });
+                }
+                continue; 
+            }
+
+            let statusCalc = 'dia-1';
+            if (diaCalc === 2) statusCalc = 'dia-2';
+            else if (diaCalc === 3) statusCalc = 'dia-3';
+            else if (diaCalc === 4) statusCalc = 'dia-4';
+            else if (diaCalc === 5) statusCalc = 'dia-5';
+            
+            if (cliente.status !== statusCalc) {
+                cliente.status = statusCalc;
+                updateDoc(doc(db, "clientes", cliente.id), { status: statusCalc });
+            }
+            criarCard(cliente);
+        }
+        filtragemAplicada();
+        atualizarContadores();
+        atualizarInfosHoje();
+    }
+
+   /* ================= FORM ================= */
+    clientForm.onsubmit = async function(e){
+        e.preventDefault();
+        const submitBtn = clientForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Salvando...";
+
+        try {
+            const nome = inputNome.value.trim();
+            if(!nome){ showToast("Nome obrigatório"); return; }
+
+            const processos = Array.from(document.querySelectorAll('.inputProcesso')).map(i => i.value.trim()).filter(v => v);
+            if (processos.length > 0) {
+                let processoDuplicado = null;
+                
+                const clientesGlobais = await getDocs(collection(db, "clientes"));
+                
+                for (let proc of processos) {
+                    const cleanInputProc = proc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+                    if(!cleanInputProc) continue;
+                    
+                    const clienteExistente = clientesGlobais.docs.find(doc => {
+                        if (clientForm.dataset.editId && doc.id === clientForm.dataset.editId) return false;
+                        const data = doc.data();
+                        if (!data.processo) return false;
+                        return data.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()).includes(cleanInputProc);
+                    });
+                    
+                    if (clienteExistente) { processoDuplicado = proc; break; }
+                }
+                
+                if (processoDuplicado) {
+                    showToast(`Erro: O processo ${processoDuplicado} já está cadastrado no sistema!`);
+                    return; 
+                }
+            }
+
+            const telefones = Array.from(document.querySelectorAll('.inputTelefone')).map(i => i.value.trim()).filter(v => v);
+
+            const novo = {
+                nome: nome,
+                cpf: inputCPF.value.trim(),
+                obs: inputObs.value.trim().substring(0,300),
+                numeros: telefones.join(', '),
+                processo: processos.join(', '),
+                classe: inputClasse.value,
+                valor: inputValor.value,
+                estado: inputEstado.value,
+                documentos: currentDocs, 
+                criadoPor: currentUser ? (currentUser.email || "") : "",
+                fechadoPor: ""
+            };
+
+            // <-- CORRIGIDO: Agora o form NÃO baixa toda a base após salvar
+            if(clientForm.dataset.editId){
+                novo.id = clientForm.dataset.editId;
+                
+                // Pega do cache local em vez do Firebase! Zero Leituras.
+                const antigo = todosClientesCache.find(c=>c.id===novo.id);
+                if(antigo){
+                    novo.criadoPor = antigo.criadoPor || "";
+                    novo.fechadoPor = antigo.fechadoPor || "";
+                    if (antigo.vendedor) novo.vendedor = antigo.vendedor; 
+                    if (antigo.dataFechamento) novo.dataFechamento = antigo.dataFechamento; 
+                    novo.dataCadastro = antigo.dataCadastro || new Date().toISOString();
+                    novo.dataPipeline = antigo.dataPipeline || null; 
+                    novo.dataEmNegociacao = antigo.dataEmNegociacao || null;
+                    novo.dataContratoAssinado = antigo.dataContratoAssinado || null;
+                    novo.status = antigo.status || "lista-fria";
+                }
+                await saveCliente(novo);
+                showToast("Cliente atualizado!");
+
+                // Atualiza a memória e recria só esse card (Zero leituras na nuvem)
+                const index = todosClientesCache.findIndex(c => c.id === novo.id);
+                if(index !== -1) todosClientesCache[index] = novo;
+                
+                const cardAntigo = document.querySelector(`.card[data-id="${novo.id}"]`);
+                if(cardAntigo) cardAntigo.remove();
+                criarCard(novo);
+                
+            }else{
+                novo.dataCadastro = new Date().toISOString();
+                novo.status = "lista-fria";
+                await saveCliente(novo);
+                showToast("Cliente adicionado!");
+                
+                // Adiciona na memória local (Zero leituras na nuvem)
+                todosClientesCache.push(novo);
+                criarCard(novo);
+            }
+            
+            closeModal();
+            filtragemAplicada();
+            atualizarContadores();
+            atualizarInfosHoje(); 
+            // REMOVIDO o "await render()" que causava o vazamento de leituras!
+            
+        } catch (error) {
+            showToast("Erro inesperado ao salvar!");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+        }
+    };
+
+    /* ================= DRAG AND DROP ================= */
+    let draggedCard = null;
+
+    function addDragEvents(card){
+        card.addEventListener('dragstart', () => { draggedCard = card; setTimeout(() => card.classList.add('dragging'), 0); });
+        card.addEventListener('dragend', () => {
+            draggedCard = null;
+            card.classList.remove('dragging');
+            document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+        });
+    }
+
+    document.querySelectorAll('.column').forEach(col => {
+        col.addEventListener('dragenter', e => { e.preventDefault(); if (draggedCard) col.classList.add('drag-over'); });
+        col.addEventListener('dragover', e => { e.preventDefault(); });
+        col.addEventListener('dragleave', e => { col.classList.remove('drag-over'); });
+        
+        col.addEventListener('drop', async () => {
+            col.classList.remove('drag-over');
+            if(!draggedCard) return;
+
+            const novoStatus = col.id;
+            const currentStatus = draggedCard.dataset.status;
+            const hasDocs = draggedCard.dataset.hasDocs === 'true';
+
+            if (novoStatus === currentStatus) return;
+
+            if (currentStatus === 'fechado') { showToast("Negado: Um contrato 'Fechado' não pode retroceder."); return; }
+
+            if (novoStatus !== 'contrato-assinado' && novoStatus !== 'fechado' && novoStatus !== 'em-negociacao') {
+                showToast("Avanço automático! Movimente apenas para 'Em Negociação', 'Contrato Assinado' ou 'Fechado'."); return;
+            }
+
+            if (novoStatus === 'contrato-assinado' && !hasDocs) {
+                showToast("Bloqueado: Para mover para 'Contrato Assinado', anexe documentos no card."); return;
+            }
+
+            if (novoStatus === 'fechado') {
+                if (currentStatus !== 'contrato-assinado') {
+                    showToast("Bloqueado: O card precisa passar por 'Contrato Assinado' primeiro."); return;
+                }
+
+                const clienteDragged = todosClientesCache.find(c => c.id === draggedCard.dataset.id);
+                if (clienteDragged) {
+                    const docsDoCliente = clienteDragged.documentos || {};
+                    let pendentes = [];
+                    
+                    DOCUMENTOS_CONFIG.forEach(docConf => {
+                        if (docConf.obrigatorio) {
+                            if (!docsDoCliente[docConf.id] || docsDoCliente[docConf.id].length === 0) {
+                                pendentes.push(docConf.label);
+                            }
+                        }
+                    });
+
+                    if (pendentes.length > 0) {
+                        showToast(`Bloqueado! Faltam os seguintes documentos obrigatórios: ${pendentes.join(', ')}`);
+                        return; 
+                    }
+                }
+            }
+
+            const updatePayload = { status: novoStatus };
+            if (novoStatus === 'em-negociacao') updatePayload.dataEmNegociacao = new Date().toISOString();
+            if (novoStatus === 'contrato-assinado') updatePayload.dataContratoAssinado = new Date().toISOString();
+            if (novoStatus === 'fechado') {
+                updatePayload.fechadoPor = currentUser ? currentUser.email : '';
+                updatePayload.vendedor = updatePayload.fechadoPor;
+                updatePayload.dataFechamento = new Date().toISOString(); 
+            }
+
+            await updateDoc(doc(db, "clientes", draggedCard.dataset.id), updatePayload);
+            
+            // <-- CORRIGIDO: Atualiza a memória local para não afetar as buscas ou precisar de novo download
+            const cacheCli = todosClientesCache.find(c => c.id === draggedCard.dataset.id);
+            if(cacheCli) Object.assign(cacheCli, updatePayload);
+
+            showToast("Sucesso! Card movimentado e salvo.");
+            col.appendChild(draggedCard); 
+            draggedCard.dataset.status = novoStatus;
+            draggedCard.className = `card ${novoStatus}`; 
+            atualizarContadores();
+        });
+    });
+
+    /* ================= FILTROS ================= */
+    function filtragemAplicada(){
+        const rawQ = searchInput.value;
+        const q = rawQ.toLowerCase();
+        const filterS = filterStatus.value;
+        
+        Object.values(cardsMap).forEach(card => {
+            const matchSearch = (card.dataset.nome || '').includes(q) || (card.dataset.cpf || '').includes(q) || (card.dataset.processo || '').includes(q);
+            const matchStatus = !filterS || card.dataset.status === filterS;
+            card.style.display = (matchSearch && matchStatus) ? 'flex' : 'none';
+        });
+
+        // NOVA IMPLEMENTAÇÃO: Verificar no cache se o processo já existe (Zero leituras no Firebase)
+        let processoExiste = false;
+        const cleanQ = rawQ.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+        if (cleanQ !== '') {
+            processoExiste = todosClientesCache.some(c => {
+                if (!c.processo) return false;
+                const processosCadastrados = c.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
+                return processosCadastrados.includes(cleanQ);
+            });
+        }
+
+        if (processoExiste) {
+            searchInput.style.color = '#ef4444'; // Vermelho se existir
+            searchInput.style.fontWeight = '600'; 
+        } else {
+            searchInput.style.color = '#fff'; // Branco padrão
+            searchInput.style.fontWeight = 'normal';
+        }
+    }
+
+    searchInput.oninput = filtragemAplicada;
+    filterStatus.onchange = filtragemAplicada;
+
+    /* ================= LOGIN ================= */
+    onAuthStateChanged(auth, user => {
+        if(user){
+            currentUser = user;
+            const emailDisplay = document.getElementById('userEmailDisplay');
+            if (emailDisplay) emailDisplay.innerHTML = `👤 ${user.email}`;
+            render();
+        }else{
+            window.location.href = "login.html";
+        }
+    });
+
+});
+
+</script>
+
+</head>
+
+<body>
+<div class="sidebar">
+
+    <h2 onclick="window.location.href='dashboard.html'">
+        AMR ADV
+    </h2>
+
+    <button onclick="window.location.href='crm.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/>
+        <span>CRM</span>
+    </button>
+
+    <button onclick="window.location.href='agenda.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/>
+        <span>Agenda</span>
+    </button>
+
+    <button onclick="window.location.href='discador.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/contacts.png"/>
+        <span>Contatos</span>
+    </button>
+
+    <button onclick="window.location.href='funil-geral.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/filter.png"/>
+        <span>Funil Geral</span>
+    </button>
+   
+    <button onclick="window.location.href='adm.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/admin-settings-male.png"/>
+        <span>ADM</span>
+    </button>
+
+    <button>
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/>
+        <span>Configurações</span>
+    </button>
+
+    <button id="btnSair" style="margin-top: auto; margin-bottom: 20px;">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/exit.png"/>
+        <span>Sair</span>
+    </button>
+
+</div>
+
+<div class="main">
+
+<header>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <h1>CRM</h1>
+        <div id="userEmailDisplay" class="user-info"></div>
+        <div class="user-info" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
+            Resgatados do Funil: <strong id="countResgatadosText" style="color: #fff; margin-left: 4px;">0</strong>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <button id="btnAgente" class="btn btn-green" style="padding: 10px 18px; border-radius: 12px; font-weight: 600;">
+            🤖 Agente de Whatsapp
+        </button>
+        
+        <button id="btnAdd" class="btn primary">
+            + Adicionar Cliente
+        </button>
+    </div>
+
+</header>
+
+<div class="search-bar">
+    <input id="searchInput" placeholder="Buscar por Nome, Processo ou CPF..." />
+    <select id="filterStatus">
+        <option value="">Todos os status</option>
+        <option value="lista-fria">Lista Fria</option>
+        <option value="dia-1">Dia 1</option>
+        <option value="dia-2">Dia 2</option>
+        <option value="dia-3">Dia 3</option>
+        <option value="dia-4">Dia 4</option>
+        <option value="dia-5">Dia 5</option>
+        <option value="em-negociacao">Em Negociação</option>
+        <option value="contrato-assinado">Contrato Assinado</option>
+        <option value="fechado">Fechado</option>
+    </select>
+</div>
+
+<div class="kanban-container">
+<main class="kanban" id="kanban">
+    <div class="column" id="lista-fria"></div>
+    <div class="column" id="dia-1"></div>
+    <div class="column" id="dia-2"></div>
+    <div class="column" id="dia-3"></div>
+    <div class="column" id="dia-4"></div>
+    <div class="column" id="dia-5"></div>
+    <div class="column" id="em-negociacao"></div>
+    <div class="column" id="contrato-assinado"></div>
+    <div class="column" id="fechado"></div>
+</main>
+</div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <h3 id="modalTitle">Novo Cliente</h3>
+        <form id="clientForm">
+            <div id="infoExtra" class="row" style="display:none; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6;"></div>
+            
+            <div class="row">
+                <input id="inputNome" placeholder="Nome do cliente" required />
+            </div>
+            
+            <div id="processosContainer" style="margin-bottom: 14px;"></div>
+
+            <div class="row">
+                <input id="inputCPF" placeholder="CPF/CNPJ" />
+            </div>
+            <div id="telefonesContainer"></div>
+            <div class="row">
+                <button type="button" class="btn ghost" id="btnAddTelefone">+ Adicionar Telefone</button>
+            </div>
+            <div class="row">
+                <select id="inputClasse">
+                    <option value="Outros">Outros</option>
+                    <option value="Busca e Apreensão">Busca e Apreensão</option>
+                    <option value="Execução">Execução</option>
+                    <option value="Renegociação">Renegociação</option>
+                    <option value="Monitoria">Monitória</option>
+                    <option value="Procedimento Comum">Procedimento Comum</option>
+                </select>
+            </div>
+            <div class="row">
+                <input id="inputValor" type="text" placeholder="Valor exato do tribunal (R$)" />
+            </div>
+            <div class="row">
+                <select id="inputEstado">
+                    <option value="Acre">Acre</option>
+                    <option value="Alagoas">Alagoas</option>
+                    <option value="Amapá">Amapá</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Bahia">Bahia</option>
+                    <option value="Ceará">Ceará</option>
+                    <option value="Distrito Federal">Distrito Federal</option>
+                    <option value="Espírito Santo">Espírito Santo</option>
+                    <option value="Goiás">Goiás</option>
+                    <option value="Maranhão">Maranhão</option>
+                    <option value="Mato Grosso">Mato Grosso</option>
+                    <option value="Mato Grosso do Sul">Mato Grosso do Sul</option>
+                    <option value="Minas Gerais">Minas Gerais</option>
+                    <option value="Pará">Pará</option>
+                    <option value="Paraíba">Paraíba</option>
+                    <option value="Paraná">Paraná</option>
+                    <option value="Pernambuco">Pernambuco</option>
+                    <option value="Piauí">Piauí</option>
+                    <option value="Rio de Janeiro" selected>Rio de Janeiro</option>
+                    <option value="Rio Grande do Norte">Rio Grande do Norte</option>
+                    <option value="Rio Grande do Sul">Rio Grande do Sul</option>
+                    <option value="Rondônia">Rondônia</option>
+                    <option value="Roraima">Roraima</option>
+                    <option value="Santa Catarina">Santa Catarina</option>
+                    <option value="São Paulo">São Paulo</option>
+                    <option value="Sergipe">Sergipe</option>
+                    <option value="Tocantins">Tocantins</option>
+                </select>
+            </div>
+
+            <!-- NOVA SEÇÃO DE DOCUMENTOS -->
+            <div class="docs-section">
+                <h4>Documentos do Cliente</h4>
+                <div id="docsListContainer"></div>
+                <!-- Input genérico oculto reutilizado por cada botão de anexar -->
+                <input type="file" id="inputSpecificFile" style="display: none;" multiple />
+                <div id="uploadProgress" style="font-size: 12px; color: #10b981; margin-top: 5px; display: none;"></div>
+            </div>
+
+            <div class="row">
+                <textarea id="inputObs" maxlength="300" placeholder="Observações (máx. 300 caracteres)"></textarea>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn primary">Salvar</button>
+                <button type="button" class="btn ghost" id="btnCancel">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalAgenteBackdrop">
+    <div class="modal">
+        <h3 style="margin-bottom: 5px;"> Agente de WhatsApp</h3>
+        
+        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+            <p style="font-size: 12px; color: #fcd34d; margin: 0;">
+                <strong>Aviso:</strong> Se um cliente tiver múltiplos números, o seu navegador pode bloquear a abertura das abas extras. Caso isso aconteça, clique no ícone de "Pop-up bloqueado" na barra de endereços lá em cima e selecione <strong>"Sempre permitir pop-ups"</strong>.
+            </p>
+        </div>
+
+        <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px;">
+            Digite a mensagem base. Escreva <strong>{nome}</strong> para que o sistema troque automaticamente pelo nome do cliente.
+        </p>
+        
+        <div class="row">
+            <textarea id="agenteMensagem" rows="5" placeholder="Olá {nome}, tudo bem? Vi que seu caso..." style="background: rgba(255,255,255,0.05);"></textarea>
+        </div>
+
+        <div class="actions">
+            <button class="btn primary" id="btnCarregarFila">Carregar Lista Fria</button>
+            <button class="btn ghost" id="btnFecharAgente">Fechar</button>
+        </div>
+
+        <div id="agenteFilaContainer" style="margin-top: 25px; display: none;">
+            <h4 style="margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">Fila de Disparo</h4>
+            <div id="agenteLista" style="max-height: 250px; overflow-y: auto; padding-right: 5px;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<audio
+    id="coinSound"
+    src="https://assets.mixkit.co/sfx/preview/mixkit-winning-notification-2018.mp3"
+    preload="auto">
+</audio>
+
+</body>
+</html>
