@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clientes - CRM AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-thin-rounded/css/uicons-thin-rounded.css'>
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body { 
+    display:flex; height:100vh; overflow:hidden; transition:filter 0.3s; 
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px; display:flex; flex-direction:column; align-items:center;
+    padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10;
+    backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+.sidebar.expanded { width:240px; }
+.sidebar h2 {
+    font-size:22px; font-weight:800; color:#fff;
+    letter-spacing:1px; margin-bottom:30px; text-align:center; cursor:pointer;
+    width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0;
+}
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7);
+    display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px;
+    cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px;
+    white-space:nowrap; overflow:hidden;
+}
+.sidebar button img { width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; transition:filter 0.3s; }
+.main.blur { filter:blur(5px) brightness(0.7); }
+
+header { 
+    height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); 
+    display:flex; align-items:center; justify-content:space-between; padding:0 30px; flex-shrink:0; 
+}
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+/* ================= RESUMO FINANCEIRO ================= */
+.resumo-container {
+    display: flex; gap: 20px; padding: 25px 30px 0 30px; flex-wrap: wrap; flex-shrink: 0;
+}
+.resumo-card {
+    flex: 1; min-width: 200px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: 0.3s;
+}
+.resumo-card .title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; }
+.resumo-card .value { font-size: 26px; font-weight: 800; }
+.resumo-pago .value { color: #10b981; }
+.resumo-aberto .value { color: #f59e0b; }
+.resumo-atraso .value { color: #ef4444; }
+.resumo-pago { border-bottom: 4px solid #10b981; }
+.resumo-aberto { border-bottom: 4px solid #f59e0b; }
+.resumo-atraso { border-bottom: 4px solid #ef4444; cursor: pointer; }
+.resumo-atraso:hover { transform: translateY(-2px); background: rgba(239, 68, 68, 0.1); }
+
+/* ================= SEARCH ================= */
+.search-container { padding: 25px 30px 0 30px; flex-shrink: 0; display: flex; gap: 15px; flex-wrap: wrap; }
+
+/* ================= CARDS ================= */
+.container { flex:1; overflow-y:auto; padding:30px; display:flex; flex-wrap:wrap; gap:25px; align-content: flex-start; }
+
+.card { 
+    display:flex; background:rgba(255,255,255,0.05); backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+    overflow:hidden; transition:transform 0.3s, background 0.3s; 
+    flex-direction:row; position:relative; width:340px; max-height: 480px;
+    cursor: pointer;
+}
+.card:hover { transform:translateY(-5px); background:rgba(255,255,255,0.08); border-color: rgba(16, 185, 129, 0.4); }
+
+/* Classe Dinâmica para Renunciar */
+.card.renunciar { border-color: rgba(168, 85, 247, 0.6) !important; background: rgba(168, 85, 247, 0.08) !important; }
+.card.renunciar .color-bar { background: #a855f7 !important; }
+
+.card .color-bar { width:6px; height:100%; border-radius:16px 0 0 16px; background:#10b981; flex-shrink: 0; transition: 0.3s;}
+.card .color-bar.andamento { background: #3b82f6; }
+
+.card-content { padding:20px; flex:1; display:flex; flex-direction:column; overflow:hidden; position: relative;}
+
+/* Indicador de Documentos Anexados */
+.indicator-docs {
+    position: absolute; top: 15px; left: 15px;
+    background: rgba(59, 130, 246, 0.15); color: #60a5fa;
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; gap: 5px;
+}
+
+.card-header-info { margin-bottom: 12px; margin-top: 25px; display: flex; align-items: center; justify-content: space-between; }
+.card-date { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+
+.action-badges { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 2; }
+.badge-btn {
+    width: 32px; height: 32px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
+    cursor: pointer; transition: 0.3s;
+}
+.badge-boleto { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-boleto:hover { background: #10b981; color: #fff; }
+
+.badge-delete { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 14px; }
+.badge-delete:hover { background: #ef4444; color: #fff; }
+
+.card h2 { font-size:18px; margin-bottom:8px; color:#fff; font-weight:700; padding-right: 40px; }
+.card p { font-size:13px; color:rgba(255,255,255,0.7); margin:2px 0; }
+.card p strong { color: #fff; font-weight: 600; }
+
+/* Novo Modal/Select de Situação direto no Card */
+.situacao-card-select {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    outline: none; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 10px; margin-bottom: 5px;
+    appearance: none; -webkit-appearance: none; text-align: center;
+}
+.situacao-card-select:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+.situacao-card-select option { background: #0f172a; color: #fff; }
+
+.boletos-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-right: 5px; flex: 1; }
+.boleto-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.boleto-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.boleto-info .val { font-size: 14px; font-weight: 700; color: #10b981; }
+.boleto-info .date { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+/* Seletor de Status da Parcela */
+.status-select {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+    outline: none; cursor: pointer; transition: 0.3s; appearance: none; -webkit-appearance: none; text-align: center;
+}
+.status-select option { background: #0f172a; color: #fff; }
+.status-pago { color: #10b981; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.1); }
+.status-aberto { color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.1); }
+.status-atrasado { color: #ef4444; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
+
+/* ================= MODAIS ================= */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:50; }
+.modal { background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:24px; min-width:320px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+.modal-large { max-width: 900px; } 
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.modal-header h3 { font-size:22px; font-weight:700; color:#fff; margin: 0; }
+.btn-close { background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 20px; cursor: pointer; transition: 0.3s; }
+.btn-close:hover { color: #ef4444; }
+
+.grid-completa { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+@media(max-width: 768px) { .grid-completa { grid-template-columns: 1fr; } }
+
+.section-title { font-size: 14px; font-weight: 700; color: #10b981; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+.info-pessoal { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+.info-pessoal p { font-size: 13px; color: rgba(255,255,255,0.7); }
+.info-pessoal strong { color: #fff; }
+
+.honorarios-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
+
+/* FIX: Refinando o formulário de grid para não engolir o layout */
+.form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px; }
+
+.doc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
+.doc-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(59, 130, 246, 0.3); }
+.doc-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+.doc-info i { color: #3b82f6; font-size: 18px; flex-shrink: 0;}
+.doc-info span { font-size: 13px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.btn-view-doc { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.2s; }
+.btn-view-doc:hover { background: #3b82f6; color: #fff; }
+
+label { display:block; margin-bottom:6px; font-size:12px; font-weight:600; color:rgba(255,255,255,0.7); }
+
+input { width:100%; min-width: 0; padding:10px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:13px; outline:none; transition:0.3s; }
+input:focus { background:rgba(255,255,255,0.1); border-color: #10b981; }
+textarea { width:100%; min-width: 0; padding:10px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:13px; outline:none; transition:0.3s; resize:vertical; font-family: 'Inter', sans-serif;}
+textarea:focus { background:rgba(255,255,255,0.1); border-color: #10b981; }
+input[type="file"] { padding: 8px; font-size: 12px; }
+input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 10px; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.form-grid .full-width { grid-column: 1 / -1; }
+
+.actions { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; }
+.btn { padding:10px 18px; border-radius:10px; border:0; cursor:pointer; font-weight:600; font-size:13px; transition:0.3s; display: flex; align-items: center; gap: 8px; justify-content: center;}
+.btn.primary { background: linear-gradient(135deg, #10b981, #059669); color:#fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn.primary:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(16, 185, 129, 0.4); }
+.btn.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+.btn.ghost { background:rgba(255,255,255,0.1); color:#fff; }
+.btn.ghost:hover { background:rgba(255,255,255,0.2); }
+
+.toast {
+    position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff;
+    padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none; z-index:9999; font-size:14px; font-weight: 500;
+}
+
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="location.href='crm.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/><span>CRM</span></button>
+    <button onclick="window.location.href='relatorios.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png"/><span>Relatórios</span></button>
+    <button onclick="window.location.href='agenda.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/><span>Agenda</span></button>
+    <button onclick="window.location.href='contatos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/contacts.png"/><span>Contatos</span></button>
+    <button onclick="window.location.href='clientes.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/><span>Clientes</span></button>
+    <button onclick="window.location.href='processos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/><span>Processos</span></button>
+    <button><img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/><span>Configurações</span></button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Clientes</h1>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="btn ghost" onclick="forcarAtualizacao()" title="Sincronizar dados com o servidor" style="padding: 10px; font-size: 16px;">🔄</button>
+            <button class="btn primary" onclick="abrirModalNovoCliente()">+ Adicionar Cliente Antigo</button>
+        </div>
+    </header>
+
+    <div class="resumo-container">
+        <div class="resumo-card resumo-pago">
+            <span class="title">Total Recebido</span>
+            <span class="value" id="resumoPago">R$ 0,00</span>
+        </div>
+        <div class="resumo-card resumo-aberto">
+            <span class="title">Total em Aberto</span>
+            <span class="value" id="resumoAberto">R$ 0,00</span>
+        </div>
+        <div class="resumo-card resumo-atraso" onclick="toggleFiltroAtrasados()" title="Clique para filtrar apenas devedores">
+            <span class="title">Total em Atraso</span>
+            <span class="value" id="resumoAtraso">R$ 0,00</span>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="buscarCliente" placeholder="Buscar por nome, CPF, telefone ou processo..." style="flex: 1; min-width: 250px;">
+        
+        <select id="filtroPeriodo" style="padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size: 14px; outline: none; transition: 0.3s; backdrop-filter: blur(10px); cursor: pointer; min-width: 180px;">
+            <option value="todos" style="background: #0f172a; color: #fff;">Todos os Fechados</option>
+            <option value="hoje" style="background: #0f172a; color: #fff;">Fechados Hoje</option>
+            <option value="semana" style="background: #0f172a; color: #fff;">Fechados esta Semana</option>
+            <option value="mes" style="background: #0f172a; color: #fff;">Fechados este Mês</option>
+            <option value="data" style="background: #0f172a; color: #fff;">Período Personalizado</option>
+        </select>
+
+        <div id="containerDataEspecifica" style="display: none; gap: 10px; align-items: center;">
+            <input type="date" id="filtroDataInicio" style="padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size: 14px; outline: none; backdrop-filter: blur(10px);" title="Data de Início">
+            <span style="color: rgba(255,255,255,0.5); font-weight: 600; font-size: 14px;">até</span>
+            <input type="date" id="filtroDataFim" style="padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size: 14px; outline: none; backdrop-filter: blur(10px);" title="Data de Fim">
+        </div>
+    </div>
+
+    <div class="container" id="clientesContainer"></div>
+</div>
+
+<!-- ================= NOVO MODAL: ADICIONAR CLIENTE ANTIGO ================= -->
+<div id="modalNovoCliente" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Adicionar Cliente Antigo</h3>
+            <button class="btn-close" onclick="fecharModalNovoCliente()">✖</button>
+        </div>
+        <div class="form-grid">
+            <div class="full-width">
+                <label>Nome Completo *</label>
+                <input type="text" id="novoNome" placeholder="Nome do cliente">
+            </div>
+            <div>
+                <label>CPF/CNPJ</label>
+                <input type="text" id="novoCpf" placeholder="000.000.000-00">
+            </div>
+            <div>
+                <label>Telefone</label>
+                <input type="text" id="novoTelefone" placeholder="(00) 00000-0000">
+            </div>
+            <div class="full-width">
+                <label>E-mail</label>
+                <input type="email" id="novoEmail" placeholder="email@exemplo.com">
+            </div>
+            <div class="full-width">
+                <label>Número do Processo</label>
+                <input type="text" id="novoProcesso" placeholder="0000000-00.0000.0.00.0000">
+            </div>
+            <div class="full-width">
+                <label>Endereço</label>
+                <input type="text" id="novoEndereco" placeholder="Rua, Número, Bairro">
+            </div>
+            <div>
+                <label>Cidade</label>
+                <input type="text" id="novaCidade" placeholder="Cidade">
+            </div>
+            <div>
+                <label>Estado</label>
+                <input type="text" id="novoEstado" placeholder="UF">
+            </div>
+            <div>
+                <label>CEP</label>
+                <input type="text" id="novoCep" placeholder="00000-000">
+            </div>
+            <div>
+                <label>Vendedor</label>
+                <input type="text" id="novoVendedor" placeholder="Nome do vendedor">
+            </div>
+            <div class="full-width">
+                <label>Data de Fechamento</label>
+                <input type="date" id="novaDataFechamento">
+            </div>
+        </div>
+        <div class="actions" style="margin-top: 20px;">
+            <button class="btn ghost" onclick="fecharModalNovoCliente()">Cancelar</button>
+            <button class="btn primary" id="btnSalvarNovoCliente" onclick="salvarNovoCliente()">Salvar e Adicionar Detalhes</button>
+        </div>
+    </div>
+</div>
+<!-- ================= FIM DO NOVO MODAL ================= -->
+
+<div id="modalClienteCompleto" class="modal-backdrop">
+    <div class="modal modal-large">
+        <div class="modal-header">
+            <h3 id="infoCompletaNome">Nome do Cliente</h3>
+            <button class="btn-close" onclick="fecharModalCompleto()">✖</button>
+        </div>
+        
+        <div class="grid-completa">
+            <div>
+                <h4 class="section-title">Dados Pessoais</h4>
+                <div class="info-pessoal" id="dadosPessoaisContainer"></div>
+
+                <!-- NOVA SEÇÃO: OBSERVAÇÕES -->
+                <h4 class="section-title" style="margin-top: 25px;">Observações</h4>
+                <div class="honorarios-box">
+                    <textarea id="editObservacoes" rows="3" placeholder="Adicione observações adicionais sobre o cliente..."></textarea>
+                </div>
+
+                <!-- NOVA SEÇÃO: ANDAMENTO PROCESSUAL -->
+                <h4 class="section-title" style="margin-top: 25px;">Andamento Processual</h4>
+                <div class="honorarios-box" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label>Data do Último Andamento Passado</label>
+                        <input type="date" id="editUltimoAndamento">
+                    </div>
+                    <div>
+                        <label>Tramitação Processual</label>
+                        <textarea id="editTramitacao" rows="3" placeholder="O que foi falado/passado para o cliente?"></textarea>
+                    </div>
+                </div>
+
+                <h4 class="section-title" style="margin-top: 25px;">Detalhes do Fechamento</h4>
+                <div class="honorarios-box" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 140px;">
+                        <label>Data de Fechamento</label>
+                        <input type="date" id="editDataFechamento">
+                    </div>
+                    <div style="flex: 1; min-width: 140px;">
+                        <label>Vendedor</label>
+                        <input type="text" id="editVendedor" placeholder="Nome do vendedor">
+                    </div>
+                    <button class="btn primary" onclick="salvarDetalhesFechamento()" id="btnSalvarDetalhes">Fechar Cliente</button>
+                </div>
+
+                <h4 class="section-title" style="margin-top: 25px;">Honorários e Parcelas</h4>
+                <div class="honorarios-box">
+                    <div class="form-inline">
+                        <div>
+                            <label>Valor Total (R$)</label>
+                            <input type="text" id="addHonValor" placeholder="0,00">
+                        </div>
+                        <div>
+                            <label>Valor Entrada (R$)</label>
+                            <input type="text" id="addHonEntrada" placeholder="Opcional">
+                        </div>
+                        <div>
+                            <label>Qtd. Parcelas</label>
+                            <input type="number" id="addHonParcelas" placeholder="Restantes">
+                        </div>
+                        <div>
+                            <label>Vencimento da 1ª</label>
+                            <input type="date" id="addHonData">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn primary" style="flex: 1;" onclick="gerarHonorarios()">Gerar Parcelado</button>
+                        <button class="btn ghost" style="flex: 1;" onclick="gerarAVista()">Gerar à Vista</button>
+                    </div>
+                </div>
+                
+                <div id="listaHonorariosGerados" class="boletos-list" style="max-height: 250px;">
+                </div>
+            </div>
+
+            <div>
+                <h4 class="section-title">Documentação</h4>
+                
+                <div class="honorarios-box">
+                    <label>Nome do Documento</label>
+                    <input type="text" id="addDocNome" placeholder="Opcional (Usa nome do arquivo se vazio)" style="margin-bottom:10px;">
+                    <label>Arquivo</label>
+                    <input type="file" id="addDocFile" style="margin-bottom:10px;">
+                    <button class="btn blue" style="width: 100%;" onclick="anexarDocumento()" id="btnAnexarDoc">Anexar Documento</button>
+                </div>
+
+                <div id="listaDocsContainer" class="boletos-list" style="max-height: 250px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalBoleto" class="modal-backdrop">
+    <div class="modal">
+        <h3 style="margin-bottom: 20px;">Gerar Boleto Avulso</h3>
+        <div class="form-grid">
+            <div class="full-width">
+                <label>Nome Completo</label>
+                <input type="text" id="modalNome">
+            </div>
+            <div>
+                <label>CPF/CNPJ</label>
+                <input type="text" id="modalCpf">
+            </div>
+            <div>
+                <label>Valor (R$)</label>
+                <input type="text" id="modalValor" placeholder="0,00">
+            </div>
+            <div class="full-width">
+                <label>Vencimento</label>
+                <input type="date" id="modalVencimento">
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn ghost" onclick="document.getElementById('modalBoleto').style.display='none'">Cancelar</button>
+            <button class="btn primary" id="confirmBoletoBtn">Gerar Boleto</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, query, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+let storage = null;
+
+try {
+    storage = getStorage(app);
+} catch (error) {
+    console.error("Storage indisponível:", error);
+}
+
+const sidebar = document.querySelector(".sidebar");
+const mainContent = document.querySelector(".main");
+const container = document.getElementById("clientesContainer");
+const toastEl = document.getElementById("toast");
+
+let clienteAtual = null;
+let clientesData = [];
+let filtroAtrasadosAtivo = false;
+
+sidebar.addEventListener('mouseenter', () => { sidebar.classList.add('expanded'); mainContent.classList.add('blur'); });
+sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('expanded'); mainContent.classList.remove('blur'); });
+
+function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.style.display = 'none', 3000);
+}
+
+function obterUsuarioAutenticado() {
+    if (auth.currentUser) return Promise.resolve(auth.currentUser);
+
+    return new Promise((resolve) => {
+        let unsubscribe = null;
+        unsubscribe = onAuthStateChanged(
+            auth,
+            (user) => {
+                if (unsubscribe) unsubscribe();
+                resolve(user);
+            },
+            (error) => {
+                console.error("Erro ao verificar autenticação:", error);
+                if (unsubscribe) unsubscribe();
+                resolve(null);
+            }
+        );
+    });
+}
+
+// ================= HELPERS (LÓGICA FINANCEIRA E DATAS) =================
+function converterMoedaParaFloat(valorStr) {
+    if(!valorStr) return 0;
+    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.'));
+}
+
+function formatarFloatParaMoeda(valor) {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function obterStatusEfetivo(parcela) {
+    if (parcela.status === "Pago") return "Pago";
+    
+    if (parcela.vencimento) {
+        const dataVencimento = new Date(parcela.vencimento + "T23:59:59");
+        const hoje = new Date();
+        
+        if (dataVencimento < hoje) {
+            return "Atrasado";
+        }
+    }
+    return "Pendente";
+}
+
+function atualizarResumoFinanceiro(listaClientes) {
+    let totalPago = 0;
+    let totalAberto = 0;
+    let totalAtraso = 0;
+
+    listaClientes.forEach(cliente => {
+        const honorarios = Array.isArray(cliente.honorarios) ? cliente.honorarios : [];
+        honorarios.forEach(h => {
+            const valor = converterMoedaParaFloat(h.valor);
+            const statusEfetivo = obterStatusEfetivo(h);
+
+            if (statusEfetivo === "Pago") {
+                totalPago += valor;
+            } else if (statusEfetivo === "Atrasado") {
+                totalAtraso += valor;
+            } else if (statusEfetivo === "Pendente") {
+                totalAberto += valor;
+            }
+        });
+    });
+
+    document.getElementById('resumoPago').textContent = formatarFloatParaMoeda(totalPago);
+    document.getElementById('resumoAberto').textContent = formatarFloatParaMoeda(totalAberto);
+    document.getElementById('resumoAtraso').textContent = formatarFloatParaMoeda(totalAtraso);
+}
+
+function extrairDocumentos(docsOriginais) {
+    let listaDocs = [];
+    if (Array.isArray(docsOriginais)) {
+        listaDocs = docsOriginais;
+    } else if (docsOriginais && typeof docsOriginais === 'object') {
+        Object.values(docsOriginais).forEach(categoriaArray => {
+            if (Array.isArray(categoriaArray)) {
+                listaDocs = listaDocs.concat(categoriaArray);
+            }
+        });
+    }
+    return listaDocs;
+}
+
+// ================= CACHE LOCAL ROBUSTO (INDEXEDDB) =================
+// O localStorage tem um limite pequeno e não é adequado para milhares de clientes.
+// O IndexedDB suporta um volume muito maior e impede que o CRM precise reler a
+// coleção inteira do Firestore a cada abertura da página.
+const CACHE_DB_NAME = 'amr_crm_cache_db';
+const CACHE_DB_VERSION = 1;
+const CACHE_STORE_NAME = 'dados';
+const CACHE_CLIENTES_KEY = 'clientes_data_v2';
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 horas
+const REFRESH_COOLDOWN_MS = 30 * 1000; // evita duplo clique = duas consultas grandes
+
+let cacheDbPromise = null;
+let carregarClientesPromise = null;
+let ultimaSincronizacaoServidor = 0;
+
+function abrirCacheDB() {
+    if (cacheDbPromise) return cacheDbPromise;
+
+    cacheDbPromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+            reject(new Error('IndexedDB não disponível neste navegador.'));
+            return;
+        }
+
+        const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+
+        request.onupgradeneeded = () => {
+            const dbCache = request.result;
+            if (!dbCache.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                dbCache.createObjectStore(CACHE_STORE_NAME, { keyPath: 'key' });
+            }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Erro ao abrir o cache local.'));
+    });
+
+    return cacheDbPromise;
+}
+
+async function lerCacheClientes() {
+    try {
+        const dbCache = await abrirCacheDB();
+        const registro = await new Promise((resolve, reject) => {
+            const tx = dbCache.transaction(CACHE_STORE_NAME, 'readonly');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            const req = store.get(CACHE_CLIENTES_KEY);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+
+        if (!registro || !registro.json) return null;
+
+        const data = JSON.parse(registro.json);
+        if (!Array.isArray(data)) return null;
+
+        return {
+            data,
+            timestamp: Number(registro.timestamp || 0)
+        };
+    } catch (error) {
+        console.warn('Não foi possível ler o cache IndexedDB:', error);
+        return null;
+    }
+}
+
+async function salvarCacheClientes(lista, timestamp = Date.now()) {
+    try {
+        const dbCache = await abrirCacheDB();
+        const json = JSON.stringify(lista);
+
+        await new Promise((resolve, reject) => {
+            const tx = dbCache.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            store.put({
+                key: CACHE_CLIENTES_KEY,
+                timestamp,
+                json
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error || new Error('Gravação do cache abortada.'));
+        });
+
+        // Mantém apenas o timestamp pequeno no localStorage para compatibilidade/diagnóstico.
+        try {
+            localStorage.setItem('amr_crm_clientes_timestamp', String(timestamp));
+            localStorage.removeItem('amr_crm_clientes_data');
+        } catch(e) {}
+    } catch (error) {
+        console.warn('Não foi possível salvar o cache IndexedDB:', error);
+    }
+}
+
+async function apagarCacheClientes() {
+    try {
+        const dbCache = await abrirCacheDB();
+        await new Promise((resolve, reject) => {
+            const tx = dbCache.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            store.delete(CACHE_CLIENTES_KEY);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.warn('Não foi possível apagar o cache IndexedDB:', error);
+    }
+
+    try {
+        localStorage.removeItem('amr_crm_clientes_data');
+        localStorage.removeItem('amr_crm_clientes_timestamp');
+    } catch(e) {}
+}
+
+// Migra automaticamente o cache antigo do localStorage para o IndexedDB.
+// Isso evita uma leitura completa do Firestore logo após instalar esta versão,
+// caso ainda exista um cache válido da versão anterior.
+async function migrarCacheAntigoSeExistir() {
+    try {
+        const cachedData = localStorage.getItem('amr_crm_clientes_data');
+        const cacheTimestamp = localStorage.getItem('amr_crm_clientes_timestamp');
+        if (!cachedData) return null;
+
+        const parsedData = JSON.parse(cachedData);
+        if (!Array.isArray(parsedData)) return null;
+
+        const timestamp = Number(cacheTimestamp || Date.now());
+        await salvarCacheClientes(parsedData, timestamp);
+        return { data: parsedData, timestamp };
+    } catch (error) {
+        console.warn('Não foi possível migrar o cache antigo:', error);
+        return null;
+    } finally {
+        // O array grande não deve continuar no localStorage.
+        try { localStorage.removeItem('amr_crm_clientes_data'); } catch(e) {}
+    }
+}
+
+function atualizarCacheLocal() {
+    // Mantém a mesma assinatura usada no restante do código.
+    // A gravação é local e NÃO gera leituras/escritas no Firestore.
+    salvarCacheClientes(clientesData).catch(error => {
+        console.warn('Falha ao atualizar cache local:', error);
+    });
+}
+
+window.forcarAtualizacao = async function() {
+    const agora = Date.now();
+
+    // Impede que um duplo clique no botão de sincronização gere duas leituras completas.
+    if (agora - ultimaSincronizacaoServidor < REFRESH_COOLDOWN_MS) {
+        showToast('Os dados já foram sincronizados há poucos segundos.');
+        return;
+    }
+
+    showToast('Buscando dados recentes do servidor...');
+    await carregarClientes({ forcarServidor: true });
+}
+
+// ================= SISTEMA DE BUSCA E FILTROS UNIFICADO =================
+const inputBusca = document.getElementById('buscarCliente');
+const selectPeriodo = document.getElementById('filtroPeriodo');
+const inputDataInicio = document.getElementById('filtroDataInicio');
+const inputDataFim = document.getElementById('filtroDataFim');
+
+window.toggleFiltroAtrasados = function() {
+    filtroAtrasadosAtivo = !filtroAtrasadosAtivo;
+    const cardAtraso = document.querySelector('.resumo-atraso');
+    if (filtroAtrasadosAtivo) {
+        cardAtraso.style.background = 'rgba(239, 68, 68, 0.2)';
+        cardAtraso.style.borderColor = '#ef4444';
+    } else {
+        cardAtraso.style.background = '';
+        cardAtraso.style.borderColor = '';
+    }
+    aplicarFiltros();
+}
+
+function isToday(dateString) {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    return date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+}
+
+function isThisWeek(dateString) {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); 
+    startOfWeek.setHours(0,0,0,0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); 
+    endOfWeek.setHours(23,59,59,999);
+    
+    return date >= startOfWeek && date <= endOfWeek;
+}
+
+function isThisMonth(dateString) {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+}
+
+function isSpecificDate(dateString, targetDateStr) {
+    if (!dateString || !targetDateStr) return false;
+    const date = new Date(dateString);
+    const iso = date.toISOString().split('T')[0];
+    return iso === targetDateStr;
+}
+
+window.aplicarFiltros = function() {
+    const termo = inputBusca.value.toLowerCase().trim();
+    const periodo = selectPeriodo.value;
+    const targetDateInicio = inputDataInicio.value;
+    const targetDateFim = inputDataFim.value;
+    
+    let filtrados = clientesData;
+
+    if (termo !== '' && periodo === "todos") {
+        filtrados = clientesData.filter(c => {
+            const nome = (c.nome || "").toLowerCase();
+            const cpf = (c.cpf || "").toLowerCase();
+            const telefone = (c.numeros || "").toLowerCase();
+            const processo = (c.processo || "").toLowerCase();
+            return nome.includes(termo) || cpf.includes(termo) || telefone.includes(termo) || processo.includes(termo);
+        });
+    } else {
+        filtrados = clientesData.filter(c => c.status === "fechado");
+
+        if (periodo === "hoje") {
+            filtrados = filtrados.filter(c => {
+                const dataObj = c.dataFechamento?.toDate ? c.dataFechamento.toDate() : c.dataFechamento;
+                return isToday(dataObj);
+            });
+        } else if (periodo === "semana") {
+            filtrados = filtrados.filter(c => {
+                const dataObj = c.dataFechamento?.toDate ? c.dataFechamento.toDate() : c.dataFechamento;
+                return isThisWeek(dataObj);
+            });
+        } else if (periodo === "mes") {
+            filtrados = filtrados.filter(c => {
+                const dataObj = c.dataFechamento?.toDate ? c.dataFechamento.toDate() : c.dataFechamento;
+                return isThisMonth(dataObj);
+            });
+        } else if (periodo === "data") {
+            filtrados = filtrados.filter(c => {
+                if (!c.dataFechamento) return false;
+                const dataObj = c.dataFechamento?.toDate ? c.dataFechamento.toDate() : new Date(c.dataFechamento);
+                
+                let pass = true;
+                if (targetDateInicio) {
+                    const dataIn = new Date(targetDateInicio + "T00:00:00");
+                    if (dataObj < dataIn) pass = false;
+                }
+                if (targetDateFim) {
+                    const dataFi = new Date(targetDateFim + "T23:59:59");
+                    if (dataObj > dataFi) pass = false;
+                }
+                return pass;
+            });
+        }
+
+        if (termo !== '') {
+            filtrados = filtrados.filter(c => {
+                const nome = (c.nome || "").toLowerCase();
+                const cpf = (c.cpf || "").toLowerCase();
+                const telefone = (c.numeros || "").toLowerCase();
+                const processo = (c.processo || "").toLowerCase();
+                return nome.includes(termo) || cpf.includes(termo) || telefone.includes(termo) || processo.includes(termo);
+            });
+        }
+    }
+
+    if (filtroAtrasadosAtivo) {
+        filtrados = filtrados.filter(c => {
+            const honorarios = Array.isArray(c.honorarios) ? c.honorarios : [];
+            return honorarios.some(h => obterStatusEfetivo(h) === "Atrasado");
+        });
+    }
+
+    filtrados.sort((a, b) => {
+        const getMs = (item) => {
+            if (!item.dataFechamento) return 0;
+            return item.dataFechamento.toDate ? item.dataFechamento.toDate().getTime() : new Date(item.dataFechamento).getTime();
+        };
+        return getMs(b) - getMs(a); 
+    });
+
+    exibirClientes(filtrados);
+}
+
+inputBusca.addEventListener('input', aplicarFiltros);
+inputDataInicio.addEventListener('change', aplicarFiltros);
+inputDataFim.addEventListener('change', aplicarFiltros);
+
+selectPeriodo.addEventListener('change', (e) => {
+    if (e.target.value === 'data') {
+        document.getElementById('containerDataEspecifica').style.display = 'flex';
+    } else {
+        document.getElementById('containerDataEspecifica').style.display = 'none';
+    }
+    aplicarFiltros();
+});
+
+// ================= LÓGICA DE EXCLUSÃO DE CLIENTE =================
+window.deletarCliente = async function(id) {
+    if(!confirm("Tem certeza que deseja excluir este card? Esta ação não pode ser desfeita.")) return;
+    try {
+        await deleteDoc(doc(db, "clientes", id));
+        clientesData = clientesData.filter(c => c.id !== id);
+        atualizarCacheLocal();
+        aplicarFiltros();
+        showToast("Card excluído com sucesso!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao excluir o card.");
+    }
+};
+
+// ================= LÓGICA DE ATUALIZAR SITUAÇÃO =================
+window.atualizarSituacao = async function(clienteId, novaSituacao) {
+    const cardEl = document.getElementById(`card-cliente-${clienteId}`);
+    if (cardEl) {
+        if (novaSituacao === 'Renunciar') {
+            cardEl.classList.add('renunciar');
+        } else {
+            cardEl.classList.remove('renunciar');
+        }
+    }
+
+    try {
+        const clienteRef = doc(db, "clientes", clienteId);
+        await updateDoc(clienteRef, { situacao: novaSituacao });
+        
+        const idx = clientesData.findIndex(c => c.id === clienteId);
+        if (idx > -1) {
+            clientesData[idx].situacao = novaSituacao;
+            atualizarCacheLocal();
+        }
+        
+        showToast("Situação da cobrança atualizada!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao atualizar situação.");
+    }
+};
+
+// ================= CARREGAR E RENDERIZAR CARDS COM CACHE =================
+function normalizarClientesDoSnapshot(snapshot) {
+    return snapshot.docs.map(docSnap => {
+        let data = docSnap.data();
+        try {
+            if (data.dataFechamento && typeof data.dataFechamento.toDate === 'function') {
+                data.dataFechamento = data.dataFechamento.toDate().toISOString();
+            }
+            if (data.ultimoAndamento && typeof data.ultimoAndamento.toDate === 'function') {
+                data.ultimoAndamento = data.ultimoAndamento.toDate().toISOString();
+            }
+        } catch(e) {}
+        return { id: docSnap.id, ...data };
+    });
+}
+
+async function buscarClientesNoServidor() {
+    // ATENÇÃO: esta é a única leitura completa da coleção nesta página.
+    // Ela só roda quando não existe cache local utilizável ou quando o usuário
+    // clica explicitamente no botão de sincronização.
+    const q = query(collection(db, 'clientes'));
+    const snapshot = await getDocs(q);
+    const lista = normalizarClientesDoSnapshot(snapshot);
+
+    ultimaSincronizacaoServidor = Date.now();
+    await salvarCacheClientes(lista, ultimaSincronizacaoServidor);
+    return lista;
+}
+
+async function executarCargaProtegida(forcarServidor = false) {
+    const executar = async () => {
+        // Depois de obter o lock, verifica o cache novamente. Se outra aba acabou
+        // de sincronizar, esta aba reutiliza os mesmos dados e não lê o Firestore.
+        if (!forcarServidor) {
+            let cache = await lerCacheClientes();
+            if (!cache) cache = await migrarCacheAntigoSeExistir();
+
+            if (cache && Array.isArray(cache.data)) {
+                const idade = Date.now() - Number(cache.timestamp || 0);
+                if (idade >= 0 && idade < CACHE_MAX_AGE_MS) {
+                    return { lista: cache.data, origem: 'cache' };
+                }
+            }
+        }
+
+        const lista = await buscarClientesNoServidor();
+        return { lista, origem: 'servidor' };
+    };
+
+    // Web Locks evita que duas abas do mesmo navegador façam a mesma consulta
+    // enorme simultaneamente. Em navegadores sem suporte, a página continua normal.
+    if (navigator.locks && typeof navigator.locks.request === 'function') {
+        return navigator.locks.request('amr_crm_clientes_firestore_sync', executar);
+    }
+
+    return executar();
+}
+
+async function carregarClientes(opcoes = {}) {
+    const forcarServidor = Boolean(opcoes.forcarServidor);
+
+    // Evita chamadas duplicadas dentro da própria aba.
+    if (carregarClientesPromise) {
+        if (!forcarServidor) return carregarClientesPromise;
+        try { await carregarClientesPromise; } catch(e) {}
+    }
+
+    carregarClientesPromise = (async () => {
+        container.innerHTML = "<p style='color:rgba(255,255,255,0.5);'>Carregando clientes...</p>";
+
+        // Para abertura normal, tenta primeiro o IndexedDB sem tocar no Firestore.
+        let cacheAnterior = null;
+        if (!forcarServidor) {
+            cacheAnterior = await lerCacheClientes();
+            if (!cacheAnterior) cacheAnterior = await migrarCacheAntigoSeExistir();
+
+            if (cacheAnterior && Array.isArray(cacheAnterior.data)) {
+                const idade = Date.now() - Number(cacheAnterior.timestamp || 0);
+                if (idade >= 0 && idade < CACHE_MAX_AGE_MS) {
+                    clientesData = cacheAnterior.data;
+                    aplicarFiltros();
+                    return;
+                }
+            }
+        }
+
+        try {
+            const resultado = await executarCargaProtegida(forcarServidor);
+            clientesData = resultado.lista;
+            aplicarFiltros();
+
+            if (resultado.origem === 'servidor' && forcarServidor) {
+                showToast('Dados sincronizados com o servidor!');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
+
+            // Se o servidor estiver indisponível, usa até cache antigo/expirado.
+            // Isso mantém o CRM funcional sem gerar novas tentativas em loop.
+            const fallback = cacheAnterior || await lerCacheClientes();
+            if (fallback && Array.isArray(fallback.data)) {
+                clientesData = fallback.data;
+                aplicarFiltros();
+                showToast('Servidor indisponível. Exibindo dados do cache local.');
+                return;
+            }
+
+            showToast('Erro ao carregar clientes.');
+        }
+    })();
+
+    try {
+        return await carregarClientesPromise;
+    } finally {
+        carregarClientesPromise = null;
+    }
+}
+
+function exibirClientes(lista) {
+    atualizarResumoFinanceiro(lista);
+    
+    container.innerHTML = "";
+    if(lista.length === 0) {
+        container.innerHTML = "<p style='color:rgba(255,255,255,0.5);'>Nenhum cliente encontrado.</p>";
+        return;
+    }
+    
+    lista.forEach(cliente => {
+        const card = document.createElement("div");
+        const isRenunciar = cliente.situacao === "Renunciar";
+        
+        card.className = `card ${isRenunciar ? 'renunciar' : ''}`;
+        card.id = `card-cliente-${cliente.id}`;
+        
+        let dataFechamentoStr = "";
+        
+        try {
+            if (cliente.dataFechamento) {
+                const dataObj = cliente.dataFechamento.toDate ? cliente.dataFechamento.toDate() : new Date(cliente.dataFechamento);
+                if (!isNaN(dataObj)) {
+                    dataFechamentoStr = dataObj.toLocaleDateString('pt-BR');
+                }
+            }
+        } catch(e) {}
+
+        const isFechado = cliente.status === "fechado";
+        const badgeStatus = isFechado 
+            ? `<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3);">Fechado</span>`
+            : `<span style="background: rgba(59, 130, 246, 0.2); color: #3b82f6; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.3);">Em Andamento</span>`;
+
+        const documentosArr = extrairDocumentos(cliente.documentos);
+        const honorariosArr = Array.isArray(cliente.honorarios) ? cliente.honorarios : [];
+
+        let docsIndicator = '';
+        if (documentosArr.length > 0) {
+            docsIndicator = `<div class="indicator-docs"><i class="fi fi-tr-clip"></i> ${documentosArr.length} Doc(s)</div>`;
+        }
+
+        const honorariosHtml = honorariosArr.slice(0, 3).map(h => {
+            const statusEfetivo = obterStatusEfetivo(h);
+            let corBarra = "#f59e0b"; 
+            if (statusEfetivo === "Pago") corBarra = "#10b981";
+            if (statusEfetivo === "Atrasado") corBarra = "#ef4444";
+
+            return `
+            <div class="boleto-item" style="padding:6px 10px; border-left: 3px solid ${corBarra}; pointer-events: none;">
+                <div class="boleto-info">
+                    <span class="val" style="font-size:12px;">R$ ${h.valor}</span>
+                    <span class="date" style="font-size:10px;">Venc: ${h.vencimento.split('-').reverse().join('/')} - <strong style="color:${corBarra};">${statusEfetivo}</strong></span>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        card.innerHTML = `
+            <div class="color-bar ${isFechado ? '' : 'andamento'}"></div>
+            <div class="card-content">
+                ${docsIndicator}
+                <div class="action-badges">
+                    <div class="badge-btn badge-delete" title="Excluir Card" id="btnDelete-${cliente.id}">🗑️</div>
+                    <div class="badge-btn badge-boleto" title="Gerar Boleto" id="btnBoleto-${cliente.id}">+</div>
+                </div>
+                <div class="card-header-info">
+                    ${badgeStatus}
+                    ${dataFechamentoStr ? `<span class="card-date">${isFechado ? 'Fechado em:' : 'Data:'} ${dataFechamentoStr}</span>` : ''}
+                </div>
+                <h2>${cliente.nome || "Sem nome"}</h2>
+                <p><strong>CPF:</strong> ${cliente.cpf || "-"}</p>
+                <p><strong>Vendedor:</strong> ${cliente.vendedor || "Não informado"}</p>
+                ${cliente.observacoes ? `<p style="font-size:11px; margin-top:6px; margin-bottom:6px; padding:6px; border-radius:6px; background:rgba(255,255,255,0.05); border-left:3px solid #f59e0b; color:rgba(255,255,255,0.8); line-height: 1.4;"><strong>Obs:</strong> ${cliente.observacoes.substring(0, 65)}${cliente.observacoes.length > 65 ? '...' : ''}</p>` : ''}
+                
+                <select class="situacao-card-select" onclick="event.stopPropagation()" onchange="atualizarSituacao('${cliente.id}', this.value)">
+                    <option value="" ${!cliente.situacao ? 'selected' : ''}>Situação da Cobrança...</option>
+                    <option value="Cobrança realizada" ${cliente.situacao === 'Cobrança realizada' ? 'selected' : ''}>Cobrança realizada</option>
+                    <option value="Renegociação" ${cliente.situacao === 'Renegociação' ? 'selected' : ''}>Renegociação</option>
+                    <option value="Sem retorno" ${cliente.situacao === 'Sem retorno' ? 'selected' : ''}>Sem retorno</option>
+                    <option value="Renunciar" ${cliente.situacao === 'Renunciar' ? 'selected' : ''}>Renunciar</option>
+                </select>
+
+                <div class="boletos-list">
+                    ${honorariosHtml || '<p style="font-size:11px; color:rgba(255,255,255,0.4); pointer-events: none;">Sem parcelas geradas.</p>'}
+                    ${(honorariosArr.length > 3) ? '<p style="font-size:10px; color:#10b981; margin-top:5px; pointer-events: none;">+ ver mais no modal</p>' : ''}
+                </div>
+            </div>
+        `;
+        
+        card.onclick = () => abrirModalCompleto(cliente);
+        container.appendChild(card);
+
+        document.getElementById(`btnDelete-${cliente.id}`).onclick = (e) => {
+            e.stopPropagation();
+            deletarCliente(cliente.id);
+        };
+
+        document.getElementById(`btnBoleto-${cliente.id}`).onclick = (e) => {
+            e.stopPropagation();
+            abrirModalBoleto(cliente);
+        };
+    });
+}
+
+// ================= MODAL NOVO CLIENTE =================
+const modalNovoCliente = document.getElementById('modalNovoCliente');
+
+window.abrirModalNovoCliente = function() {
+    document.getElementById('novoNome').value = "";
+    document.getElementById('novoCpf').value = "";
+    document.getElementById('novoTelefone').value = "";
+    document.getElementById('novoEmail').value = "";
+    document.getElementById('novoProcesso').value = "";
+    document.getElementById('novoEndereco').value = "";
+    document.getElementById('novaCidade').value = "";
+    document.getElementById('novoEstado').value = "";
+    document.getElementById('novoCep').value = "";
+    document.getElementById('novoVendedor').value = "";
+    document.getElementById('novaDataFechamento').value = new Date().toISOString().split('T')[0];
+    
+    modalNovoCliente.style.display = "flex";
+}
+
+window.fecharModalNovoCliente = function() {
+    modalNovoCliente.style.display = "none";
+}
+
+modalNovoCliente.addEventListener('click', (e) => {
+    if(e.target === modalNovoCliente) fecharModalNovoCliente();
+});
+
+window.salvarNovoCliente = async function() {
+    const nome = document.getElementById('novoNome').value.trim();
+    if(!nome) {
+        showToast("O nome do cliente é obrigatório.");
+        return;
+    }
+
+    const btn = document.getElementById('btnSalvarNovoCliente');
+    btn.textContent = "Salvando...";
+    btn.disabled = true;
+
+    const dataFechamentoStr = document.getElementById('novaDataFechamento').value;
+    const dataFechamentoFormatada = dataFechamentoStr ? dataFechamentoStr + "T12:00:00" : null;
+
+    const novoCliente = {
+        nome: nome,
+        cpf: document.getElementById('novoCpf').value.trim(),
+        numeros: document.getElementById('novoTelefone').value.trim(),
+        email: document.getElementById('novoEmail').value.trim(),
+        processo: document.getElementById('novoProcesso').value.trim(),
+        endereco: document.getElementById('novoEndereco').value.trim(),
+        cidade: document.getElementById('novaCidade').value.trim(),
+        estado: document.getElementById('novoEstado').value.trim(),
+        cep: document.getElementById('novoCep').value.trim(),
+        vendedor: document.getElementById('novoVendedor').value.trim(),
+        dataFechamento: dataFechamentoFormatada,
+        status: "fechado",
+        situacao: "",
+        honorarios: [],
+        documentos: [],
+        ultimoAndamento: "",
+        tramitacaoProcessual: "",
+        observacoes: "" 
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, "clientes"), novoCliente);
+        novoCliente.id = docRef.id;
+        
+        clientesData.push(novoCliente);
+        atualizarCacheLocal();
+        aplicarFiltros();
+        
+        fecharModalNovoCliente();
+        showToast("Cliente salvo! Adicione os honorários e documentos.");
+        
+        abrirModalCompleto(novoCliente);
+        
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao salvar o cliente.");
+    } finally {
+        btn.textContent = "Salvar e Adicionar Detalhes";
+        btn.disabled = false;
+    }
+}
+
+// ================= MODAL DE INFORMAÇÃO COMPLETA =================
+const modalClienteCompleto = document.getElementById('modalClienteCompleto');
+
+window.abrirModalCompleto = function(cliente) {
+    clienteAtual = cliente;
+    
+    document.getElementById('infoCompletaNome').textContent = cliente.nome || "Cliente sem nome";
+    document.getElementById('dadosPessoaisContainer').innerHTML = `
+        <p><strong>CPF/CNPJ:</strong> ${cliente.cpf || "Não informado"}</p>
+        <p><strong>E-mail:</strong> ${cliente.email || "Não informado"}</p>
+        <p><strong>Telefone:</strong> ${cliente.numeros || "Não informado"}</p>
+        <p><strong>Processo:</strong> ${cliente.processo || "Não informado"}</p>
+        <p><strong>Endereço:</strong> ${cliente.endereco || ""}, ${cliente.cidade || ""} - ${cliente.estado || ""}</p>
+        <p><strong>CEP:</strong> ${cliente.cep || "Não informado"}</p>
+    `;
+
+    try {
+        if (cliente.dataFechamento) {
+            const dataObj = cliente.dataFechamento.toDate ? cliente.dataFechamento.toDate() : new Date(cliente.dataFechamento);
+            if (!isNaN(dataObj)) {
+                document.getElementById('editDataFechamento').value = dataObj.toISOString().split('T')[0];
+            } else {
+                document.getElementById('editDataFechamento').value = "";
+            }
+        } else {
+            document.getElementById('editDataFechamento').value = "";
+        }
+    } catch (err) {
+        document.getElementById('editDataFechamento').value = "";
+    }
+    
+    document.getElementById('editVendedor').value = cliente.vendedor || "";
+    document.getElementById('editObservacoes').value = cliente.observacoes || "";
+
+    document.getElementById('editTramitacao').value = cliente.tramitacaoProcessual || "";
+    try {
+        if (cliente.ultimoAndamento) {
+            const dataUltAnd = cliente.ultimoAndamento.toDate ? cliente.ultimoAndamento.toDate() : new Date(cliente.ultimoAndamento);
+            if (!isNaN(dataUltAnd)) {
+                document.getElementById('editUltimoAndamento').value = dataUltAnd.toISOString().split('T')[0];
+            } else {
+                document.getElementById('editUltimoAndamento').value = "";
+            }
+        } else {
+            document.getElementById('editUltimoAndamento').value = "";
+        }
+    } catch (err) {
+        document.getElementById('editUltimoAndamento').value = "";
+    }
+
+    const btnSalvar = document.getElementById('btnSalvarDetalhes');
+    if(cliente.status === 'fechado') {
+        btnSalvar.textContent = "Salvar Detalhes";
+    } else {
+        btnSalvar.textContent = "Fechar Cliente";
+    }
+
+    document.getElementById('addHonValor').value = "";
+    document.getElementById('addHonEntrada').value = ""; 
+    document.getElementById('addHonParcelas').value = "";
+    document.getElementById('addHonData').value = "";
+    document.getElementById('addDocNome').value = "";
+    document.getElementById('addDocFile').value = "";
+
+    renderizarHonorarios();
+    renderizarDocumentos();
+
+    modalClienteCompleto.style.display = "flex";
+}
+
+window.fecharModalCompleto = function() {
+    modalClienteCompleto.style.display = "none";
+    clienteAtual = null;
+    aplicarFiltros();
+}
+
+modalClienteCompleto.addEventListener('click', (e) => {
+    if(e.target === modalClienteCompleto) fecharModalCompleto();
+});
+
+// ================= LÓGICA DE SALVAR/FECHAR CLIENTE =================
+window.salvarDetalhesFechamento = async function() {
+    if(!clienteAtual) return;
+    
+    const novaDataStr = document.getElementById('editDataFechamento').value;
+    const novoVendedor = document.getElementById('editVendedor').value.trim();
+    const novoUltimoAndamentoStr = document.getElementById('editUltimoAndamento').value;
+    const novaTramitacao = document.getElementById('editTramitacao').value.trim();
+    const novaObservacao = document.getElementById('editObservacoes').value.trim();
+    
+    const btn = document.getElementById('btnSalvarDetalhes');
+    btn.textContent = "Processando...";
+    btn.disabled = true;
+
+    try {
+        let atualizacoes = { 
+            vendedor: novoVendedor,
+            status: "fechado" 
+        };
+        
+        if (novaDataStr) {
+            const novaDataFormatada = novaDataStr + "T12:00:00"; 
+            atualizacoes.dataFechamento = novaDataFormatada;
+            clienteAtual.dataFechamento = novaDataFormatada;
+        }
+
+        atualizacoes.tramitacaoProcessual = novaTramitacao;
+        clienteAtual.tramitacaoProcessual = novaTramitacao;
+        
+        atualizacoes.observacoes = novaObservacao;
+        clienteAtual.observacoes = novaObservacao;
+
+        if (novoUltimoAndamentoStr) {
+            const dataAndamentoFormatada = novoUltimoAndamentoStr + "T12:00:00"; 
+            atualizacoes.ultimoAndamento = dataAndamentoFormatada;
+            clienteAtual.ultimoAndamento = dataAndamentoFormatada;
+        } else {
+            atualizacoes.ultimoAndamento = "";
+            clienteAtual.ultimoAndamento = "";
+        }
+
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, atualizacoes);
+        
+        clienteAtual.vendedor = novoVendedor;
+        clienteAtual.status = "fechado"; 
+        
+        atualizarCacheLocal();
+        showToast("Cliente atualizado e salvo com sucesso!");
+        btn.textContent = "Salvar Detalhes"; 
+        
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao atualizar os detalhes.");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// ================= LÓGICA DE HONORÁRIOS E ENTRADA =================
+document.getElementById('addHonValor').addEventListener('input', (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if(val === '') { e.target.value = ''; return; }
+    val = (parseInt(val) / 100).toFixed(2);
+    e.target.value = val.replace('.', ',');
+});
+
+document.getElementById('addHonEntrada').addEventListener('input', (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if(val === '') { e.target.value = ''; return; }
+    val = (parseInt(val) / 100).toFixed(2);
+    e.target.value = val.replace('.', ',');
+});
+
+window.gerarAVista = async function() {
+    if(!clienteAtual) return;
+    
+    const valorTotalStr = document.getElementById('addHonValor').value;
+    if(!valorTotalStr) {
+        showToast("Preencha o Valor Total para registrar o pagamento à vista.");
+        return;
+    }
+
+    const hoje = new Date().toISOString().split('T')[0];
+    let novosHonorarios = Array.isArray(clienteAtual.honorarios) ? clienteAtual.honorarios : [];
+    
+    novosHonorarios.push({
+        id_parcela: `hon_${Date.now()}_avista`,
+        parcela: `À Vista`,
+        valor: valorTotalStr,
+        vencimento: hoje,
+        status: "Pago" 
+    });
+
+    try {
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { honorarios: novosHonorarios });
+        
+        clienteAtual.honorarios = novosHonorarios;
+        
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarResumoFinanceiro(clientesData);
+        
+        atualizarCacheLocal();
+        renderizarHonorarios();
+        showToast("Pagamento à vista registrado com sucesso!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao registrar pagamento à vista.");
+    }
+};
+
+window.gerarHonorarios = async function() {
+    if(!clienteAtual) return;
+
+    const valorTotalStr = document.getElementById('addHonValor').value;
+    const valorEntradaStr = document.getElementById('addHonEntrada').value; 
+    const parcelasStr = document.getElementById('addHonParcelas').value;
+    const dataInicial = document.getElementById('addHonData').value;
+
+    if(!valorTotalStr) {
+        showToast("Preencha ao menos o Valor Total.");
+        return;
+    }
+
+    const valorFloat = parseFloat(valorTotalStr.replace(/\./g, '').replace(',', '.'));
+    const entradaFloat = valorEntradaStr ? parseFloat(valorEntradaStr.replace(/\./g, '').replace(',', '.')) : 0;
+    
+    let parcelas = 0;
+    if(parcelasStr) {
+        parcelas = parseInt(parcelasStr);
+    }
+
+    if (entradaFloat > valorFloat) {
+        showToast("A entrada não pode ser maior que o valor total.");
+        return;
+    }
+
+    let novosHonorarios = Array.isArray(clienteAtual.honorarios) ? clienteAtual.honorarios : [];
+    
+    if (entradaFloat > 0) {
+        const hoje = new Date().toISOString().split('T')[0];
+        novosHonorarios.push({
+            id_parcela: `hon_${Date.now()}_entrada`,
+            parcela: `Entrada`,
+            valor: entradaFloat.toFixed(2).replace('.', ','),
+            vencimento: hoje,
+            status: "Pendente" 
+        });
+    }
+
+    if (parcelas > 0 && dataInicial) {
+        const valorRestante = valorFloat - entradaFloat;
+        const valorParcela = (valorRestante / parcelas).toFixed(2).replace('.', ',');
+        let dataAtualObj = new Date(dataInicial + "T00:00:00");
+
+        for(let i = 0; i < parcelas; i++) {
+            let dataParcela = new Date(dataAtualObj);
+            dataParcela.setMonth(dataParcela.getMonth() + i);
+            
+            novosHonorarios.push({
+                id_parcela: `hon_${Date.now()}_${i}`,
+                parcela: `${i + 1}/${parcelas}`,
+                valor: valorParcela,
+                vencimento: dataParcela.toISOString().split('T')[0],
+                status: "Pendente"
+            });
+        }
+    } else if (entradaFloat < valorFloat) {
+        showToast("Preencha Qtd. Parcelas e Vencimento para gerar o saldo restante.");
+        return;
+    }
+
+    try {
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { honorarios: novosHonorarios });
+        
+        clienteAtual.honorarios = novosHonorarios;
+        atualizarCacheLocal();
+        renderizarHonorarios();
+        showToast("Honorários gerados e salvos!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao salvar honorários.");
+    }
+}
+
+window.mascaraDinheirInline = function(input) {
+    let val = input.value.replace(/\D/g, '');
+    if(val === '') { input.value = ''; return; }
+    val = (parseInt(val) / 100).toFixed(2);
+    input.value = val.replace('.', ',');
+};
+
+window.atualizarDadosParcela = async function(index, campo, valor) {
+    if(!clienteAtual || !clienteAtual.honorarios) return;
+    
+    if (campo === 'valor') {
+        let val = valor.replace(/\D/g, '');
+        if(val !== '') {
+            val = (parseInt(val) / 100).toFixed(2).replace('.', ',');
+            clienteAtual.honorarios[index][campo] = val;
+        }
+    } else {
+        clienteAtual.honorarios[index][campo] = valor;
+    }
+
+    try {
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { honorarios: clienteAtual.honorarios });
+        
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarResumoFinanceiro(clientesData);
+        
+        atualizarCacheLocal();
+        showToast("Parcela atualizada!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao atualizar parcela.");
+    }
+};
+
+window.atualizarStatusParcela = async function(index, novoStatus) {
+    if(!clienteAtual || !clienteAtual.honorarios) return;
+
+    clienteAtual.honorarios[index].status = novoStatus;
+
+    try {
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { honorarios: clienteAtual.honorarios });
+        
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarResumoFinanceiro(clientesData);
+        
+        atualizarCacheLocal();
+        renderizarHonorarios(); 
+        showToast(`Parcela atualizada para ${novoStatus}!`);
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao atualizar o status da parcela.");
+    }
+}
+
+window.removerParcela = async function(index) {
+    if(!confirm("Tem certeza que deseja remover esta parcela?")) return;
+    
+    clienteAtual.honorarios.splice(index, 1);
+    try {
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { honorarios: clienteAtual.honorarios });
+        
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarResumoFinanceiro(clientesData);
+        
+        atualizarCacheLocal();
+        renderizarHonorarios();
+        showToast("Parcela removida!");
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao remover parcela.");
+    }
+};
+
+function renderizarHonorarios() {
+    const containerHon = document.getElementById('listaHonorariosGerados');
+    const honorarios = Array.isArray(clienteAtual.honorarios) ? clienteAtual.honorarios : [];
+    
+    if(honorarios.length === 0) {
+        containerHon.innerHTML = '<p style="font-size:12px; color:rgba(255,255,255,0.4);">Nenhum honorário registrado.</p>';
+        return;
+    }
+
+    containerHon.innerHTML = honorarios.map((h, index) => {
+        const statusEfetivo = obterStatusEfetivo(h);
+        const isPagoNoBanco = h.status === "Pago"; 
+        
+        let selectClass = 'status-aberto';
+        let textoOpcaoAberto = 'Em Aberto';
+        
+        if (statusEfetivo === 'Pago') {
+            selectClass = 'status-pago';
+        } else if (statusEfetivo === 'Atrasado') {
+            selectClass = 'status-atrasado';
+            textoOpcaoAberto = 'Em Atraso'; 
+        }
+
+        return `
+        <div class="boleto-item" style="flex-direction: column; align-items: stretch; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size:12px; font-weight:bold; color:#fff;">Parcela ${h.parcela}</span>
+                    <button class="btn-close" style="font-size:14px; position:relative; top:0; right:0;" title="Remover Parcela" onclick="removerParcela(${index})">✖</button>
+                </div>
+                <select class="status-select ${selectClass}" onchange="atualizarStatusParcela(${index}, this.value)">
+                    <option value="Pendente" ${!isPagoNoBanco ? 'selected' : ''}>${textoOpcaoAberto}</option>
+                    <option value="Pago" ${isPagoNoBanco ? 'selected' : ''}>Pago</option>
+                </select>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 8px;">
+                <div>
+                    <label style="font-size: 11px; margin-bottom: 4px; display: block; color: rgba(255,255,255,0.7);">Valor (R$)</label>
+                    <input type="text" value="${h.valor}" style="padding: 8px 12px; font-size: 13px; width: 100%; box-sizing: border-box;" 
+                           oninput="mascaraDinheirInline(this)" 
+                           onchange="atualizarDadosParcela(${index}, 'valor', this.value)">
+                </div>
+                <div>
+                    <label style="font-size: 11px; margin-bottom: 4px; display: block; color: rgba(255,255,255,0.7);">Vencimento</label>
+                    <input type="date" value="${h.vencimento}" style="padding: 8px 12px; font-size: 13px; width: 100%; box-sizing: border-box;" 
+                           onchange="atualizarDadosParcela(${index}, 'vencimento', this.value)">
+                </div>
+            </div>
+        </div>
+    `}).join('');
+}
+
+// ================= LÓGICA DE DOCUMENTOS (STORAGE) =================
+window.anexarDocumento = async function() {
+    if(!clienteAtual) return;
+
+    let nomeInput = document.getElementById('addDocNome').value.trim();
+    const fileInput = document.getElementById('addDocFile');
+    const file = fileInput.files[0];
+    const btn = document.getElementById('btnAnexarDoc');
+
+    if(!storage) {
+        showToast("Erro: serviço de arquivos do Firebase não configurado.");
+        return;
+    }
+
+    const currentUser = await obterUsuarioAutenticado();
+    if(!currentUser) {
+        showToast("Sua sessão expirou. Entre novamente para anexar documentos.");
+        return;
+    }
+
+    if(!file) {
+        showToast("Selecione um arquivo para anexar.");
+        return;
+    }
+    
+    if(!nomeInput) {
+        nomeInput = file.name;
+    }
+
+    btn.textContent = "Enviando...";
+    btn.disabled = true;
+
+    try {
+        // Mesmo motor de upload utilizado pela página CRM.html.
+        // O caminho inclui o UID autenticado para respeitar as regras do Firebase Storage.
+        const uniqueName = `${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, `documentos/${currentUser.uid}/${uniqueName}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+
+        let docsAtuais = clienteAtual.documentos;
+        const novoDocObj = {
+            name: nomeInput,
+            nome: nomeInput,
+            url: downloadURL,
+            dataEnvio: new Date().toISOString()
+        };
+
+        if (Array.isArray(docsAtuais)) {
+            docsAtuais.push(novoDocObj);
+        } else if (docsAtuais && typeof docsAtuais === 'object') {
+            if (!docsAtuais.outros) docsAtuais.outros = [];
+            docsAtuais.outros.push(novoDocObj);
+        } else {
+            docsAtuais = { outros: [novoDocObj] };
+        }
+
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { documentos: docsAtuais });
+
+        clienteAtual.documentos = docsAtuais;
+        
+        document.getElementById('addDocNome').value = "";
+        fileInput.value = "";
+        
+        atualizarCacheLocal();
+        renderizarDocumentos();
+        showToast("Documento anexado com sucesso!");
+
+    } catch (error) {
+        console.error("Erro no upload:", error);
+        const detalhe = error && error.code ? ` (${error.code})` : "";
+        showToast(`Erro ao anexar arquivo${detalhe}.`);
+    } finally {
+        btn.textContent = "Anexar Documento";
+        btn.disabled = false;
+    }
+}
+
+function renderizarDocumentos() {
+    const containerDocs = document.getElementById('listaDocsContainer');
+    const documentos = extrairDocumentos(clienteAtual.documentos);
+
+    if (documentos.length === 0) {
+        containerDocs.innerHTML = '<p style="font-size:12px; color:rgba(255,255,255,0.4);">Nenhum documento anexado.</p>';
+        return;
+    }
+
+    containerDocs.innerHTML = documentos.map(doc => {
+        let nomeDoArquivo = doc.nome || doc.name;
+        if (!nomeDoArquivo || nomeDoArquivo === 'undefined') {
+            try {
+                const urlDecodificada = decodeURIComponent(doc.url.split('?')[0]);
+                const nomeComTimestamp = urlDecodificada.split('/').pop();
+                const indexUnderline = nomeComTimestamp.indexOf('_');
+                nomeDoArquivo = indexUnderline !== -1 
+                    ? nomeComTimestamp.substring(indexUnderline + 1) 
+                    : nomeComTimestamp;
+            } catch (e) {
+                nomeDoArquivo = 'Documento'; 
+            }
+        }
+
+        return `
+            <div class="doc-item">
+                <div class="doc-info">
+                    <i class="fi fi-tr-document"></i>
+                    <span title="${nomeDoArquivo}">${nomeDoArquivo}</span>
+                </div>
+                <a href="${doc.url}" target="_blank" class="btn-view-doc">Visualizar</a>
+            </div>
+        `;
+    }).join('');
+}
+
+// ================= LÓGICA DO MODAL BOLETO AVULSO =================
+const modalBoleto = document.getElementById('modalBoleto');
+const modalNome = document.getElementById('modalNome');
+const modalCpf = document.getElementById('modalCpf');
+const modalValor = document.getElementById('modalValor');
+const modalVencimento = document.getElementById('modalVencimento');
+
+function abrirModalBoleto(cliente) {
+    clienteAtual = cliente;
+    modalNome.value = cliente.nome || "";
+    modalCpf.value = cliente.cpf || "";
+    modalValor.value = "";
+    
+    const date = new Date();
+    date.setDate(date.getDate() + 5);
+    modalVencimento.value = date.toISOString().split('T')[0];
+    
+    modalBoleto.style.display = "flex";
+}
+
+modalValor.addEventListener('input', (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if(val === '') { e.target.value = ''; return; }
+    val = (parseInt(val) / 100).toFixed(2);
+    e.target.value = val.replace('.', ',');
+});
+
+document.getElementById('confirmBoletoBtn').onclick = async () => {
+    showToast("Função de API de Boleto chamada (Implementar backend)");
+    modalBoleto.style.display = "none";
+};
+
+// Iniciar
+carregarClientes();
+</script>
+</body>
+</html>
