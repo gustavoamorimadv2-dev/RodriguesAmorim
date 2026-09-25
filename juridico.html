@@ -1,1 +1,1024 @@
 
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jurídico - CRM AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-thin-rounded/css/uicons-thin-rounded.css'>
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body { 
+    display:flex; height:100vh; overflow:hidden; transition:filter 0.3s; 
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px; display:flex; flex-direction:column; align-items:center;
+    padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10;
+    backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+.sidebar.expanded { width:240px; }
+.sidebar h2 {
+    font-size:22px; font-weight:800; color:#fff;
+    letter-spacing:1px; margin-bottom:30px; text-align:center; cursor:pointer;
+    width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0;
+}
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7);
+    display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px;
+    cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px;
+    white-space:nowrap; overflow:hidden;
+}
+.sidebar button img { width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover, .sidebar button.active { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; transition:filter 0.3s; }
+.main.blur { filter:blur(5px) brightness(0.7); }
+
+header { 
+    height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); 
+    display:flex; align-items:center; justify-content:space-between; padding:0 30px; flex-shrink:0; 
+}
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+/* ================= RESUMO JURÍDICO ================= */
+.resumo-container { display: flex; gap: 20px; padding: 25px 30px 0 30px; flex-wrap: wrap; flex-shrink: 0; }
+.resumo-card {
+    flex: 1; min-width: 200px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: 0.3s;
+}
+.resumo-card .title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; }
+.resumo-card .value { font-size: 26px; font-weight: 800; }
+.resumo-total .value { color: #3b82f6; }
+.resumo-aguardando .value { color: #f59e0b; }
+.resumo-lancados .value { color: #10b981; }
+.resumo-total { border-bottom: 4px solid #3b82f6; }
+.resumo-aguardando { border-bottom: 4px solid #f59e0b; }
+.resumo-lancados { border-bottom: 4px solid #10b981; }
+
+/* ================= SEARCH ================= */
+.search-container { padding: 25px 30px 0 30px; flex-shrink: 0; display: flex; gap: 15px; flex-wrap: wrap; }
+input.search-input { 
+    flex: 1; min-width: 250px; padding:12px 16px; background:rgba(255,255,255,0.08); 
+    border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size: 14px; 
+    outline: none; transition: 0.3s; backdrop-filter: blur(10px); 
+}
+input.search-input:focus { border-color: #3b82f6; background:rgba(255,255,255,0.1); }
+
+/* ================= CARDS ================= */
+.container { flex:1; overflow-y:auto; padding:30px; display:flex; flex-wrap:wrap; gap:25px; align-content: flex-start; }
+
+.card { 
+    display:flex; background:rgba(255,255,255,0.05); backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+    overflow:hidden; transition:transform 0.3s, background 0.3s, border-color 0.3s; 
+    flex-direction:row; position:relative; width:340px; min-height: 250px; height: max-content;
+    cursor: pointer;
+}
+.card:hover { transform:translateY(-5px); border-color: rgba(59, 130, 246, 0.4); }
+
+/* CLASSE DINÂMICA PARA CARD LANÇADO */
+.card.lancado { 
+    border-color: #10b981 !important; /* Borda Verde viva */
+    background: rgba(16, 185, 129, 0.1) !important; /* Fundo esverdeado */
+}
+.card.lancado .color-bar { background: #10b981 !important; }
+
+.card .color-bar { width:6px; height:100%; min-height: 100%; border-radius:16px 0 0 16px; background:#475569; flex-shrink: 0; transition: 0.3s;}
+.card-content { padding:20px; flex:1; display:flex; flex-direction:column; overflow:hidden; position: relative;}
+
+/* Indicador de Documentos Anexados */
+.indicator-docs {
+    position: absolute; top: 15px; left: 15px;
+    background: rgba(59, 130, 246, 0.15); color: #60a5fa;
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    border: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; gap: 5px;
+}
+
+.card-header-info { margin-bottom: 12px; margin-top: 25px; display: flex; align-items: center; justify-content: space-between; }
+.card-date { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+
+.action-badges { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 2; }
+.badge-btn {
+    width: 32px; height: 32px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 16px; font-weight: bold;
+    cursor: pointer; transition: 0.3s;
+}
+
+/* Botão de Lançar Sistema */
+.badge-lancamento { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-lancamento:hover { background: #f59e0b; color: #fff; }
+.card.lancado .badge-lancamento { background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+.card.lancado .badge-lancamento:hover { background: #10b981; color: #fff; }
+
+.card h2 { font-size:18px; margin-bottom:8px; color:#fff; font-weight:700; padding-right: 40px; }
+.card p { font-size:13px; color:rgba(255,255,255,0.7); margin:2px 0; line-height: 1.4; }
+.card p strong { color: #fff; font-weight: 600; }
+
+.tramitacao-box {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* MODAIS & FORMULÁRIOS */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:50; }
+.modal { background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:24px; min-width:320px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+.modal-large { max-width: 900px; } 
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.modal-header h3 { font-size:22px; font-weight:700; color:#fff; margin: 0; }
+.btn-close { background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 20px; cursor: pointer; transition: 0.3s; }
+.btn-close:hover { color: #ef4444; }
+
+.grid-completa { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+@media(max-width: 768px) { .grid-completa { grid-template-columns: 1fr; } }
+
+.section-title { font-size: 14px; font-weight: 700; color: #3b82f6; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
+label { display:block; margin-bottom:6px; margin-top: 10px; font-size:12px; font-weight:600; color:rgba(255,255,255,0.7); }
+input, textarea { 
+    width:100%; min-width: 0; padding:10px 14px; background:rgba(255,255,255,0.05); 
+    border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#fff; font-size:13px; 
+    outline:none; transition:0.3s; font-family: 'Inter', sans-serif;
+}
+input:focus, textarea:focus { background:rgba(255,255,255,0.1); border-color: #3b82f6; }
+textarea { resize: vertical; }
+
+.btn { padding:10px 18px; border-radius:10px; border:0; cursor:pointer; font-weight:600; font-size:13px; transition:0.3s; display: flex; align-items: center; justify-content: center;}
+.btn.primary { background: linear-gradient(135deg, #10b981, #059669); color:#fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn.primary:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(16, 185, 129, 0.4); }
+.btn.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; }
+
+.toast {
+    position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff;
+    padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none; z-index:9999; font-size:14px; font-weight: 500;
+}
+
+.boletos-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; padding-right: 5px; flex: 1; }
+.doc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; transition: 0.2s; }
+.doc-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(59, 130, 246, 0.3); }
+.doc-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+.doc-info i { color: #3b82f6; font-size: 18px; flex-shrink: 0;}
+.doc-info span { font-size: 13px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.btn-view-doc { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.2s; }
+.btn-view-doc:hover { background: #3b82f6; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="location.href='crm.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/><span>CRM</span></button>
+    <button onclick="window.location.href='clientes.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/><span>Clientes</span></button>
+    <!-- Aba Jurídico Adicionada e Ativa -->
+    <button class="active" onclick="window.location.href='juridico.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/law.png"/><span>Jurídico</span></button>
+    <button onclick="window.location.href='processos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/><span>Processos</span></button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Painel Jurídico - Conferência</h1>
+        <button class="btn blue" onclick="forcarAtualizacao()" title="Sincronizar dados com o servidor" style="width:auto; padding:10px 14px;">🔄 Sincronizar</button>
+    </header>
+
+    <div class="resumo-container">
+        <div class="resumo-card resumo-total">
+            <span class="title">Total de Fechados</span>
+            <span class="value" id="resumoTotal">0</span>
+        </div>
+        <div class="resumo-card resumo-aguardando">
+            <span class="title">Aguardando Lançamento</span>
+            <span class="value" id="resumoAguardando">0</span>
+        </div>
+        <div class="resumo-card resumo-lancados">
+            <span class="title">Já Lançados</span>
+            <span class="value" id="resumoLancados">0</span>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="buscarCliente" class="search-input" placeholder="Buscar por nome, CPF, telefone, processo, tipo ou vendedor...">
+    </div>
+
+    <div class="container" id="clientesContainer"></div>
+</div>
+
+<!-- MODAL DE EDIÇÃO COMPLETA -->
+<div id="modalEdicao" class="modal-backdrop">
+    <div class="modal modal-large">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Editar Cliente</h3>
+            <button class="btn-close" onclick="fecharModal()">✖</button>
+        </div>
+        
+        <div class="grid-completa">
+            <!-- COLUNA 1: DADOS E ANDAMENTO -->
+            <div>
+                <h4 class="section-title">Dados Gerais</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="grid-column: 1 / -1;">
+                        <label>Nome Completo</label>
+                        <input type="text" id="editNome">
+                    </div>
+                    <div>
+                        <label>CPF/CNPJ</label>
+                        <input type="text" id="editCpf">
+                    </div>
+                    <div>
+                        <label>Telefone</label>
+                        <input type="text" id="editTelefone">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label>E-mail</label>
+                        <input type="text" id="editEmail">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label>Número do Processo</label>
+                        <input type="text" id="editProcesso">
+                    </div>
+                    <div>
+                        <label>Tipo de Processo</label>
+                        <input type="text" id="editTipoProcesso" placeholder="Ex.: Cível, Trabalhista, Previdenciário...">
+                    </div>
+                    <div>
+                        <label>Nome do Vendedor</label>
+                        <input type="text" id="editVendedor">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label>Observação do Vendedor</label>
+                        <textarea id="editObservacaoVendedor" rows="3" placeholder="Observações registradas pelo vendedor"></textarea>
+                    </div>
+                </div>
+
+                <h4 class="section-title" style="margin-top: 25px;">Andamento Processual</h4>
+                <div>
+                    <label>Data do Último Andamento Passado</label>
+                    <input type="date" id="editUltimoAndamento">
+                </div>
+                <div>
+                    <label>Tramitação Processual (Detalhes)</label>
+                    <textarea id="editTramitacao" rows="4" placeholder="Registre aqui a situação atual, prazos, etc."></textarea>
+                </div>
+
+                <button class="btn primary" style="width: 100%; margin-top: 20px;" id="btnSalvarEdicao" onclick="salvarAlteracoes()">
+                    Salvar Alterações
+                </button>
+            </div>
+
+            <!-- COLUNA 2: DOCUMENTOS -->
+            <div>
+                <h4 class="section-title">Documentação</h4>
+                
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">
+                    <label style="margin-top:0;">Arquivo</label>
+                    <input type="file" id="addDocFile" style="margin-bottom:10px; font-size: 12px;">
+                    <button class="btn blue" style="width: 100%;" onclick="anexarDocumento()" id="btnAnexarDoc">Anexar Documento</button>
+                </div>
+
+                <div id="listaDocsContainer" class="boletos-list" style="max-height: 250px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, query, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+const storage = getStorage(app);
+
+const sidebar = document.querySelector(".sidebar");
+const mainContent = document.querySelector(".main");
+const container = document.getElementById("clientesContainer");
+const toastEl = document.getElementById("toast");
+const inputBusca = document.getElementById('buscarCliente');
+
+let clientesData = [];
+let clienteAtual = null;
+
+sidebar.addEventListener('mouseenter', () => { sidebar.classList.add('expanded'); mainContent.classList.add('blur'); });
+sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('expanded'); mainContent.classList.remove('blur'); });
+
+function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.style.display = 'none', 3000);
+}
+
+// ================= CACHE LOCAL ROBUSTO (INDEXEDDB) =================
+// Compartilha o mesmo cache da página Clientes otimizada.
+const CACHE_DB_NAME = 'amr_crm_cache_db';
+const CACHE_DB_VERSION = 1;
+const CACHE_STORE_NAME = 'dados';
+const CACHE_CLIENTES_KEY = 'clientes_data_v2';
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 horas
+const REFRESH_COOLDOWN_MS = 30 * 1000;
+
+let cacheDbPromise = null;
+let carregarClientesPromise = null;
+let ultimaSincronizacaoServidor = 0;
+let timestampBaseCache = 0;
+
+function abrirCacheDB() {
+    if (cacheDbPromise) return cacheDbPromise;
+    cacheDbPromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+            reject(new Error('IndexedDB não disponível neste navegador.'));
+            return;
+        }
+        const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+        request.onupgradeneeded = () => {
+            const dbCache = request.result;
+            if (!dbCache.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                dbCache.createObjectStore(CACHE_STORE_NAME, { keyPath: 'key' });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Erro ao abrir o cache local.'));
+    });
+    return cacheDbPromise;
+}
+
+async function lerCacheClientes() {
+    try {
+        const dbCache = await abrirCacheDB();
+        const registro = await new Promise((resolve, reject) => {
+            const tx = dbCache.transaction(CACHE_STORE_NAME, 'readonly');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            const req = store.get(CACHE_CLIENTES_KEY);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+        if (!registro || !registro.json) return null;
+        const data = JSON.parse(registro.json);
+        if (!Array.isArray(data)) return null;
+        return { data, timestamp: Number(registro.timestamp || 0) };
+    } catch (error) {
+        console.warn('Não foi possível ler o cache IndexedDB:', error);
+        return null;
+    }
+}
+
+async function salvarCacheClientes(lista, timestamp = timestampBaseCache || Date.now()) {
+    try {
+        const dbCache = await abrirCacheDB();
+        const json = JSON.stringify(lista);
+        await new Promise((resolve, reject) => {
+            const tx = dbCache.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            store.put({ key: CACHE_CLIENTES_KEY, timestamp, json });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error || new Error('Gravação do cache abortada.'));
+        });
+    } catch (error) {
+        console.warn('Não foi possível salvar o cache IndexedDB:', error);
+    }
+}
+
+async function migrarCacheAntigoSeExistir() {
+    try {
+        const cachedData = localStorage.getItem('amr_crm_clientes_data');
+        const cacheTimestamp = localStorage.getItem('amr_crm_clientes_timestamp');
+        if (!cachedData) return null;
+        const parsedData = JSON.parse(cachedData);
+        if (!Array.isArray(parsedData)) return null;
+        const timestamp = Number(cacheTimestamp || Date.now());
+        timestampBaseCache = timestamp;
+        await salvarCacheClientes(parsedData, timestamp);
+        return { data: parsedData, timestamp };
+    } catch (error) {
+        console.warn('Não foi possível migrar o cache antigo:', error);
+        return null;
+    } finally {
+        try { localStorage.removeItem('amr_crm_clientes_data'); } catch(e) {}
+    }
+}
+
+function atualizarCacheLocal() {
+    salvarCacheClientes(clientesData, timestampBaseCache || Date.now()).catch(error => {
+        console.warn('Falha ao atualizar cache local:', error);
+    });
+}
+
+function normalizarClientesDoSnapshot(snapshot) {
+    return snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        try {
+            if (data.dataFechamento && typeof data.dataFechamento.toDate === 'function') {
+                data.dataFechamento = data.dataFechamento.toDate().toISOString();
+            }
+            if (data.ultimoAndamento && typeof data.ultimoAndamento.toDate === 'function') {
+                data.ultimoAndamento = data.ultimoAndamento.toDate().toISOString();
+            }
+            if (data.dataUltimoAndamento && typeof data.dataUltimoAndamento.toDate === 'function') {
+                data.dataUltimoAndamento = data.dataUltimoAndamento.toDate().toISOString();
+            }
+        } catch(e) {}
+        return { id: docSnap.id, ...data };
+    });
+}
+
+async function buscarClientesNoServidor() {
+    // ÚNICA leitura completa da coleção nesta página.
+    const q = query(collection(db, 'clientes'));
+    const snapshot = await getDocs(q);
+    const lista = normalizarClientesDoSnapshot(snapshot);
+    ultimaSincronizacaoServidor = Date.now();
+    timestampBaseCache = ultimaSincronizacaoServidor;
+    await salvarCacheClientes(lista, timestampBaseCache);
+    return lista;
+}
+
+async function executarCargaProtegida(forcarServidor = false) {
+    const executar = async () => {
+        if (!forcarServidor) {
+            let cache = await lerCacheClientes();
+            if (!cache) cache = await migrarCacheAntigoSeExistir();
+            if (cache && Array.isArray(cache.data)) {
+                const idade = Date.now() - Number(cache.timestamp || 0);
+                if (idade >= 0 && idade < CACHE_MAX_AGE_MS) {
+                    timestampBaseCache = cache.timestamp;
+                    return { lista: cache.data, origem: 'cache' };
+                }
+            }
+        }
+        const lista = await buscarClientesNoServidor();
+        return { lista, origem: 'servidor' };
+    };
+
+    // Mesmo lock da página Clientes: duas abas não baixam a coleção inteira juntas.
+    if (navigator.locks && typeof navigator.locks.request === 'function') {
+        return navigator.locks.request('amr_crm_clientes_firestore_sync', executar);
+    }
+    return executar();
+}
+
+window.forcarAtualizacao = async function() {
+    const agora = Date.now();
+    if (agora - ultimaSincronizacaoServidor < REFRESH_COOLDOWN_MS) {
+        showToast('Os dados já foram sincronizados há poucos segundos.');
+        return;
+    }
+    showToast('Buscando dados recentes do servidor...');
+    await carregarClientes({ forcarServidor: true });
+};
+
+
+// Extrai Documentos (Helpers)
+function extrairDocumentos(docsOriginais) {
+    let listaDocs = [];
+    if (Array.isArray(docsOriginais)) {
+        listaDocs = docsOriginais;
+    } else if (docsOriginais && typeof docsOriginais === 'object') {
+        Object.values(docsOriginais).forEach(categoriaArray => {
+            if (Array.isArray(categoriaArray)) {
+                listaDocs = listaDocs.concat(categoriaArray);
+            }
+        });
+    }
+    return listaDocs;
+}
+
+function atualizarResumo(lista) {
+    const total = lista.length;
+    const lancados = lista.filter(c => c.lancadoSistemaInterno === true).length;
+    const aguardando = total - lancados;
+
+    document.getElementById('resumoTotal').textContent = total;
+    document.getElementById('resumoAguardando').textContent = aguardando;
+    document.getElementById('resumoLancados').textContent = lancados;
+}
+
+window.aplicarFiltrosEOrdenacao = function() {
+    const termo = inputBusca.value.toLowerCase().trim();
+    
+    // REGRA 1: Apenas os que estão com status "fechado"
+    let filtrados = clientesData.filter(c => c.status === "fechado");
+
+    if (termo !== '') {
+        filtrados = filtrados.filter(c => {
+            const nome = (c.nome || "").toLowerCase();
+            const cpf = (c.cpf || "").toLowerCase();
+            const processo = (c.processo || "").toLowerCase();
+            const telefone = (c.numeros || "").toLowerCase();
+            const tipoProcesso = (c.tipoProcesso || c.tipo_processo || "").toLowerCase();
+            const vendedor = (c.nomeVendedor || c.vendedor || "").toLowerCase();
+            return nome.includes(termo) || cpf.includes(termo) || processo.includes(termo) || telefone.includes(termo) || tipoProcesso.includes(termo) || vendedor.includes(termo);
+        });
+    }
+
+    // REGRA 2: Ordenação Visual Customizada (Jurídico)
+    filtrados.sort((a, b) => {
+        const isLancadoA = a.lancadoSistemaInterno === true;
+        const isLancadoB = b.lancadoSistemaInterno === true;
+
+        if (isLancadoA !== isLancadoB) {
+            return isLancadoA ? 1 : -1; 
+        }
+
+        const dateA = a.dataFechamento ? (a.dataFechamento.toDate ? a.dataFechamento.toDate() : new Date(a.dataFechamento)) : new Date(0);
+        const dateB = b.dataFechamento ? (b.dataFechamento.toDate ? b.dataFechamento.toDate() : new Date(b.dataFechamento)) : new Date(0);
+        
+        return dateB - dateA;
+    });
+
+    exibirClientes(filtrados);
+}
+
+inputBusca.addEventListener('input', aplicarFiltrosEOrdenacao);
+
+// ================= MARCAR COMO LANÇADO =================
+window.toggleLancamento = async function(id, currentState) {
+    const newState = !currentState;
+    
+    const cardEl = document.getElementById(`card-cliente-${id}`);
+    const btnEl = document.getElementById(`btnLancamento-${id}`);
+    
+    if (newState) {
+        cardEl.classList.add('lancado');
+        btnEl.innerHTML = "✔️";
+        btnEl.title = "Desmarcar Lançamento";
+    } else {
+        cardEl.classList.remove('lancado');
+        btnEl.innerHTML = "⏳";
+        btnEl.title = "Marcar como Lançado";
+    }
+
+    try {
+        const clienteRef = doc(db, "clientes", id);
+        await updateDoc(clienteRef, { lancadoSistemaInterno: newState });
+        
+        const idx = clientesData.findIndex(c => c.id === id);
+        if (idx > -1) {
+            clientesData[idx].lancadoSistemaInterno = newState;
+            atualizarCacheLocal();
+        }
+        
+        showToast(newState ? "Card marcado como Lançado!" : "Lançamento desmarcado!");
+        
+        setTimeout(() => { aplicarFiltrosEOrdenacao(); }, 1500);
+
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao atualizar o card.");
+    }
+}
+
+// ================= CARREGAR E RENDERIZAR CARDS =================
+async function carregarClientes(opcoes = {}) {
+    const forcarServidor = Boolean(opcoes.forcarServidor);
+
+    if (carregarClientesPromise) {
+        if (!forcarServidor) return carregarClientesPromise;
+        try { await carregarClientesPromise; } catch(e) {}
+    }
+
+    carregarClientesPromise = (async () => {
+        container.innerHTML = "<p style='color:rgba(255,255,255,0.5);'>Carregando base do Jurídico...</p>";
+        let cacheAnterior = null;
+
+        if (!forcarServidor) {
+            cacheAnterior = await lerCacheClientes();
+            if (!cacheAnterior) cacheAnterior = await migrarCacheAntigoSeExistir();
+            if (cacheAnterior && Array.isArray(cacheAnterior.data)) {
+                const idade = Date.now() - Number(cacheAnterior.timestamp || 0);
+                if (idade >= 0 && idade < CACHE_MAX_AGE_MS) {
+                    timestampBaseCache = cacheAnterior.timestamp;
+                    clientesData = cacheAnterior.data;
+                    aplicarFiltrosEOrdenacao();
+                    return;
+                }
+            }
+        }
+
+        try {
+            const resultado = await executarCargaProtegida(forcarServidor);
+            clientesData = resultado.lista;
+            aplicarFiltrosEOrdenacao();
+            if (resultado.origem === 'servidor' && forcarServidor) {
+                showToast('Dados sincronizados com o servidor!');
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dados:', error);
+            const fallback = cacheAnterior || await lerCacheClientes();
+            if (fallback && Array.isArray(fallback.data)) {
+                timestampBaseCache = fallback.timestamp;
+                clientesData = fallback.data;
+                aplicarFiltrosEOrdenacao();
+                showToast('Servidor indisponível. Exibindo dados do cache local.');
+                return;
+            }
+            showToast('Erro ao carregar dados.');
+        }
+    })();
+
+    try {
+        return await carregarClientesPromise;
+    } finally {
+        carregarClientesPromise = null;
+    }
+}
+
+function exibirClientes(lista) {
+    atualizarResumo(lista);
+    
+    container.innerHTML = "";
+    if(lista.length === 0) {
+        container.innerHTML = "<p style='color:rgba(255,255,255,0.5);'>Nenhum cliente fechado encontrado.</p>";
+        return;
+    }
+    
+    lista.forEach(cliente => {
+        const isLancado = cliente.lancadoSistemaInterno === true;
+        const card = document.createElement("div");
+        
+        card.className = `card ${isLancado ? 'lancado' : ''}`;
+        card.id = `card-cliente-${cliente.id}`;
+        
+        let dataFechamentoStr = "";
+        try {
+            if (cliente.dataFechamento) {
+                const dataObj = cliente.dataFechamento.toDate ? cliente.dataFechamento.toDate() : new Date(cliente.dataFechamento);
+                if (!isNaN(dataObj)) dataFechamentoStr = dataObj.toLocaleDateString('pt-BR');
+            }
+        } catch(e) {}
+
+        let dataAndamentoStr = "Nenhum";
+        try {
+            if (cliente.ultimoAndamento) {
+                const dataAndObj = cliente.ultimoAndamento.toDate ? cliente.ultimoAndamento.toDate() : new Date(cliente.ultimoAndamento);
+                if (!isNaN(dataAndObj)) dataAndamentoStr = dataAndObj.toLocaleDateString('pt-BR');
+            }
+        } catch(e) {}
+
+        const documentosArr = extrairDocumentos(cliente.documentos);
+        let docsIndicator = '';
+        if (documentosArr.length > 0) {
+            docsIndicator = `<div class="indicator-docs"><i class="fi fi-tr-clip"></i> ${documentosArr.length} Doc(s)</div>`;
+        }
+
+        const btnIcon = isLancado ? '✔️' : '⏳';
+        const btnTitle = isLancado ? 'Desmarcar Lançamento' : 'Marcar como Lançado';
+
+        card.innerHTML = `
+            <div class="color-bar"></div>
+            <div class="card-content">
+                ${docsIndicator}
+                
+                <div class="action-badges">
+                    <div class="badge-btn badge-lancamento" title="${btnTitle}" id="btnLancamento-${cliente.id}" 
+                         onclick="event.stopPropagation(); toggleLancamento('${cliente.id}', ${isLancado})">
+                        ${btnIcon}
+                    </div>
+                </div>
+
+                <div class="card-header-info">
+                    <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        FECHADO
+                    </span>
+                    ${dataFechamentoStr ? `<span class="card-date">Fechado em: ${dataFechamentoStr}</span>` : ''}
+                </div>
+
+                <h2>${cliente.nome || "Sem nome"}</h2>
+                <p><strong>CPF:</strong> ${cliente.cpf || "-"}</p>
+                <p><strong>Processo:</strong> ${cliente.processo || "Não informado"}</p>
+                <p><strong>Tipo de Processo:</strong> ${cliente.tipoProcesso || cliente.tipo_processo || "Não informado"}</p>
+                <p><strong>Vendedor:</strong> ${cliente.nomeVendedor || cliente.vendedor || "Não informado"}</p>
+                <p><strong>Observação do Vendedor:</strong> ${cliente.observacaoVendedor || cliente.observacao_vendedor || "Sem observação"}</p>
+                
+                <div class="tramitacao-box">
+                    <p><strong>Último Andamento:</strong> ${dataAndamentoStr}</p>
+                    <p style="font-size: 11px; margin-top: 4px; opacity: 0.8;">
+                        <strong>Tramitação:</strong> ${cliente.tramitacaoProcessual || "Sem informações de tramitação cadastradas."}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        card.onclick = () => abrirModalEdicao(cliente);
+        container.appendChild(card);
+    });
+}
+
+// ================= MODAL DE EDIÇÃO =================
+const modalView = document.getElementById('modalEdicao');
+
+window.abrirModalEdicao = function(cliente) {
+    clienteAtual = cliente;
+    
+    document.getElementById('modalTitulo').textContent = "Editar: " + (cliente.nome || "Cliente");
+    
+    // Preencher Inputs Gerais
+    document.getElementById('editNome').value = cliente.nome || "";
+    document.getElementById('editCpf').value = cliente.cpf || "";
+    document.getElementById('editTelefone').value = cliente.numeros || "";
+    document.getElementById('editEmail').value = cliente.email || "";
+    document.getElementById('editProcesso').value = cliente.processo || "";
+    document.getElementById('editTipoProcesso').value = cliente.tipoProcesso || cliente.tipo_processo || "";
+    document.getElementById('editVendedor').value = cliente.nomeVendedor || cliente.vendedor || "";
+    document.getElementById('editObservacaoVendedor').value = cliente.observacaoVendedor || cliente.observacao_vendedor || "";
+    
+    // Preencher Andamento
+    document.getElementById('editTramitacao').value = cliente.tramitacaoProcessual || "";
+    try {
+        if (cliente.ultimoAndamento) {
+            const dataUltAnd = cliente.ultimoAndamento.toDate ? cliente.ultimoAndamento.toDate() : new Date(cliente.ultimoAndamento);
+            if (!isNaN(dataUltAnd)) {
+                document.getElementById('editUltimoAndamento').value = dataUltAnd.toISOString().split('T')[0];
+            } else {
+                document.getElementById('editUltimoAndamento').value = "";
+            }
+        } else {
+            document.getElementById('editUltimoAndamento').value = "";
+        }
+    } catch (err) {
+        document.getElementById('editUltimoAndamento').value = "";
+    }
+
+    renderizarDocumentos();
+    modalView.style.display = "flex";
+}
+
+window.fecharModal = function() {
+    modalView.style.display = "none";
+    clienteAtual = null;
+}
+
+modalView.addEventListener('click', (e) => {
+    if(e.target === modalView) fecharModal();
+});
+
+// ================= SALVAR ALTERAÇÕES =================
+window.salvarAlteracoes = async function() {
+    if (!clienteAtual) return;
+    
+    const btn = document.getElementById('btnSalvarEdicao');
+    btn.textContent = "Salvando...";
+    btn.disabled = true;
+
+    try {
+        const dataUltAndStr = document.getElementById('editUltimoAndamento').value;
+        const dataAndamentoFormatada = dataUltAndStr ? dataUltAndStr + "T12:00:00" : "";
+
+        const updates = {
+            nome: document.getElementById('editNome').value.trim(),
+            cpf: document.getElementById('editCpf').value.trim(),
+            numeros: document.getElementById('editTelefone').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            processo: document.getElementById('editProcesso').value.trim(),
+            tipoProcesso: document.getElementById('editTipoProcesso').value.trim(),
+            nomeVendedor: document.getElementById('editVendedor').value.trim(),
+            observacaoVendedor: document.getElementById('editObservacaoVendedor').value.trim(),
+            tramitacaoProcessual: document.getElementById('editTramitacao').value.trim(),
+            ultimoAndamento: dataAndamentoFormatada
+        };
+
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, updates);
+        
+        // Atualiza a lista em memória
+        Object.assign(clienteAtual, updates);
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarCacheLocal();
+        
+        showToast("Informações do cliente atualizadas!");
+        aplicarFiltrosEOrdenacao();
+        fecharModal();
+        
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao salvar as edições.");
+    } finally {
+        btn.textContent = "Salvar Alterações";
+        btn.disabled = false;
+    }
+}
+
+// ================= DOCUMENTOS =================
+window.anexarDocumento = async function() {
+    if(!clienteAtual) return;
+
+    const fileInput = document.getElementById('addDocFile');
+    const file = fileInput.files[0];
+    const btn = document.getElementById('btnAnexarDoc');
+
+    if(!file) {
+        showToast("Selecione um arquivo para anexar.");
+        return;
+    }
+    
+    btn.textContent = "Enviando...";
+    btn.disabled = true;
+
+    try {
+        const storageRef = ref(storage, `documentos_clientes/${clienteAtual.id}/${Date.now()}_${file.name}`);
+        const uploadTask = await uploadBytesResumable(storageRef, file);
+        const downloadURL = await getDownloadURL(uploadTask.ref);
+
+        let docsAtuais = clienteAtual.documentos;
+        const novoDocObj = {
+            // Compatibilidade com as duas estruturas já usadas no CRM:
+            // CRM antigo usa "name"; Clientes/Jurídico usam "nome".
+            // Em todos os casos, o valor gravado é o NOME ORIGINAL do arquivo.
+            name: file.name,
+            nome: file.name,
+            nomeOriginal: file.name,
+            nomeArquivo: file.name,
+            url: downloadURL,
+            dataEnvio: new Date().toISOString()
+        };
+
+        if (Array.isArray(docsAtuais)) {
+            docsAtuais.push(novoDocObj);
+        } else if (docsAtuais && typeof docsAtuais === 'object') {
+            if (!docsAtuais.outros) docsAtuais.outros = [];
+            docsAtuais.outros.push(novoDocObj);
+        } else {
+            docsAtuais = { outros: [novoDocObj] };
+        }
+
+        const docRef = doc(db, "clientes", clienteAtual.id);
+        await updateDoc(docRef, { documentos: docsAtuais });
+
+        clienteAtual.documentos = docsAtuais;
+        const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
+        if (idxCache > -1) clientesData[idxCache] = clienteAtual;
+        atualizarCacheLocal();
+        
+        fileInput.value = "";
+        
+        renderizarDocumentos();
+        showToast("Documento anexado com sucesso!");
+
+    } catch (error) {
+        console.error("Erro no upload:", error);
+        showToast("Erro ao anexar arquivo.");
+    } finally {
+        btn.textContent = "Anexar Documento";
+        btn.disabled = false;
+    }
+}
+
+function obterNomeOriginalDocumento(doc) {
+    if (!doc) return "Documento";
+
+    // Em versões antigas do CRM, alguns documentos podem eventualmente
+    // aparecer como uma URL/string em vez de objeto.
+    if (typeof doc === 'string') {
+        if (!doc.includes('://')) return doc;
+        return extrairNomeOriginalDaUrl(doc) || "Documento";
+    }
+
+    // IMPORTANTE: o CRM que fez os uploads antigos grava assim:
+    // { name: file.name, url: url }
+    // Por isso "name" precisa ser lido antes de qualquer fallback.
+    const candidatosOriginais = [
+        doc.name,
+        doc.nomeOriginal,
+        doc.nomeArquivo,
+        doc.fileName,
+        doc.filename,
+        doc.originalName,
+        doc.originalFilename
+    ];
+
+    for (const candidato of candidatosOriginais) {
+        if (typeof candidato === 'string' && candidato.trim() && candidato !== 'undefined') {
+            return candidato.trim();
+        }
+    }
+
+    // Se o objeto antigo não tiver o campo de nome, recupera pelo caminho
+    // do Firebase Storage. Isso funciona para URLs no formato /o/pasta%2Farquivo.
+    const urlDocumento = doc.url || doc.downloadURL || doc.downloadUrl || doc.href || doc.link || '';
+    const nomePelaUrl = extrairNomeOriginalDaUrl(urlDocumento);
+    if (nomePelaUrl) return nomePelaUrl;
+
+    // Último fallback para documentos criados pela página Clientes antiga.
+    // Nessa estrutura o campo disponível era "nome".
+    if (typeof doc.nome === 'string' && doc.nome.trim() && doc.nome !== 'undefined') {
+        return doc.nome.trim();
+    }
+
+    return "Documento";
+}
+
+function extrairNomeOriginalDaUrl(urlDocumento) {
+    if (!urlDocumento || typeof urlDocumento !== 'string') return '';
+
+    try {
+        const url = new URL(urlDocumento);
+        let caminho = url.pathname || '';
+
+        // Firebase Storage: /v0/b/<bucket>/o/documentos%2Fuid%2F123_nome.pdf
+        const marcador = '/o/';
+        const posicao = caminho.indexOf(marcador);
+        if (posicao >= 0) caminho = caminho.substring(posicao + marcador.length);
+
+        caminho = decodeURIComponent(caminho);
+        let nome = caminho.split('/').filter(Boolean).pop() || '';
+
+        // Os uploads existentes usam Date.now() + "_" + file.name.
+        // Remove SOMENTE o timestamp gerado pelo sistema, preservando o nome real.
+        nome = nome.replace(/^\d{10,17}_/, '');
+
+        return nome.trim();
+    } catch (e) {
+        // Fallback para URLs que não forem aceitas pelo construtor URL.
+        try {
+            let limpa = decodeURIComponent(urlDocumento.split('?')[0]);
+            let nome = limpa.split('/').filter(Boolean).pop() || '';
+            nome = nome.replace(/^\d{10,17}_/, '');
+            return nome.trim();
+        } catch (_) {
+            return '';
+        }
+    }
+}
+
+function escaparHtml(valor) {
+    return String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function renderizarDocumentos() {
+    const containerDocs = document.getElementById('listaDocsContainer');
+    const documentos = extrairDocumentos(clienteAtual.documentos);
+
+    if (documentos.length === 0) {
+        containerDocs.innerHTML = '<p style="font-size:12px; color:rgba(255,255,255,0.4);">Nenhum documento anexado.</p>';
+        return;
+    }
+
+    containerDocs.innerHTML = documentos.map(doc => {
+        const nomeDoArquivo = obterNomeOriginalDocumento(doc);
+        const urlDocumento = typeof doc === 'string' ? doc : (doc.url || doc.downloadURL || doc.downloadUrl || doc.href || doc.link || '#');
+        const nomeSeguro = escaparHtml(nomeDoArquivo);
+        const urlSegura = escaparHtml(urlDocumento);
+
+        return `
+            <div class="doc-item">
+                <div class="doc-info">
+                    <i class="fi fi-tr-document"></i>
+                    <span title="${nomeSeguro}">${nomeSeguro}</span>
+                </div>
+                <a href="${urlSegura}" target="_blank" rel="noopener noreferrer" class="btn-view-doc">Acessar</a>
+            </div>
+        `;
+    }).join('');
+}
+
+carregarClientes();
+</script>
+</body>
+</html>
