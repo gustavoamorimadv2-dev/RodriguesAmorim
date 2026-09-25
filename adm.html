@@ -1,1 +1,1115 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel ADM - AMR ADV</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body {
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    background: radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+                radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+                linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* SIDEBAR PADRÃO */
+.sidebar{ width:80px; display:flex; flex-direction:column; align-items:center; padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10; backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08); box-shadow:0 0 40px rgba(0,0,0,0.25); }
+.sidebar.expanded{ width:240px; }
+.sidebar h2{ font-size:22px; font-weight:800; color:#fff; letter-spacing:1px; margin-bottom:30px; text-align:center; cursor:pointer; width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0; }
+.sidebar.expanded h2{ opacity:1; }
+.sidebar button{ width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px; cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px; white-space:nowrap; overflow:hidden; }
+.sidebar button img{ width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span{ display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span{ opacity:1; }
+.sidebar button:hover img{ transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover{ background:rgba(255,255,255,0.1); color:#fff; }
+.active-menu { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
+
+/* MAIN E DASHBOARD ADM */
+.main{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
+header{ height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; padding:0 30px; flex-shrink:0; }
+header h1{ font-size:24px; color:#fff; font-weight:800; }
+
+.content-area { padding: 30px; overflow-y: auto; flex: 1; }
+
+.adm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.adm-header h2 { font-size: 20px; font-weight: 600; }
+
+/* PAINEL GERAL CRM */
+.geral-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px; }
+.geral-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 25px 20px; text-align: center; transition: transform 0.3s; }
+.geral-card:hover { transform: translateY(-3px); }
+.geral-card h4 { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.geral-card h2 { font-size: 34px; color: #fff; font-weight: 800; margin-bottom: 5px; }
+.geral-card p { font-size: 12px; color: #3b82f6; font-weight: 600; }
+.geral-card.highlight-success p { color: #10b981; }
+.geral-card.highlight-warning p { color: #f59e0b; }
+
+.grid-funcionarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.func-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+.func-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+.func-card h3 { font-size: 18px; margin-bottom: 2px; color: #fff; }
+.func-card p.email { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 15px; }
+.func-card p.cargo { font-size: 12px; color: #6ee7b7; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; }
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+}
+.stat-row span { color: rgba(255,255,255,0.7); }
+.stat-row strong { color: #fff; font-weight: 700; }
+.highlight-green { color: #10b981 !important; }
+.highlight-blue { color: #3b82f6 !important; }
+.highlight-purple { color: #a855f7 !important; }
+
+/* TAREFAS */
+.tarefas-container { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+.tarefa-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+.tarefa-info h4 { font-size: 15px; color: #fff; margin-bottom: 4px; }
+.tarefa-info p { font-size: 12px; color: rgba(255,255,255,0.6); }
+.tarefa-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.status-pendente { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-concluida { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+/* MODAL E BOTÕES */
+.btn { padding:10px 18px; border-radius:12px; border:0; cursor:pointer; font-weight: 600; font-size: 14px; transition: 0.3s; z-index: 2; position: relative;}
+.btn-primary { background:#fff; color:#111827; }
+.btn-primary:hover { box-shadow: 0 5px 15px rgba(255,255,255,0.2); transform: translateY(-2px); }
+.btn-ghost { background:rgba(255,255,255,0.12); color:#fff; }
+.btn-ghost:hover { background:rgba(255,255,255,0.2); }
+.btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; }
+.btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(8px); justify-content:center; align-items:center; z-index:50; }
+.modal { background:#0f172a; border: 1px solid rgba(255,255,255,0.1); padding:24px; border-radius:24px; min-width:320px; max-width:450px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;}
+.modal.modal-large { max-width: 800px; } 
+.modal h3 { margin-bottom:5px; font-size: 20px; }
+.modal .subtitle { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+.row { margin-bottom:14px; }
+
+.modal input, .modal textarea, .modal select { width:100%; padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; font-size: 14px; outline: none; }
+.modal select option { background: #0f172a; color: #fff; }
+
+.modal textarea { min-height: 80px; resize: vertical; }
+.modal input:focus, .modal textarea:focus, .modal select:focus { background:rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+.actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+.toast { position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff; padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); display:none; z-index:60; font-weight: 500; }
+
+.charts-container { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+.chart-box { flex: 1; min-width: 300px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; }
+
+/* LISTA DE CONTRATOS FECHADOS E DOCUMENTOS */
+.lista-fechados { display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; padding-right: 5px; }
+.card-fechado { background: rgba(255,255,255,0.03); border: 1px solid rgba(16, 185, 129, 0.2); padding: 16px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; cursor: pointer; }
+.card-fechado:hover { border-color: rgba(16, 185, 129, 0.7); background: rgba(16, 185, 129, 0.05); transform: translateY(-2px); }
+.card-fechado-info h4 { color: #fff; font-size: 15px; margin-bottom: 4px; }
+.card-fechado-info p { font-size: 12px; color: rgba(255,255,255,0.6); }
+.card-fechado-info p strong { color: rgba(255,255,255,0.8); }
+
+.badge-com-anexo { font-size: 11px; color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 10px; border-radius: 8px; font-weight: 600; display: inline-block;}
+.badge-sem-anexo { font-size: 11px; color: #f59e0b; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 6px 10px; border-radius: 8px; font-weight: 600; display: inline-block;}
+
+/* SEÇÃO DE DOCS NO MODAL DE DETALHES */
+.docs-section { border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; margin-bottom: 14px; }
+.docs-section h4 { font-size: 14px; margin-bottom: 12px; color: #fff; }
+.doc-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+.doc-item a { color: #60a5fa; text-decoration: none; word-break: break-all; flex: 1; display: block; }
+.doc-item a:hover { text-decoration: underline; }
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, getDocs, setDoc, doc, getDoc, addDoc, query, orderBy, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const sidebar = document.querySelector(".sidebar");
+    if(sidebar){
+        sidebar.addEventListener('mouseenter', () => sidebar.classList.add('expanded'));
+        sidebar.addEventListener('mouseleave', () => sidebar.classList.remove('expanded'));
+    }
+
+    const toastEl = document.getElementById('toast');
+    function showToast(msg){
+        toastEl.innerText = msg;
+        toastEl.style.display = 'block';
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => { toastEl.style.display = 'none'; }, 3000);
+    }
+
+    /* ================= FORÇAR DOWNLOAD DE DOCUMENTO ================= */
+    window.forceDownload = async function(url, filename, event) {
+        if(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        showToast("Iniciando download...");
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const objectUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(objectUrl);
+        } catch (error) {
+            console.warn("Bloqueio de CORS. Abrindo em nova aba para download manual.", error);
+            window.open(url, '_blank');
+        }
+    };
+
+    let currentUser = null;
+    window.currentUserCargo = null;
+    window.isSuperAdmin = false;
+
+    let mapaFuncionarios = {}; 
+    window.todosClientes = []; 
+    let chartEstadoInstancia = null;
+    let chartAcaoInstancia = null;
+
+    // Variáveis de controle para o botão "Voltar"
+    let relatorioAtualFuncId = null;
+    let relatorioAtualFuncNome = null;
+
+    // Elementos
+    const gridFuncionarios = document.getElementById('gridFuncionarios');
+    const modalFunc = document.getElementById('modalFuncionario');
+    const modalRelatorio = document.getElementById('modalRelatorio');
+    const modalDetalhesCliente = document.getElementById('modalDetalhesCliente');
+    const modalEditar = document.getElementById('modalEditarFuncionario');
+    
+    const btnNovo = document.getElementById('btnNovoFuncionario');
+    const btnCancelFunc = document.getElementById('btnCancelFunc');
+    const btnFecharRelatorio = document.getElementById('btnFecharRelatorio');
+    const btnFecharDetalhes = document.getElementById('btnFecharDetalhes');
+    const btnCancelEdit = document.getElementById('btnCancelEdit');
+    const formFunc = document.getElementById('formFuncionario');
+    const formEditar = document.getElementById('formEditarFunc');
+
+    // Elementos Tarefas
+    const listaTarefas = document.getElementById('listaTarefas');
+    const modalTarefa = document.getElementById('modalTarefa');
+    const formTarefa = document.getElementById('formTarefa');
+    const btnCancelTarefa = document.getElementById('btnCancelTarefa');
+    const subtituloTarefa = document.getElementById('subtituloTarefa');
+    const inputTarefaFuncId = document.getElementById('inputTarefaFuncId');
+
+    // Abre Modais Básicos
+    if(btnNovo) {
+        btnNovo.onclick = () => {
+            formFunc.reset();
+            modalFunc.style.display = 'flex';
+        }
+    }
+    if(btnCancelFunc) {
+        btnCancelFunc.onclick = () => modalFunc.style.display = 'none';
+    }
+    if(btnFecharRelatorio) {
+        btnFecharRelatorio.onclick = () => modalRelatorio.style.display = 'none';
+    }
+    if(btnFecharDetalhes) {
+        btnFecharDetalhes.onclick = () => {
+            modalDetalhesCliente.style.display = 'none';
+            window.abrirRelatorio(relatorioAtualFuncId, relatorioAtualFuncNome);
+        };
+    }
+    if(btnCancelEdit) {
+        btnCancelEdit.onclick = () => modalEditar.style.display = 'none';
+    }
+
+    window.abrirModalTarefa = (event, funcId, funcNome) => {
+        event.stopPropagation(); 
+        formTarefa.reset();
+        inputTarefaFuncId.value = funcId;
+        subtituloTarefa.innerText = `Delegar para: ${funcNome}`;
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('inputTarefaPrazo').min = hoje;
+        modalTarefa.style.display = 'flex';
+    };
+
+    window.abrirModalEditar = (event, id, statusConta, nome, cargo) => {
+        event.stopPropagation();
+        document.getElementById('editId').value = id;
+        document.getElementById('editStatusConta').value = statusConta;
+        document.getElementById('editNome').value = nome;
+        document.getElementById('editCargo').value = cargo;
+        document.getElementById('editSenha').value = '';
+        modalEditar.style.display = 'flex';
+    };
+
+    if(btnCancelTarefa) {
+        btnCancelTarefa.onclick = () => modalTarefa.style.display = 'none';
+    }
+
+    // ==============================================================
+    // MODAL: RELATÓRIO DO FUNCIONÁRIO E LISTA DE CONTRATOS
+    // ==============================================================
+    window.abrirRelatorio = (funcId, funcNome) => {
+        relatorioAtualFuncId = funcId;
+        relatorioAtualFuncNome = funcNome;
+        
+        document.getElementById('nomeFuncRelatorio').innerText = `Desempenho: ${funcNome}`;
+        modalRelatorio.style.display = 'flex';
+
+        const clientesDoFunc = window.todosClientes.filter(c => c.userId === funcId);
+
+        const contagemEstados = {};
+        const contagemAcoes = {};
+
+        clientesDoFunc.forEach(c => {
+            const estado = c.estado || c.uf || 'Não Informado';
+            const acao = c.classe || c.acao || c.tipoAcao || 'Outros';
+
+            contagemEstados[estado] = (contagemEstados[estado] || 0) + 1;
+            contagemAcoes[acao] = (contagemAcoes[acao] || 0) + 1;
+        });
+
+        renderizarGraficos(contagemEstados, contagemAcoes);
+
+        // Renderizar Lista de Contratos Fechados
+        const listaFechadosEl = document.getElementById('listaContratosFechados');
+        listaFechadosEl.innerHTML = '';
+
+        const clientesFechados = clientesDoFunc.filter(c => c.status === 'fechado');
+
+        if (clientesFechados.length === 0) {
+            listaFechadosEl.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; padding: 20px 0;">Nenhum contrato fechado por este funcionário ainda.</p>';
+        } else {
+            clientesFechados.forEach(c => {
+                const nomeCliente = c.nome || 'Cliente não identificado';
+                const acaoCliente = c.classe || c.acao || c.tipoAcao || 'Não informada';
+                const dataCard = c.dataFechamento ? new Date(c.dataFechamento).toLocaleDateString('pt-BR') : 'Data não registrada';
+                
+                let totalDocs = 0;
+                if (Array.isArray(c.documentos)) {
+                    totalDocs = c.documentos.length;
+                } else if (c.documentos && typeof c.documentos === 'object') {
+                    Object.values(c.documentos).forEach(arr => {
+                        if (Array.isArray(arr)) totalDocs += arr.length;
+                    });
+                }
+                const temDocs = totalDocs > 0;
+                
+                const badgeDoc = temDocs 
+                    ? `<span class="badge-com-anexo">📎 ${totalDocs} Anexo(s)</span>`
+                    : `<span class="badge-sem-anexo">⚠️ Pendente Anexo</span>`;
+
+                listaFechadosEl.innerHTML += `
+                    <div class="card-fechado" onclick="window.abrirDetalhesCliente('${c.id}')" title="Clique para ver os detalhes e documentos do cliente">
+                        <div class="card-fechado-info">
+                            <h4>${nomeCliente}</h4>
+                            <p><strong>Ação:</strong> ${acaoCliente}</p>
+                            <p><strong>Data de Fechamento:</strong> ${dataCard}</p>
+                        </div>
+                        <div>
+                            ${badgeDoc}
+                            <div style="font-size: 10px; color: #10b981; margin-top: 5px; text-align: right;">Ver Card ➔</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    };
+
+    // ==============================================================
+    // MODAL: DETALHES DO CLIENTE E DOCUMENTOS
+    // ==============================================================
+    window.abrirDetalhesCliente = (clienteId) => {
+        const cliente = window.todosClientes.find(c => c.id === clienteId);
+        if(!cliente) return;
+
+        modalRelatorio.style.display = 'none';
+
+        document.getElementById('detalheClienteNome').innerText = cliente.nome || 'Cliente sem nome';
+
+        const processos = cliente.processo ? cliente.processo.split(',').join('<br>') : '-';
+        const telefones = cliente.numeros ? cliente.numeros.split(',').join('<br>') : '-';
+        
+        let valorCardFormatado = "0,00";
+        if (cliente.valor) {
+            if (!isNaN(cliente.valor) && !cliente.valor.toString().includes(',')) {
+                valorCardFormatado = parseFloat(cliente.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } else {
+                valorCardFormatado = cliente.valor;
+            }
+        }
+
+        document.getElementById('detalheClienteInfo').innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <p><strong>CPF/CNPJ:</strong><br> ${cliente.cpf || '-'}</p>
+                <p><strong>Classe:</strong><br> ${cliente.classe || '-'}</p>
+                <p><strong>Estado:</strong><br> ${cliente.estado || '-'}</p>
+                <p><strong>Valor:</strong><br> R$ ${valorCardFormatado}</p>
+            </div>
+            <div style="margin-top: 10px;">
+                <p><strong>Telefone(s):</strong><br> ${telefones}</p>
+                <p style="margin-top: 10px;"><strong>Processo(s):</strong><br> ${processos}</p>
+                <p style="margin-top: 10px;"><strong>Observações:</strong><br> ${cliente.obs || '-'}</p>
+            </div>
+        `;
+
+        const docsList = document.getElementById('detalheClienteDocs');
+        docsList.innerHTML = '';
+
+        let arrayDocsDisplay = [];
+        if (Array.isArray(cliente.documentos)) {
+            arrayDocsDisplay = cliente.documentos.map(d => ({ ...d, label: 'Outros' }));
+        } else if (cliente.documentos && typeof cliente.documentos === 'object') {
+            Object.keys(cliente.documentos).forEach(key => {
+                const arr = cliente.documentos[key];
+                if (Array.isArray(arr)) {
+                    arr.forEach(d => {
+                        let labelFormatada = key.replace(/_/g, ' ');
+                        labelFormatada = labelFormatada.charAt(0).toUpperCase() + labelFormatada.slice(1);
+                        arrayDocsDisplay.push({ ...d, label: labelFormatada });
+                    });
+                }
+            });
+        }
+
+        if(arrayDocsDisplay.length > 0) {
+            arrayDocsDisplay.forEach(doc => {
+                docsList.innerHTML += `
+                    <div class="doc-item">
+                        <a href="javascript:void(0)" onclick="window.forceDownload('${doc.url}', '${doc.name}', event)">
+                            <span style="font-size:10px; color:#9ca3af; margin-right:5px;">[${doc.label}]</span>📄 ${doc.name} <span style="font-size:10px; color:#9ca3af; margin-left: 5px;">(Clique para Baixar)</span>
+                        </a>
+                    </div>
+                `;
+            });
+        } else {
+            docsList.innerHTML = '<span style="color:rgba(255,255,255,0.5); font-size:12px;">Nenhum documento anexado ao card deste cliente.</span>';
+        }
+
+        modalDetalhesCliente.style.display = 'flex';
+    };
+
+    function renderizarGraficos(dadosEstados, dadosAcoes) {
+        const ctxEstado = document.getElementById('chartEstados').getContext('2d');
+        const ctxAcao = document.getElementById('chartAcoes').getContext('2d');
+
+        if(chartEstadoInstancia) chartEstadoInstancia.destroy();
+        if(chartAcaoInstancia) chartAcaoInstancia.destroy();
+
+        Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        chartEstadoInstancia = new Chart(ctxEstado, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(dadosEstados),
+                datasets: [{
+                    data: Object.values(dadosEstados),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right' },
+                    title: { display: true, text: 'Clientes por Estado', color: '#fff', font: { size: 16 } }
+                }
+            }
+        });
+
+        chartAcaoInstancia = new Chart(ctxAcao, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(dadosAcoes),
+                datasets: [{
+                    label: 'Quantidade',
+                    data: Object.values(dadosAcoes),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Tipos de Ação', color: '#fff', font: { size: 16 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+    }
+
+    async function carregarDashboard() {
+        if(!gridFuncionarios) return;
+        gridFuncionarios.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Carregando dados da equipe...</p>';
+
+        try {
+            const funcSnap = await getDocs(collection(db, "funcionarios"));
+            const funcionariosAtivos = funcSnap.docs.map(d => ({ id: d.id, statusConta: 'Ativo', ...d.data() }));
+
+            const preSnap = await getDocs(collection(db, "pre_cadastros"));
+            const preCadastros = preSnap.docs.map(d => ({ id: d.id, statusConta: 'Aguardando 1º Acesso', ...d.data() }));
+
+            const todosFuncionarios = [...funcionariosAtivos, ...preCadastros];
+
+            const clientesSnap = await getDocs(collection(db, "clientes"));
+            window.todosClientes = clientesSnap.docs.map(d => ({ id: d.id, ...d.data() })); 
+
+            // ================== LÓGICA DO PAINEL GERAL ==================
+            let totalListaFria = 0;
+            let totalEmNegociacao = 0;
+            let totalFechados = 0;
+            let contagemAcoes = {};
+
+            window.todosClientes.forEach(c => {
+                const status = c.status || 'lista-fria';
+                
+                if (status === 'lista-fria') totalListaFria++;
+                else if (status === 'fechado') totalFechados++;
+                else if (['dia-1', 'dia-2', 'dia-3', 'dia-4', 'dia-5'].includes(status)) totalEmNegociacao++;
+
+                const classe = c.classe || c.acao || c.tipoAcao || 'Outros';
+                if (classe !== 'Outros' && classe !== '') {
+                    contagemAcoes[classe] = (contagemAcoes[classe] || 0) + 1;
+                }
+            });
+
+            let acaoMaisComum = 'Nenhuma';
+            let maxAcaoCount = 0;
+            for (const [classe, count] of Object.entries(contagemAcoes)) {
+                if (count > maxAcaoCount) {
+                    maxAcaoCount = count;
+                    acaoMaisComum = classe;
+                }
+            }
+
+            document.getElementById('geralListaFria').innerText = totalListaFria;
+            document.getElementById('geralNegociacao').innerText = totalEmNegociacao;
+            document.getElementById('geralFechados').innerText = totalFechados;
+            document.getElementById('geralAcao').innerText = acaoMaisComum;
+            document.getElementById('geralAcaoDetalhe').innerText = maxAcaoCount > 0 ? `${maxAcaoCount} cadastros` : '';
+
+            // ==============================================================
+
+            const hojeDate = new Date();
+            const dataHojeStr = hojeDate.toISOString().split('T')[0];
+            const hojeLocalStr = hojeDate.toLocaleDateString('pt-BR');
+
+            const dataSemanaAtras = new Date();
+            dataSemanaAtras.setDate(dataSemanaAtras.getDate() - 7);
+
+            gridFuncionarios.innerHTML = '';
+            mapaFuncionarios = {};
+
+            if (todosFuncionarios.length === 0) {
+                gridFuncionarios.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Nenhum funcionário cadastrado ainda.</p>';
+            } else {
+                todosFuncionarios.forEach(func => {
+                    mapaFuncionarios[func.id] = func.nome;
+
+                    const clientesDoFunc = window.todosClientes.filter(c => c.userId === func.id);
+                    
+                    const cadastrosHoje = clientesDoFunc.filter(c => c.dataCadastro && c.dataCadastro.startsWith(dataHojeStr)).length;
+                    
+                    const chamadosHoje = clientesDoFunc.filter(c => {
+                        if (!c.dataPipeline || c.status !== 'dia-1') return false;
+                        const pipelineDateStr = new Date(c.dataPipeline).toLocaleDateString('pt-BR');
+                        return pipelineDateStr === hojeLocalStr;
+                    }).length;
+                    
+                    const cadastrosSemana = clientesDoFunc.filter(c => {
+                        if(!c.dataCadastro) return false;
+                        return new Date(c.dataCadastro) >= dataSemanaAtras;
+                    }).length;
+
+                    const naListaFria = clientesDoFunc.filter(c => c.status === 'lista-fria').length;
+                    const fechados = clientesDoFunc.filter(c => c.status === 'fechado').length;
+                    
+                    const cargoExibicao = func.cargo ? func.cargo : 'Vendedor';
+
+                    const card = document.createElement('div');
+                    card.className = 'func-card';
+                    card.setAttribute('onclick', `window.abrirRelatorio('${func.id}', '${func.nome}')`);
+                    
+                    const corStatus = func.statusConta === 'Ativo' ? '#10b981' : '#f59e0b';
+
+                    // PERMISSÕES PARA EDITAR: Administrador, Diretor ou CEO
+                    const podeEditar = ['Diretor', 'CEO', 'Administrador'].includes(window.currentUserCargo) || window.isSuperAdmin;
+                    
+                    let btnEditarHTML = '';
+                    if(podeEditar) {
+                        btnEditarHTML = `
+                            <button class="btn btn-outline" style="width: 100%; margin-top: 5px; font-size: 12px; border-color: rgba(245, 158, 11, 0.5); color: #fcd34d;" onclick="window.abrirModalEditar(event, '${func.id}', '${func.statusConta}', '${func.nome}', '${cargoExibicao}')">
+                                ✏️ Editar Cadastro
+                            </button>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <h3>${func.nome}</h3>
+                                <p class="cargo">${cargoExibicao}</p>
+                            </div>
+                            <span style="font-size:10px; background:${corStatus}20; color:${corStatus}; border:1px solid ${corStatus}40; padding:2px 6px; border-radius:10px; font-weight:600;">${func.statusConta}</span>
+                        </div>
+                        <p class="email">${func.email}</p>
+
+                        <div style="flex:1;">
+                            <div class="stat-row">
+                                <span>Cadastros Hoje</span>
+                                <strong class="highlight-green">${cadastrosHoje}</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Chamados Hoje (Dia 1)</span>
+                                <strong style="color: #06b6d4;">${chamadosHoje}</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Cadastros Semana</span>
+                                <strong class="highlight-purple">${cadastrosSemana}</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Lista Fria (Abertos)</span>
+                                <strong>${naListaFria}</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Fechados (Sucesso)</span>
+                                <strong class="highlight-blue">${fechados}</strong>
+                            </div>
+                            <div class="stat-row">
+                                <span>Total Histórico</span>
+                                <strong>${clientesDoFunc.length}</strong>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-outline" style="width: 100%; margin-top: 15px; font-size: 12px;" onclick="window.abrirModalTarefa(event, '${func.id}', '${func.nome}')">
+                            + Criar Tarefa
+                        </button>
+                        ${btnEditarHTML}
+                    `;
+                    gridFuncionarios.appendChild(card);
+                });
+            }
+
+            carregarTarefas();
+
+        } catch (error) {
+            console.error(error);
+            gridFuncionarios.innerHTML = '<p style="color: #ef4444;">Erro ao carregar dados do painel.</p>';
+        }
+    }
+
+    async function carregarTarefas() {
+        if(!listaTarefas) return;
+        listaTarefas.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size: 13px;">Carregando tarefas...</p>';
+        try {
+            const tarefasSnap = await getDocs(collection(db, "tarefas"));
+            const tarefas = tarefasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            tarefas.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+
+            listaTarefas.innerHTML = '';
+            if(tarefas.length === 0) {
+                listaTarefas.innerHTML = '<p style="color: rgba(255,255,255,0.5); font-size: 13px;">Nenhuma tarefa pendente na equipe.</p>';
+                return;
+            }
+
+            tarefas.forEach(t => {
+                const nomeFunc = mapaFuncionarios[t.funcionarioId] || 'Funcionário Novo';
+                const prazoFormatado = t.prazo.split('-').reverse().join('/');
+                const statusClasse = t.status === 'concluida' ? 'status-concluida' : 'status-pendente';
+                const statusTexto = t.status === 'concluida' ? 'Concluída' : 'Pendente';
+
+                const div = document.createElement('div');
+                div.className = 'tarefa-item';
+                div.innerHTML = `
+                    <div class="tarefa-info">
+                        <h4>${t.titulo}</h4>
+                        <p><strong>Para:</strong> ${nomeFunc} • <strong>Prazo:</strong> ${prazoFormatado}</p>
+                        ${t.descricao ? `<p style="margin-top: 5px; font-style: italic;">"${t.descricao}"</p>` : ''}
+                    </div>
+                    <div>
+                        <span class="tarefa-status ${statusClasse}">${statusTexto}</span>
+                    </div>
+                `;
+                listaTarefas.appendChild(div);
+            });
+        } catch (error) {
+            console.error(error);
+            listaTarefas.innerHTML = '<p style="color: #ef4444; font-size: 13px;">Erro ao carregar tarefas.</p>';
+        }
+    }
+
+    // ==============================================================
+    // EVENTOS DE SUBMIT DOS FORMULÁRIOS
+    // ==============================================================
+
+    if(formFunc) {
+        formFunc.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('inputNome').value.trim();
+            const email = document.getElementById('inputEmail').value.trim().toLowerCase();
+            const senha = document.getElementById('inputSenha').value;
+            const cargo = document.getElementById('inputCargo').value;
+            
+            const btnSalvar = formFunc.querySelector('button[type="submit"]');
+            
+            btnSalvar.innerText = 'Salvando...';
+            btnSalvar.disabled = true;
+
+            try {
+                const qAtivos = await getDocs(query(collection(db, "funcionarios"), where("email", "==", email)));
+                const qPre = await getDocs(query(collection(db, "pre_cadastros"), where("email", "==", email)));
+                
+                if(!qAtivos.empty || !qPre.empty) {
+                    showToast("Este e-mail já está cadastrado no sistema!");
+                    btnSalvar.innerText = 'Salvar';
+                    btnSalvar.disabled = false;
+                    return;
+                }
+
+                const idGeradoTemp = doc(collection(db, "pre_cadastros")).id;
+
+                await setDoc(doc(db, "pre_cadastros", idGeradoTemp), {
+                    nome: nome,
+                    email: email,
+                    senhaPadrao: senha, 
+                    cargo: cargo, 
+                    dataRegistro: new Date().toISOString()
+                });
+
+                showToast("Funcionário pré-cadastrado com sucesso!");
+                modalFunc.style.display = 'none';
+                carregarDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast("Erro ao processar o pré-cadastro.");
+            } finally {
+                btnSalvar.innerText = 'Salvar';
+                btnSalvar.disabled = false;
+            }
+        });
+    }
+
+    if(formEditar) {
+        formEditar.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const statusConta = document.getElementById('editStatusConta').value;
+            const nome = document.getElementById('editNome').value.trim();
+            const cargo = document.getElementById('editCargo').value;
+            const senha = document.getElementById('editSenha').value.trim();
+
+            const btnSalvar = formEditar.querySelector('button[type="submit"]');
+            btnSalvar.innerText = 'Salvando...';
+            btnSalvar.disabled = true;
+
+            try {
+                const colecao = statusConta === 'Ativo' ? 'funcionarios' : 'pre_cadastros';
+                const docRef = doc(db, colecao, id);
+                
+                const dadosAtualizados = { 
+                    nome: nome, 
+                    cargo: cargo 
+                };
+
+                // Atualiza o registro de senha de segurança no banco se o usuário desejar
+                if (senha !== "") {
+                    if(colecao === 'pre_cadastros') {
+                        dadosAtualizados.senhaPadrao = senha;
+                    } else {
+                        dadosAtualizados.senha = senha; 
+                    }
+                }
+
+                await updateDoc(docRef, dadosAtualizados);
+
+                showToast("Cadastro atualizado com sucesso!");
+                modalEditar.style.display = 'none';
+                carregarDashboard();
+            } catch (error) {
+                console.error(error);
+                showToast("Erro ao atualizar cadastro.");
+            } finally {
+                btnSalvar.innerText = 'Salvar Alterações';
+                btnSalvar.disabled = false;
+            }
+        });
+    }
+
+    if(formTarefa) {
+        formTarefa.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titulo = document.getElementById('inputTarefaTitulo').value.trim();
+            const descricao = document.getElementById('inputTarefaDesc').value.trim();
+            const prazo = document.getElementById('inputTarefaPrazo').value;
+            const funcionarioId = inputTarefaFuncId.value;
+            const btnSalvar = formTarefa.querySelector('button[type="submit"]');
+
+            if(!funcionarioId) return showToast("Erro: Funcionário não identificado.");
+
+            btnSalvar.innerText = 'Salvando...';
+            btnSalvar.disabled = true;
+
+            try {
+                await addDoc(collection(db, "tarefas"), {
+                    titulo: titulo,
+                    descricao: descricao,
+                    prazo: prazo,
+                    funcionarioId: funcionarioId,
+                    adminId: currentUser.uid,
+                    dataCriacao: new Date().toISOString(),
+                    status: 'pendente'
+                });
+
+                showToast("Tarefa enviada para o funcionário!");
+                modalTarefa.style.display = 'none';
+                carregarTarefas();
+            } catch (error) {
+                console.error(error);
+                showToast("Erro ao delegar tarefa.");
+            } finally {
+                btnSalvar.innerText = 'Salvar Tarefa';
+                btnSalvar.disabled = false;
+            }
+        });
+    }
+
+    onAuthStateChanged(auth, async user => {
+        if(user){
+            const superAdmins = [
+                "gruponascimentoesouza@gmail.com", 
+                "vitorunisuam@hotmail.com", 
+                "contato.aiyranascimento@gmail.com",
+                "hosannagruponascimento03@gmail.com",
+                "gruponascimentoesouza1@gmail.com",
+                "bentorosamariaeduarda@gmail.com",
+                "teste@gmail.com",
+                "tamarafrancoadv@gmail.com",
+                "pedromonteiro2109@hotmail.com",
+                "trembalamecmec@gmail.com",
+            ];
+            
+            let temAcesso = false;
+
+            if(user.email && superAdmins.includes(user.email.toLowerCase())) {
+                temAcesso = true;
+                window.isSuperAdmin = true;
+                window.currentUserCargo = 'CEO';
+            } else {
+                try {
+                    const userDoc = await getDoc(doc(db, "funcionarios", user.uid));
+                    if (userDoc.exists()) {
+                        const dados = userDoc.data();
+                        const cargoUsuario = dados.cargo || 'Vendedor';
+                        
+                        window.currentUserCargo = cargoUsuario;
+
+                        // Adicionado a permissão para 'Jurídico' e 'Administrador'
+                        if (['Gerente', 'Diretor', 'CEO', 'Jurídico', 'Administrador'].includes(cargoUsuario)) {
+                            temAcesso = true;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erro ao verificar cargo:", error);
+                }
+            }
+
+            if(temAcesso) {
+                currentUser = user;
+                if(sidebar) sidebar.style.display = 'flex';
+                carregarDashboard();
+            } else {
+                alert("⛔ Acesso Negado: Esta página é restrita para Gerentes, Jurídico, Administradores, Diretores e CEOs.");
+                window.location.href = "crm.html"; 
+            }
+
+        }else{
+            window.location.href = "login.html";
+        }
+    });
+
+});
+</script>
+</head>
+<body>
+
+<div class="sidebar" style="display: none;">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="window.location.href='index.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/>
+        <span>CRM</span>
+    </button>
+    <button onclick="window.location.href='agenda.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/>
+        <span>Agenda</span>
+    </button>
+    <button class="active-menu" onclick="window.location.href='adm.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/manager.png"/>
+        <span>Painel ADM</span>
+    </button>
+    <button onclick="window.location.href='andamento.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/task.png"/>
+        <span>Andamento</span>
+    </button>
+    <button onclick="window.location.href='processos.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/>
+        <span>Processos</span>
+    </button>
+    <button onclick="window.location.href='clientes.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/>
+        <span>Clientes</span>
+    </button>
+    <button class="active" onclick="window.location.href='juridico.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/law.png"/><span>Jurídico</span></button>
+    <button onclick="window.location.href='relatorios.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png"/>
+        <span>Relatórios</span>
+    </button>
+    <button id="btnLogout">
+    <img src="https://img.icons8.com/ios-glyphs/30/000000/logout-rounded.png" alt="Sair da Conta"/>
+    <span>Sair</span>
+</button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Painel Administrativo</h1>
+        <button id="btnNovoFuncionario" class="btn btn-primary">+ Novo Funcionário</button>
+    </header>
+
+    <div class="content-area">
+        
+        <div class="adm-header">
+            <h2>Visão Geral do CRM</h2>
+        </div>
+        
+        <div class="geral-container" id="painelGeral">
+            <div class="geral-card">
+                <h4>Lista Fria</h4>
+                <h2 id="geralListaFria">0</h2>
+                <p style="color: rgba(255,255,255,0.5);">Aguardando disparo</p>
+            </div>
+            
+            <div class="geral-card highlight-warning">
+                <h4>Em Negociação</h4>
+                <h2 id="geralNegociacao">0</h2>
+                <p>Dia 1 ao Dia 5</p>
+            </div>
+
+            <div class="geral-card highlight-success">
+                <h4>Contratos Fechados</h4>
+                <h2 id="geralFechados">0</h2>
+                <p>Sucesso de vendas</p>
+            </div>
+
+            <div class="geral-card">
+                <h4>Ação Principal</h4>
+                <h2 id="geralAcao" style="font-size: 24px; padding: 4px 0;">-</h2>
+                <p id="geralAcaoDetalhe" style="color: rgba(255,255,255,0.5);"></p>
+            </div>
+        </div>
+        <div class="adm-header">
+            <h2>Gestão de Equipe e Desempenho</h2>
+        </div>
+        
+        <div id="gridFuncionarios" class="grid-funcionarios"></div>
+
+        <div class="adm-header" style="margin-top: 50px; margin-bottom: 15px;">
+            <h2>Tarefas Ativas da Equipe</h2>
+        </div>
+        
+        <div id="listaTarefas" class="tarefas-container"></div>
+    </div>
+</div>
+
+<!-- MODAL NOVO FUNCIONÁRIO -->
+<div class="modal-backdrop" id="modalFuncionario">
+    <div class="modal">
+        <h3>Adicionar Funcionário</h3>
+        <p class="subtitle">O funcionário usará este e-mail e senha para fazer o primeiro acesso seguro.</p>
+        <form id="formFuncionario">
+            <div class="row">
+                <input id="inputNome" type="text" placeholder="Nome Completo" required />
+            </div>
+            
+            <div class="row">
+                <select id="inputCargo" required>
+                    <option value="" disabled selected>Selecione o Cargo do Funcionário</option>
+                    <option value="Vendedor">Vendedor</option>
+                    <option value="Gerente">Gerente</option>
+                    <option value="Jurídico">Jurídico</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Diretor">Diretor</option>
+                    <option value="CEO">CEO</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <input id="inputEmail" type="email" placeholder="E-mail de Acesso" required />
+            </div>
+            <div class="row">
+                <input id="inputSenha" type="password" placeholder="Senha (mínimo 6 caracteres)" minlength="6" required />
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <button type="button" class="btn btn-ghost" id="btnCancelFunc">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- NOVO MODAL: EDITAR FUNCIONÁRIO -->
+<div class="modal-backdrop" id="modalEditarFuncionario">
+    <div class="modal">
+        <h3>Editar Colaborador</h3>
+        <p class="subtitle">Modifique as permissões ou atualize os dados do colaborador.</p>
+        <form id="formEditarFunc">
+            <input type="hidden" id="editId" />
+            <input type="hidden" id="editStatusConta" />
+            <div class="row">
+                <label style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 5px; display: block;">Nome Completo:</label>
+                <input id="editNome" type="text" required />
+            </div>
+            
+            <div class="row">
+                <label style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 5px; display: block;">Cargo Atual:</label>
+                <select id="editCargo" required>
+                    <option value="Vendedor">Vendedor</option>
+                    <option value="Gerente">Gerente</option>
+                    <option value="Jurídico">Jurídico</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Diretor">Diretor</option>
+                    <option value="CEO">CEO</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 5px; display: block;">Nova Senha (deixe em branco se não quiser alterar):</label>
+                <input id="editSenha" type="text" placeholder="Digite a nova senha..." minlength="6" />
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                <button type="button" class="btn btn-ghost" id="btnCancelEdit">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalTarefa">
+    <div class="modal">
+        <h3>Delegar Tarefa</h3>
+        <p id="subtituloTarefa" class="subtitle">Delegar para: ...</p>
+        <form id="formTarefa">
+            <input type="hidden" id="inputTarefaFuncId" />
+            <div class="row">
+                <input id="inputTarefaTitulo" type="text" placeholder="Ex: Ligar para os clientes atrasados" required />
+            </div>
+            <div class="row">
+                <textarea id="inputTarefaDesc" placeholder="Descreva os detalhes ou instruções da tarefa..."></textarea>
+            </div>
+            <div class="row">
+                <label style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 5px; display: block;">Prazo de Entrega:</label>
+                <input id="inputTarefaPrazo" type="date" required />
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn btn-primary">Salvar Tarefa</button>
+                <button type="button" class="btn btn-ghost" id="btnCancelTarefa">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalRelatorio">
+    <div class="modal modal-large">
+        <h3 id="nomeFuncRelatorio">Desempenho: ...</h3>
+        <p class="subtitle">Análise de cadastros realizados pelo funcionário.</p>
+        
+        <div class="charts-container">
+            <div class="chart-box">
+                <canvas id="chartEstados"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="chartAcoes"></canvas>
+            </div>
+        </div>
+        
+        <div class="adm-header" style="margin-top: 30px; margin-bottom: 15px;">
+            <h4 style="font-size: 16px; font-weight: 600; color: #10b981;">Contratos Fechados (Para Validação de Comissão)</h4>
+        </div>
+        <div id="listaContratosFechados" class="lista-fechados">
+            </div>
+
+        <div class="actions">
+            <button type="button" class="btn btn-ghost" id="btnFecharRelatorio">Fechar Relatório</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalDetalhesCliente">
+    <div class="modal">
+        <h3 id="detalheClienteNome">Nome do Cliente</h3>
+        <p class="subtitle">Detalhes e documentos para validação de comissão.</p>
+        
+        <div id="detalheClienteInfo" style="margin-bottom: 20px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+            </div>
+
+        <div class="docs-section">
+            <h4>Documentação Anexada</h4>
+            <div id="detalheClienteDocs">
+                </div>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="btn primary" id="btnFecharDetalhes">⬅ Voltar para Relatório</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
