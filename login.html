@@ -1,1 +1,593 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - CRM AMR ADV</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
+
+body {
+  display:flex;
+  min-height:100vh;
+  background:#000;
+}
+
+/* SIDEBAR LOGIN */
+.sidebar-login {
+  width:400px;
+  background:#1e1e2f;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:40px;
+  color:#fff;
+  z-index:2;
+  position:relative;
+}
+
+.sidebar-login h1 {
+  font-family:'Poppins', sans-serif;
+  font-size:28px;
+  margin-bottom:10px;
+  text-align:center;
+}
+
+.sidebar-login p {
+  font-size:14px;
+  text-align:center;
+  margin-bottom:30px;
+  color:#bbb;
+}
+
+.input-group {
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+}
+
+.input-group input {
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  outline:none;
+}
+
+button {
+  padding:12px;
+  background:#fff;
+  color:#1e1e2f;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  cursor:pointer;
+  transition:all 0.3s ease;
+}
+button:hover { background:#eaeaea; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+
+/* LOGIN COM GOOGLE */
+.divider {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:18px 0;
+  color:#8f8f9d;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.divider::before,
+.divider::after {
+  content:"";
+  flex:1;
+  height:1px;
+  background:rgba(255,255,255,.14);
+}
+
+.google-login-btn {
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:#fff;
+  color:#202124;
+  font-weight:600;
+  border:1px solid rgba(0,0,0,.12);
+}
+
+.google-login-btn:hover {
+  background:#f5f5f5;
+}
+
+.google-login-btn svg {
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+}
+
+.error {
+  color:#ff7675;
+  font-size:13px;
+  display:none;
+  margin-top: 5px;
+  line-height: 1.4;
+}
+
+/* ÁREA DO VÍDEO */
+.video-container {
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+
+.video-container video {
+  position:absolute;
+  top:50%;
+  left:50%;
+  min-width:100%;
+  min-height:100%;
+  transform:translate(-50%, -50%);
+  object-fit:cover;
+  filter:brightness(0.5);
+}
+
+/* TEXTO NO TOPO DO VÍDEO */
+.video-overlay {
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  padding:30px 0;
+  text-align:center;
+  z-index:2;
+}
+
+.video-overlay h2 {
+  font-size:28px;
+  font-family:'Poppins', sans-serif;
+  font-weight:600;
+  color:#fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+.toast {
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#222;
+  color:#fff;
+  padding:12px 20px;
+  border-radius:8px;
+  display:none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  z-index: 999;
+}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+/* =========================================================
+   FIREBASE ÚNICO - DAP
+   Todos os métodos de login e todo o banco desta página usam
+   exclusivamente este projeto.
+   ========================================================= */
+const firebaseConfigDAP = {
+  apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+  authDomain: "rodrigues-amr.firebaseapp.com",
+  projectId: "rodrigues-amr",
+  storageBucket: "rodrigues-amr.firebasestorage.app",
+  messagingSenderId: "263843276361",
+  appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+  measurementId: "G-DV2CHKJTKF"
+};
+
+// Usa o app Firebase PADRÃO. Isso é essencial para que a sessão criada aqui
+// seja reconhecida pelas páginas internas do CRM, que também usam o app padrão.
+const appDAP = initializeApp(firebaseConfigDAP);
+const authDAP = getAuth(appDAP);
+const dbDAP = getFirestore(appDAP);
+
+const EMAIL_ADMIN_MESTRE = "gruponascimentoesouza@gmail.com";
+
+// Estas travas impedem que a restauração automática das sessões e um login
+// iniciado pelo usuário tentem redirecionar a página ao mesmo tempo.
+let loginEmAndamento = false;
+let redirecionamentoExecutado = false;
+
+/* GOOGLE TAMBÉM AUTENTICA EXCLUSIVAMENTE NO DAP. */
+const googleProviderDAP = new GoogleAuthProvider();
+googleProviderDAP.setCustomParameters({
+  prompt: "select_account"
+});
+
+function isErroCredencial(error) {
+  const code = (error?.code || "").toLowerCase();
+  const message = (error?.message || "").toLowerCase();
+
+  return (
+    code.includes("invalid-credential") ||
+    code.includes("invalid-login-credentials") ||
+    code.includes("user-not-found") ||
+    code.includes("wrong-password") ||
+    message.includes("invalid-credential") ||
+    message.includes("invalid-login-credentials")
+  );
+}
+
+function destinoDAP(email) {
+  if ((email || "").toLowerCase() === EMAIL_ADMIN_MESTRE) {
+    return "adm.html";
+  }
+  return "index.html";
+}
+
+/* =========================================================
+   AUTO-REDIRECIONAMENTO
+   Aguarda o Firebase Auth DAP restaurar completamente a sessão.
+   Só depois decide se deve redirecionar.
+   Isso evita o ciclo visual "login > CRM > login".
+   ========================================================= */
+function redirecionarUmaVez(destino) {
+  if (redirecionamentoExecutado) return;
+
+  redirecionamentoExecutado = true;
+  loginEmAndamento = true;
+
+  window.location.replace(destino);
+}
+
+function aguardarEstadoInicial(auth) {
+  if (typeof auth.authStateReady === "function") {
+    return auth.authStateReady();
+  }
+
+  // Compatibilidade de segurança caso o navegador esteja usando uma versão
+  // em cache do SDK que ainda não possua authStateReady().
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      () => {
+        unsubscribe();
+        resolve();
+      },
+      () => {
+        unsubscribe();
+        resolve();
+      }
+    );
+  });
+}
+
+const autenticacaoPronta = setPersistence(authDAP, browserLocalPersistence)
+  .then(() => aguardarEstadoInicial(authDAP));
+
+async function redirecionarSessaoExistente() {
+  try {
+    await autenticacaoPronta;
+
+    // Se o usuário já apertou Entrar, somente o fluxo do formulário pode
+    // escolher o destino. A restauração automática não interfere mais.
+    if (loginEmAndamento || redirecionamentoExecutado) return;
+
+    const usuario = authDAP.currentUser;
+
+    if (usuario) {
+      const email = (usuario.email || "").toLowerCase();
+      redirecionarUmaVez(destinoDAP(email));
+    }
+  } catch (error) {
+    console.error("Não foi possível restaurar a sessão:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const errorMsg = document.getElementById("errorMsg");
+  const toast = document.getElementById("toast");
+  const video = document.getElementById("bgVideo");
+  const btnSubmit = form.querySelector("button[type='submit']");
+  const btnGoogle = document.getElementById("btnGoogle");
+
+  video.muted = true;
+  video.play().catch(() => {
+    document.body.addEventListener("click", () => video.play(), { once: true });
+  });
+
+  function showToast(msg){
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.style.display = 'none', 4000);
+  }
+
+  function resetBotao(mensagemErro = null) {
+    loginEmAndamento = false;
+    if(mensagemErro) {
+      errorMsg.innerText = mensagemErro;
+      errorMsg.style.display = "block";
+    }
+    btnSubmit.innerText = "Entrar";
+    btnSubmit.disabled = false;
+    if (btnGoogle) btnGoogle.disabled = false;
+  }
+
+  async function loginNoDAP(email, senha) {
+    try {
+      const credencial = await signInWithEmailAndPassword(authDAP, email, senha);
+      return { sucesso: true, user: credencial.user };
+    } catch (error) {
+      return { sucesso: false, error };
+    }
+  }
+
+  async function tentarFluxoConviteDAP(email, senha) {
+    try {
+      btnSubmit.innerText = "Verificando convite...";
+
+      const qPre = query(
+        collection(dbDAP, "pre_cadastros"),
+        where("email", "==", email),
+        where("senhaPadrao", "==", senha)
+      );
+
+      const preSnap = await getDocs(qPre);
+
+      if (preSnap.empty) {
+        return { sucesso: false, motivo: "sem-convite" };
+      }
+
+      const docDados = preSnap.docs[0];
+      const dadosFunc = docDados.data();
+
+      showToast("Configurando seu primeiro acesso...");
+      btnSubmit.innerText = "Criando conta...";
+
+      const userCredential = await createUserWithEmailAndPassword(authDAP, email, senha);
+      const novoUid = userCredential.user.uid;
+
+      await setDoc(doc(dbDAP, "funcionarios", novoUid), {
+        nome: dadosFunc.nome || "Usuário",
+        email: email,
+        criadoEm: new Date().toISOString()
+      });
+
+      await deleteDoc(doc(dbDAP, "pre_cadastros", docDados.id));
+
+      return { sucesso: true, user: userCredential.user };
+
+    } catch (error) {
+      return { sucesso: false, error, motivo: "erro" };
+    }
+  }
+
+  async function loginGoogleDAP() {
+    errorMsg.style.display = "none";
+
+    if (!btnGoogle || loginEmAndamento || redirecionamentoExecutado) return;
+
+    loginEmAndamento = true;
+
+    const textoOriginal = btnGoogle.innerHTML;
+    btnGoogle.disabled = true;
+    btnSubmit.disabled = true;
+    btnGoogle.textContent = "Abrindo Google...";
+
+    try {
+      await autenticacaoPronta;
+
+      // Google entra no mesmo Auth DAP usado pelo e-mail e senha.
+      const resultado = await signInWithPopup(
+        authDAP,
+        googleProviderDAP
+      );
+
+      const emailGoogle = (resultado.user?.email || "").toLowerCase();
+      showToast(emailGoogle
+        ? `Login Google realizado: ${emailGoogle}`
+        : "Login com Google realizado com sucesso!"
+      );
+
+      redirecionarUmaVez(destinoDAP(emailGoogle));
+
+    } catch (error) {
+      console.error("Erro no login Google:", error);
+
+      const code = (error?.code || "").toLowerCase();
+
+      if (code.includes("popup-closed-by-user")) {
+        errorMsg.innerText = "Login com Google cancelado.";
+      } else if (code.includes("popup-blocked")) {
+        errorMsg.innerText = "O navegador bloqueou a janela do Google. Libere pop-ups e tente novamente.";
+      } else if (code.includes("unauthorized-domain")) {
+        errorMsg.innerText = "Este domínio ainda não está autorizado no Firebase Authentication. Adicione o domínio do CRM em Authentication > Configurações > Domínios autorizados.";
+      } else if (code.includes("operation-not-allowed")) {
+        errorMsg.innerText = "O login Google não está habilitado no projeto DAP.";
+      } else if (code.includes("account-exists-with-different-credential")) {
+        errorMsg.innerText = "Este e-mail já possui outra forma de login. Entre primeiro com e-mail e senha.";
+      } else {
+        errorMsg.innerText = "Não foi possível entrar com Google: " + (error?.message || "erro desconhecido");
+      }
+
+      errorMsg.style.display = "block";
+      loginEmAndamento = false;
+      btnGoogle.innerHTML = textoOriginal;
+      btnGoogle.disabled = false;
+      btnSubmit.disabled = false;
+    }
+  }
+
+  if (btnGoogle) {
+    btnGoogle.addEventListener("click", loginGoogleDAP);
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (loginEmAndamento || redirecionamentoExecutado) return;
+
+    loginEmAndamento = true;
+    errorMsg.style.display = "none";
+
+    const email = emailInput.value.trim().toLowerCase();
+    const senha = passwordInput.value;
+
+    btnSubmit.innerText = "Autenticando...";
+    btnSubmit.disabled = true;
+    if (btnGoogle) btnGoogle.disabled = true;
+
+    // Não inicia a tentativa enquanto o Auth DAP estiver restaurando
+    // a sessão persistida no navegador.
+    try {
+      await autenticacaoPronta;
+    } catch (error) {
+      console.error("Erro ao preparar o Firebase Authentication:", error);
+      resetBotao("Não foi possível iniciar a autenticação. Atualize a página e tente novamente.");
+      return;
+    }
+
+    // =====================================================
+    // E-MAIL E SENHA: SOMENTE AUTH + FIRESTORE DO DAP
+    // Nunca tenta essas credenciais em outro projeto Firebase.
+    // =====================================================
+    const tentativa1 = await loginNoDAP(email, senha);
+
+    if (tentativa1.sucesso) {
+      showToast("Login realizado com sucesso!");
+      redirecionarUmaVez(destinoDAP(email));
+      return;
+    }
+
+    console.log("DAP não autenticou:", tentativa1.error);
+
+    // =====================================================
+    // MANTÉM O FLUXO ANTIGO DO ADMIN MESTRE NO DAP
+    // =====================================================
+    if (email === EMAIL_ADMIN_MESTRE && isErroCredencial(tentativa1.error)) {
+      try {
+        btnSubmit.innerText = "Criando conta Admin...";
+
+        const userCredential = await createUserWithEmailAndPassword(
+          authDAP,
+          email,
+          senha
+        );
+
+        const novoUid = userCredential.user.uid;
+
+        await setDoc(doc(dbDAP, "funcionarios", novoUid), {
+          nome: "Administrador Mestre",
+          email: email,
+          criadoEm: new Date().toISOString()
+        });
+
+        showToast("Conta Mestre configurada! Redirecionando...");
+        redirecionarUmaVez("adm.html");
+        return;
+
+      } catch (adminErr) {
+        if (adminErr.code === 'auth/email-already-in-use') {
+          resetBotao("Senha incorreta para o Administrador.");
+        } else {
+          resetBotao("Erro ao configurar Admin: " + adminErr.message);
+        }
+        return;
+      }
+    }
+
+    // =====================================================
+    // PRESERVA O FLUXO DE CONVITES NO FIRESTORE DO DAP
+    // Só roda quando o Auth DAP recusa a credencial.
+    // =====================================================
+    if (isErroCredencial(tentativa1.error)) {
+      const convite = await tentarFluxoConviteDAP(email, senha);
+
+      if (convite.sucesso) {
+        showToast("Tudo pronto! Redirecionando...");
+        redirecionarUmaVez("index.html");
+        return;
+      }
+
+      if (convite.error?.code === 'permission-denied') {
+        resetBotao("As regras de banco de dados do Firebase bloquearam a criação da conta. Avise o Administrador.");
+        return;
+      }
+
+      if (convite.motivo === "erro" && convite.error) {
+        console.error("Erro no fluxo de convite:", convite.error);
+      }
+
+      resetBotao("E-mail ou senha inválidos.");
+      return;
+    }
+
+    resetBotao("Erro no acesso ao DAP: " + (tentativa1.error?.message || "Não foi possível autenticar."));
+  });
+
+  redirecionarSessaoExistente();
+});
+</script>
+</head>
+<body>
+  <div class="sidebar-login">
+    <h1>AMR ADV</h1>
+    <p>Bem-vindo ao seu CRM. Faça login para continuar.</p>
+    <form id="loginForm" class="input-group">
+      <input type="email" id="email" placeholder="E-mail" required />
+      <input type="password" id="password" placeholder="Senha" required />
+      <span id="errorMsg" class="error"></span>
+      <button type="submit">Entrar</button>
+      <div class="divider"><span>ou</span></div>
+      <button type="button" id="btnGoogle" class="google-login-btn" aria-label="Continuar com Google">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M21.805 10.023h-9.18v3.955h5.28c-.228 1.273-.912 2.352-1.945 3.078v2.56h3.145c1.84-1.695 2.9-4.196 2.9-7.17 0-.813-.073-1.596-.2-2.423z"/>
+          <path fill="#34A853" d="M12.625 22c2.625 0 4.828-.87 6.437-2.384l-3.145-2.56c-.87.585-1.985.93-3.292.93-2.53 0-4.675-1.71-5.445-4.008H3.93v2.64A9.727 9.727 0 0 0 12.625 22z"/>
+          <path fill="#FBBC05" d="M7.18 13.978a5.89 5.89 0 0 1 0-3.756V7.58H3.93a9.74 9.74 0 0 0 0 9.038l3.25-2.64z"/>
+          <path fill="#EA4335" d="M12.625 6.214c1.427 0 2.708.49 3.715 1.45l2.79-2.79C17.448 3.306 15.247 2.35 12.625 2.35A9.727 9.727 0 0 0 3.93 7.58l3.25 2.642c.77-2.298 2.915-4.008 5.445-4.008z"/>
+        </svg>
+        <span>Continuar com Google</span>
+      </button>
+    </form>
+  </div>
+
+  <div class="video-container">
+    <video id="bgVideo" autoplay muted loop playsinline>
+      <source src="videotrem.mp4" type="video/mp4">
+      Seu navegador não suporta vídeo.
+    </video>
+    <div class="video-overlay">
+      <h2>Gerencie sua advocacia de forma inteligente</h2>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</body>
+</html>
