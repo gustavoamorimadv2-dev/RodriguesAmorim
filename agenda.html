@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda & Prazos - AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-thin-rounded/css/uicons-thin-rounded.css'>
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body { 
+    display:flex; height:100vh; overflow:hidden; transition:filter 0.3s; 
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px; display:flex; flex-direction:column; align-items:center;
+    padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10;
+    backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+.sidebar.expanded { width:240px; }
+.sidebar h2 {
+    font-size:22px; font-weight:800; color:#fff;
+    letter-spacing:1px; margin-bottom:30px; text-align:center; cursor:pointer;
+    width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0;
+}
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7);
+    display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px;
+    cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px;
+    white-space:nowrap; overflow:hidden;
+}
+.sidebar button img { width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; transition:filter 0.3s; }
+.main.blur { filter:blur(5px) brightness(0.7); }
+
+header { 
+    height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); 
+    display:flex; align-items:center; justify-content:space-between; padding:0 30px; flex-shrink:0; 
+}
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+header .actions { display: flex; gap: 10px; }
+
+/* ================= CALENDAR ================= */
+.calendar-container { padding: 30px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.calendar-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+    background: rgba(255,255,255,0.03); padding: 15px 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
+}
+.calendar-header h2 { font-size: 20px; font-weight: 700; text-transform: capitalize; }
+.calendar-header .nav-btn {
+    background: rgba(255,255,255,0.08); border: none; color: #fff; padding: 8px 16px;
+    border-radius: 10px; cursor: pointer; transition: 0.2s; font-weight: 600; display: flex; align-items: center; gap: 8px;
+}
+.calendar-header .nav-btn:hover { background: rgba(255,255,255,0.15); }
+
+.calendar-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; margin-bottom: 10px; text-align: center;
+    font-weight: 600; color: rgba(255,255,255,0.5); font-size: 13px; text-transform: uppercase;
+}
+
+.calendar-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; flex: 1; overflow-y: auto; padding-right: 5px;
+}
+
+.day {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 14px; min-height: 110px; padding: 10px; display: flex; flex-direction: column;
+    gap: 6px; cursor: pointer; transition: 0.2s; backdrop-filter: blur(10px);
+}
+.day:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+.day.empty { background: transparent; border: none; cursor: default; backdrop-filter: none; }
+.day.today { border-color: #10b981; background: rgba(16, 185, 129, 0.05); box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1); }
+
+.day-header { font-weight: 700; font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+.day.today .day-header { color: #10b981; }
+
+.event {
+    background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: 0.2s;
+}
+.event:hover { filter: brightness(1.2); }
+.event.astrea { background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
+
+/* ================= MODALS ================= */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:50; }
+.modal { background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:30px; border-radius:24px; min-width:320px; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+.modal h3 { margin-bottom:20px; font-size:22px; font-weight:700; color:#fff; display: flex; align-items: center; gap: 10px;}
+
+.modal label { display:block; margin-bottom:6px; font-size:13px; font-weight:600; color:rgba(255,255,255,0.7); margin-top: 15px;}
+.modal input, .modal textarea, .modal select { 
+    width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; color:#fff; font-size:14px; outline:none; transition:0.3s;
+}
+.modal textarea { min-height: 80px; resize: vertical; }
+.modal input:focus, .modal textarea:focus { background:rgba(255,255,255,0.1); border-color: #10b981; }
+
+.astrea-badge { display: inline-block; background: #e11d48; color: #fff; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-left: 10px;}
+
+/* ================= BUTTONS ================= */
+.modal .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:30px; }
+.btn { padding:12px 20px; border-radius:12px; border:0; cursor:pointer; font-weight:600; font-size:14px; transition:0.3s; display: flex; align-items: center; gap: 8px;}
+.btn.primary { background: linear-gradient(135deg, #10b981, #059669); color:#fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn.primary:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(16, 185, 129, 0.4); }
+.btn.astrea-btn { background: linear-gradient(135deg, #e11d48, #be123c); color:#fff; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+.btn.astrea-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(225, 29, 72, 0.4); }
+.btn.ghost { background:rgba(255,255,255,0.1); color:#fff; }
+.btn.ghost:hover { background:rgba(255,255,255,0.2); }
+
+/* Loader Astrea */
+.loader-container { display: none; flex-direction: column; align-items: center; gap: 15px; margin: 20px 0; }
+.loader { width: 40px; height: 40px; border: 4px solid rgba(225, 29, 72, 0.3); border-top-color: #e11d48; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast {
+    position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff;
+    padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none; z-index:9999; font-size:14px; font-weight: 500;
+}
+
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="location.href='crm.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/><span>CRM</span></button>
+    <button onclick="window.location.href='relatorios.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png"/><span>Relatórios</span></button>
+    <button onclick="window.location.href='agenda.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/><span>Agenda</span></button>
+    <button onclick="window.location.href='contatos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/contacts.png"/><span>Contatos</span></button>
+    <button onclick="window.location.href='clientes.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/><span>Clientes</span></button>
+    <button onclick="window.location.href='processos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/><span>Processos</span></button>
+    <button><img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/><span>Configurações</span></button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Agenda & Prazos</h1>
+        <div class="actions">
+            <button class="btn astrea-btn" onclick="openAstreaModal()">
+                <i class="fi fi-tr-radar"></i> Monitorar Astrea
+            </button>
+            <button class="btn primary" onclick="openModal()">
+                <i class="fi fi-tr-add"></i> Novo Evento
+            </button>
+        </div>
+    </header>
+
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <button class="nav-btn" onclick="prevMonth()"><i class="fi fi-tr-angle-left"></i> Anterior</button>
+            <h2 id="monthYear"></h2>
+            <button class="nav-btn" onclick="nextMonth()">Próximo <i class="fi fi-tr-angle-right"></i></button>
+        </div>
+        
+        <div class="calendar-weekdays">
+            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+        </div>
+        
+        <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <h3 id="modalTitle">Novo Evento</h3>
+        <form id="eventForm">
+            <label>Data</label>
+            <input type="date" id="inputDate" required>
+            
+            <label>Hora</label>
+            <input type="time" id="inputTime">
+            
+            <label>Título do Evento</label>
+            <input type="text" id="inputTitle" placeholder="Ex: Reunião com cliente" required>
+            
+            <label>Descrição</label>
+            <textarea id="inputDesc" placeholder="Observações adicionais..."></textarea>
+            
+            <div class="actions">
+                <button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button>
+                <button type="submit" class="btn primary">Salvar Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="astreaModalBackdrop">
+    <div class="modal">
+        <h3>Sincronizar Processo <span class="astrea-badge">Astrea</span></h3>
+        <p style="font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5;">
+            Conecte-se à base de dados do tribunal via Astrea para puxar os próximos prazos e audiências automaticamente para sua agenda.
+        </p>
+        
+        <form id="astreaForm">
+            <label>Número do Processo (CNJ)</label>
+            <input type="text" id="inputProcessoAstrea" placeholder="0000000-00.0000.0.00.0000" required>
+            
+            <div class="loader-container" id="astreaLoader">
+                <div class="loader"></div>
+                <p style="font-size: 13px; color: #e11d48; font-weight: 600;">Buscando no Tribunal...</p>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn ghost" onclick="closeAstreaModal()">Cancelar</button>
+                <button type="submit" class="btn astrea-btn" id="btnSyncAstrea">Monitorar Prazo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAFJJAqVf3ge0WDHBpmS9E6sXKvnjuFkhw",
+    authDomain: "dapapp-38637.firebaseapp.com",
+    projectId: "dapapp-38637",
+    storageBucket: "dapapp-38637.appspot.com",
+    messagingSenderId: "628852295313",
+    appId: "1:628852295313:web:1234567890abcdef123456"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// DOM Elements
+const sidebar = document.querySelector(".sidebar");
+const mainContent = document.querySelector(".main");
+const modalBackdrop = document.getElementById('modalBackdrop');
+const astreaModalBackdrop = document.getElementById('astreaModalBackdrop');
+const eventForm = document.getElementById('eventForm');
+const astreaForm = document.getElementById('astreaForm');
+const monthYear = document.getElementById('monthYear');
+const calendarGrid = document.getElementById('calendarGrid');
+const toastEl = document.getElementById("toast");
+
+let currentDate = new Date();
+let events = [];
+let editId = null;
+let currentUser = null;
+
+// Hover Sidebar
+sidebar.addEventListener('mouseenter', () => { sidebar.classList.add('expanded'); mainContent.classList.add('blur'); });
+sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('expanded'); mainContent.classList.remove('blur'); });
+
+// Fechar modais clicando fora
+modalBackdrop.onclick = e => { if(e.target===modalBackdrop) closeModal(); }
+astreaModalBackdrop.onclick = e => { if(e.target===astreaModalBackdrop) closeAstreaModal(); }
+
+// Toast
+function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.style.display = 'none', 3000);
+}
+
+// Auth
+onAuthStateChanged(auth, user => {
+    if(user) {
+        currentUser = user;
+        loadEvents();
+    } else {
+        window.location.href = "login.html";
+    }
+});
+
+// Load Events from Firebase
+async function loadEvents() {
+    try {
+        const q = query(collection(db, "agenda"), where("userId", "==", currentUser.uid));
+        const snapshot = await getDocs(q);
+        events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCalendar();
+    } catch (e) {
+        console.error(e);
+        showToast("Erro ao carregar agenda.");
+    }
+}
+
+// Render Calendar
+window.renderCalendar = function() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    
+    monthYear.innerText = currentDate.toLocaleString('pt-BR', { month:'long', year:'numeric' });
+    calendarGrid.innerHTML = '';
+
+    // Dias vazios no início do mês
+    for(let i=0; i<firstDay; i++) { 
+        const empty = document.createElement('div'); 
+        empty.className = 'day empty'; 
+        calendarGrid.appendChild(empty);
+    }
+
+    // Dias do mês
+    for(let d=1; d<=lastDate; d++) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'day';
+        
+        // Verifica se é hoje
+        if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            dayDiv.classList.add('today');
+        }
+
+        const fullDate = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        dayDiv.innerHTML = `<div class="day-header">${d}</div>`;
+        
+        // Filtra eventos para o dia
+        const dayEvents = events.filter(ev => ev.date === fullDate);
+        
+        dayEvents.forEach(ev => {
+            const evDiv = document.createElement('div');
+            evDiv.className = `event ${ev.origin === 'astrea' ? 'astrea' : ''}`;
+            evDiv.innerText = ev.time ? `${ev.time} - ${ev.title}` : ev.title;
+            evDiv.title = ev.desc || ev.title;
+            
+            evDiv.onclick = (e) => { 
+                e.stopPropagation(); 
+                if(ev.origin !== 'astrea') openModal(ev); 
+                else showToast("Eventos da Astrea não podem ser editados manualmente.");
+            };
+            dayDiv.appendChild(evDiv);
+        });
+
+        // Clique no dia para adicionar evento
+        dayDiv.onclick = () => { 
+            document.getElementById('inputDate').value = fullDate; 
+            openModal(); 
+        };
+        
+        calendarGrid.appendChild(dayDiv);
+    }
+}
+
+// Navegação
+window.prevMonth = function() { currentDate.setMonth(currentDate.getMonth()-1); renderCalendar(); }
+window.nextMonth = function() { currentDate.setMonth(currentDate.getMonth()+1); renderCalendar(); }
+
+// ================= MODAL NORMAL =================
+window.openModal = function(data=null) {
+    modalBackdrop.style.display = 'flex';
+    if(data) {
+        editId = data.id;
+        document.getElementById('inputDate').value = data.date;
+        document.getElementById('inputTime').value = data.time || '';
+        document.getElementById('inputTitle').value = data.title;
+        document.getElementById('inputDesc').value = data.desc || '';
+        document.getElementById('modalTitle').innerHTML = 'Editar Evento';
+    } else {
+        editId = null;
+        document.getElementById('inputDate').value = document.getElementById('inputDate').value || ''; 
+        document.getElementById('inputTime').value = ''; 
+        document.getElementById('inputTitle').value = ''; 
+        document.getElementById('inputDesc').value = '';
+        document.getElementById('modalTitle').innerHTML = 'Novo Evento';
+    }
+}
+
+window.closeModal = function() { modalBackdrop.style.display = 'none'; }
+
+eventForm.onsubmit = async function(e) {
+    e.preventDefault();
+    if(!currentUser) return;
+
+    const evData = {
+        userId: currentUser.uid,
+        date: document.getElementById('inputDate').value,
+        time: document.getElementById('inputTime').value,
+        title: document.getElementById('inputTitle').value,
+        desc: document.getElementById('inputDesc').value,
+        origin: 'manual'
+    };
+
+    try {
+        if(editId) {
+            await updateDoc(doc(db, "agenda", editId), evData);
+            events = events.map(e => e.id === editId ? { id: editId, ...evData } : e);
+            showToast("Evento atualizado!");
+        } else {
+            const docRef = await addDoc(collection(db, "agenda"), evData);
+            events.push({ id: docRef.id, ...evData });
+            showToast("Evento criado!");
+        }
+        closeModal();
+        renderCalendar();
+    } catch(err) {
+        console.error(err);
+        showToast("Erro ao salvar evento.");
+    }
+};
+
+// ================= ASTREA MOCK SYNC =================
+window.openAstreaModal = function() {
+    document.getElementById('inputProcessoAstrea').value = '';
+    document.getElementById('astreaLoader').style.display = 'none';
+    document.getElementById('btnSyncAstrea').style.display = 'block';
+    astreaModalBackdrop.style.display = 'flex';
+}
+
+window.closeAstreaModal = function() { astreaModalBackdrop.style.display = 'none'; }
+
+astreaForm.onsubmit = async function(e) {
+    e.preventDefault();
+    const processo = document.getElementById('inputProcessoAstrea').value.trim();
+    if(!processo) return;
+
+    // UI Loading State
+    document.getElementById('btnSyncAstrea').style.display = 'none';
+    document.getElementById('astreaLoader').style.display = 'flex';
+
+    // Simula tempo de requisição à API (2.5 segundos)
+    setTimeout(async () => {
+        try {
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            
+            // Gera 2 eventos falsos baseados no mês atual para demonstração
+            const mockEvents = [
+                {
+                    userId: currentUser.uid,
+                    date: `${year}-${month}-10`,
+                    time: "14:00",
+                    title: `Audiência - Proc. final ${processo.slice(-4)}`,
+                    desc: `Importado via Astrea: Audiência de conciliação.`,
+                    origin: 'astrea'
+                },
+                {
+                    userId: currentUser.uid,
+                    date: `${year}-${month}-25`,
+                    time: "23:59",
+                    title: `Prazo Contestação - Proc. ${processo.slice(-4)}`,
+                    desc: `Importado via Astrea: Prazo final para anexar contestação.`,
+                    origin: 'astrea'
+                }
+            ];
+
+            // Salva no Firebase
+            for(let ev of mockEvents) {
+                const docRef = await addDoc(collection(db, "agenda"), ev);
+                events.push({ id: docRef.id, ...ev });
+            }
+
+            showToast("Sincronização Astrea concluída com sucesso!");
+            closeAstreaModal();
+            renderCalendar();
+
+        } catch (err) {
+            console.error(err);
+            showToast("Erro na comunicação com a Astrea.");
+        }
+    }, 2500);
+};
+
+</script>
+</body>
+</html>
