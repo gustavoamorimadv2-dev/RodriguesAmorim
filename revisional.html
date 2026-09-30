@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        /* Estilos para a página do CRM */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
@@ -16,74 +15,37 @@
             padding: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h2 {
-            color: #2c3e50;
-            margin-top: 0;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
+        h2 { color: #2c3e50; margin-top: 0; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
         label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #34495e;
+            display: block; margin-bottom: 5px; font-weight: 600; color: #34495e; font-size: 13px;
         }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
+        input, select {
+            width: 100%; padding: 10px; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box; font-size: 14px;
         }
         button {
-            width: 100%;
-            padding: 12px;
-            background-color: #2980b9;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: background 0.3s;
+            width: 100%; padding: 14px; background-color: #2980b9; color: white;
+            border: none; border-radius: 4px; font-size: 16px; font-weight: bold;
+            cursor: pointer; margin-top: 15px; transition: background 0.3s;
         }
-        button:hover {
-            background-color: #3498db;
-        }
+        button:hover { background-color: #3498db; }
         
-        /* Estilos exclusivos para o PDF (ficará oculto na tela) */
+        /* Estilos do PDF Oculto */
         #documentoPdf {
-            display: none;
-            padding: 40px;
-            font-family: Arial, sans-serif;
-            color: #000;
-            background: #fff;
+            display: none; padding: 40px; font-family: Arial, sans-serif; color: #000; background: #fff;
         }
-        .pdf-header {
-            text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-        .pdf-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        .pdf-table td, .pdf-table th {
-            border: 1px solid #000;
-            padding: 10px;
-            text-align: left;
-        }
+        .pdf-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .pdf-table td, .pdf-table th { border: 1px solid #000; padding: 10px; text-align: left; }
     </style>
 </head>
 <body>
@@ -92,35 +54,62 @@
     <div class="container">
         <h2>Gerar Parecer Revisional</h2>
         
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 15px;">
             <label for="inputNome">Nome do Cliente:</label>
             <input type="text" id="inputNome" placeholder="Ex: Marcia Cristina Costa">
         </div>
-        
-        <div class="form-group">
-            <label for="inputValor">Valor Líquido Financiado (R$):</label>
-            <input type="number" id="inputValor" placeholder="Ex: 25000">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="inputCarro">Modelo do Veículo:</label>
+                <input type="text" id="inputCarro" placeholder="Ex: RENAULT SANDERO EXPRESSION 1.0">
+            </div>
+            <div class="form-group">
+                <label for="inputValor">Valor Líquido Financiado (R$):</label>
+                <input type="number" id="inputValor" placeholder="Ex: 25000">
+            </div>
         </div>
         
-        <div class="form-group">
-            <label for="inputTaxa">Taxa Nominal do Contrato (% a.a):</label>
-            <input type="number" step="0.01" id="inputTaxa" placeholder="Ex: 35.10">
-        </div>
-        
-        <div class="form-group">
-            <label for="inputCet">Custo Efetivo Total - CET (% a.a):</label>
-            <input type="number" step="0.01" id="inputCet" placeholder="Ex: 45.40">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="inputTaxa">Taxa do Contrato (% a.a):</label>
+                <input type="number" step="0.01" id="inputTaxa" placeholder="Ex: 35.10">
+            </div>
+            <div class="form-group">
+                <label for="inputCet">Custo Efetivo Total - CET (% a.a):</label>
+                <input type="number" step="0.01" id="inputCet" placeholder="Ex: 45.40">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="inputBacen">Taxa Média BACEN na Época (% a.a):</label>
-            <input type="number" step="0.01" id="inputBacen" placeholder="Ex: 26.50">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="inputAno">Ano do Contrato:</label>
+                <select id="inputAno" onchange="atualizarTaxaBacen()">
+                    <option value="">Selecione o Ano...</option>
+                    <option value="2015">2015</option>
+                    <option value="2016">2016</option>
+                    <option value="2017">2017</option>
+                    <option value="2018">2018</option>
+                    <option value="2019">2019</option>
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="inputBacen">Taxa Média BACEN (% a.a):</label>
+                <input type="number" step="0.01" id="inputBacen" placeholder="Preenchimento automático">
+            </div>
         </div>
         
         <button onclick="gerarPdf()">Gerar PDF do Parecer</button>
     </div>
 
-    <!-- TEMPLATE DO DOCUMENTO PDF (Oculto na tela, visível apenas na exportação) -->
+    <!-- TEMPLATE DO DOCUMENTO PDF (Oculto) -->
     <div id="documentoPdf">
         <div class="pdf-header">
             <h2>PARECER TÉCNICO PRELIMINAR</h2>
@@ -128,6 +117,7 @@
         </div>
         
         <p><strong>Identificação do Cliente:</strong> <span id="outNome"></span></p>
+        <p><strong>Veículo em Garantia:</strong> <span id="outCarro"></span></p>
         <p><strong>Valor Líquido Liberado:</strong> R$ <span id="outValor"></span></p>
         
         <h4 style="margin-top: 30px;">1. Parâmetros Analisados</h4>
@@ -152,7 +142,7 @@
 
         <h4 style="margin-top: 30px;">2. Conclusão Técnica</h4>
         <p style="line-height: 1.6; text-align: justify;">
-            Da análise preliminar das taxas aplicadas ao contrato do cliente supracitado, constata-se que a taxa de juros exigida pela instituição financeira (<strong><span id="outTaxaTexto"></span>% a.a.</strong>) encontra-se acima da taxa média de mercado divulgada pelo Banco Central do Brasil (<strong><span id="outBacenTexto"></span>% a.a.</strong>) para o mesmo período e mesma modalidade de crédito.
+            Da análise preliminar das taxas aplicadas ao contrato do cliente supracitado, referente ao veículo <strong><span id="outCarroTexto"></span></strong>, constata-se que a taxa de juros exigida pela instituição financeira (<strong><span id="outTaxaTexto"></span>% a.a.</strong>) encontra-se acima da taxa média de mercado divulgada pelo Banco Central do Brasil (<strong><span id="outBacenTexto"></span>% a.a.</strong>) para o mesmo período e mesma modalidade de crédito.
         </p>
         <p style="line-height: 1.6; text-align: justify;">
             Ademais, o Custo Efetivo Total (CET) de <strong><span id="outCetTexto"></span>% a.a.</strong> demonstra o impacto de tarifas e encargos embutidos na operação, configurando indícios de onerosidade excessiva e distanciamento das práticas médias de mercado, o que fundamenta a viabilidade de uma análise aprofundada para propositura de ação revisional.
@@ -167,17 +157,48 @@
 
     <!-- SCRIPT DE FUNCIONAMENTO -->
     <script>
+        // Tabela de taxas médias anuais do BACEN (Aquisição de Veículos PF)
+        // Você pode editar esses valores conforme precisar ser mais preciso.
+        const taxasBacen = {
+            "2015": 25.50,
+            "2016": 26.20,
+            "2017": 23.10,
+            "2018": 21.00,
+            "2019": 19.50,
+            "2020": 18.20,
+            "2021": 22.40,
+            "2022": 27.90,
+            "2023": 28.50,
+            "2024": 26.10,
+            "2025": 25.50, // Estimativa/Atual
+            "2026": 24.80  // Estimativa/Atual
+        };
+
+        // Função que preenche a taxa do Bacen ao escolher o ano
+        function atualizarTaxaBacen() {
+            const anoSelecionado = document.getElementById('inputAno').value;
+            const campoBacen = document.getElementById('inputBacen');
+            
+            if(anoSelecionado && taxasBacen[anoSelecionado]) {
+                campoBacen.value = taxasBacen[anoSelecionado];
+            } else {
+                campoBacen.value = "";
+            }
+        }
+
+        // Função que gera o PDF
         function gerarPdf() {
-            // 1. Captura os valores digitados
             const nome = document.getElementById('inputNome').value || 'Não informado';
+            const carro = document.getElementById('inputCarro').value || 'Não informado';
             const valor = parseFloat(document.getElementById('inputValor').value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
             const taxa = parseFloat(document.getElementById('inputTaxa').value || 0);
             const cet = parseFloat(document.getElementById('inputCet').value || 0);
             const bacen = parseFloat(document.getElementById('inputBacen').value || 0);
             const diferenca = (taxa - bacen).toFixed(2);
 
-            // 2. Preenche o template oculto
+            // Preenche o template
             document.getElementById('outNome').innerText = nome;
+            document.getElementById('outCarro').innerText = carro;
             document.getElementById('outValor').innerText = valor;
             document.getElementById('outTaxa').innerText = taxa.toFixed(2).replace('.', ',');
             document.getElementById('outCet').innerText = cet.toFixed(2).replace('.', ',');
@@ -185,15 +206,15 @@
             document.getElementById('outDiferenca').innerText = diferenca.replace('.', ',');
             
             // Preenche textos da conclusão
+            document.getElementById('outCarroTexto').innerText = carro;
             document.getElementById('outTaxaTexto').innerText = taxa.toFixed(2).replace('.', ',');
             document.getElementById('outBacenTexto').innerText = bacen.toFixed(2).replace('.', ',');
             document.getElementById('outCetTexto').innerText = cet.toFixed(2).replace('.', ',');
 
-            // Data atual no rodapé
             const hoje = new Date().toLocaleDateString('pt-BR');
             document.getElementById('dataAtual').innerText = hoje;
 
-            // 3. Exibe a div, gera o PDF e esconde a div novamente
+            // Gera o PDF
             const elementoPdf = document.getElementById('documentoPdf');
             elementoPdf.style.display = 'block';
 
@@ -205,9 +226,8 @@
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Gera e baixa o arquivo
             html2pdf().set(opcoes).from(elementoPdf).save().then(() => {
-                elementoPdf.style.display = 'none'; // Oculta a div após o download
+                elementoPdf.style.display = 'none';
             });
         }
     </script>
