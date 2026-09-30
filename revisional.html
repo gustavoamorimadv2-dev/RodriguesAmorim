@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Parecer - CRM</title>
+    <!-- Biblioteca para gerar o PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        /* Estilos para a página do CRM */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #3498db;
+        }
+        
+        /* Estilos exclusivos para o PDF (ficará oculto na tela) */
+        #documentoPdf {
+            display: none;
+            padding: 40px;
+            font-family: Arial, sans-serif;
+            color: #000;
+            background: #fff;
+        }
+        .pdf-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .pdf-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .pdf-table td, .pdf-table th {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- INTERFACE DO USUÁRIO NO CRM -->
+    <div class="container">
+        <h2>Gerar Parecer Revisional</h2>
+        
+        <div class="form-group">
+            <label for="inputNome">Nome do Cliente:</label>
+            <input type="text" id="inputNome" placeholder="Ex: Marcia Cristina Costa">
+        </div>
+        
+        <div class="form-group">
+            <label for="inputValor">Valor Líquido Financiado (R$):</label>
+            <input type="number" id="inputValor" placeholder="Ex: 25000">
+        </div>
+        
+        <div class="form-group">
+            <label for="inputTaxa">Taxa Nominal do Contrato (% a.a):</label>
+            <input type="number" step="0.01" id="inputTaxa" placeholder="Ex: 35.10">
+        </div>
+        
+        <div class="form-group">
+            <label for="inputCet">Custo Efetivo Total - CET (% a.a):</label>
+            <input type="number" step="0.01" id="inputCet" placeholder="Ex: 45.40">
+        </div>
+
+        <div class="form-group">
+            <label for="inputBacen">Taxa Média BACEN na Época (% a.a):</label>
+            <input type="number" step="0.01" id="inputBacen" placeholder="Ex: 26.50">
+        </div>
+        
+        <button onclick="gerarPdf()">Gerar PDF do Parecer</button>
+    </div>
+
+    <!-- TEMPLATE DO DOCUMENTO PDF (Oculto na tela, visível apenas na exportação) -->
+    <div id="documentoPdf">
+        <div class="pdf-header">
+            <h2>PARECER TÉCNICO PRELIMINAR</h2>
+            <h3>Análise Revisional de Contrato de Financiamento</h3>
+        </div>
+        
+        <p><strong>Identificação do Cliente:</strong> <span id="outNome"></span></p>
+        <p><strong>Valor Líquido Liberado:</strong> R$ <span id="outValor"></span></p>
+        
+        <h4 style="margin-top: 30px;">1. Parâmetros Analisados</h4>
+        <table class="pdf-table">
+            <tr>
+                <td><strong>Taxa Nominal Aplicada (Contrato)</strong></td>
+                <td><span id="outTaxa"></span>% a.a.</td>
+            </tr>
+            <tr>
+                <td><strong>Custo Efetivo Total - CET (Contrato)</strong></td>
+                <td><span id="outCet"></span>% a.a.</td>
+            </tr>
+            <tr>
+                <td><strong>Taxa Média BACEN (Época da Contratação)</strong></td>
+                <td><span id="outBacen"></span>% a.a.</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold;">Diferença Apurada (Nominal vs Bacen)</td>
+                <td style="font-weight: bold; color: #c0392b;">+ <span id="outDiferenca"></span>% a.a.</td>
+            </tr>
+        </table>
+
+        <h4 style="margin-top: 30px;">2. Conclusão Técnica</h4>
+        <p style="line-height: 1.6; text-align: justify;">
+            Da análise preliminar das taxas aplicadas ao contrato do cliente supracitado, constata-se que a taxa de juros exigida pela instituição financeira (<strong><span id="outTaxaTexto"></span>% a.a.</strong>) encontra-se acima da taxa média de mercado divulgada pelo Banco Central do Brasil (<strong><span id="outBacenTexto"></span>% a.a.</strong>) para o mesmo período e mesma modalidade de crédito.
+        </p>
+        <p style="line-height: 1.6; text-align: justify;">
+            Ademais, o Custo Efetivo Total (CET) de <strong><span id="outCetTexto"></span>% a.a.</strong> demonstra o impacto de tarifas e encargos embutidos na operação, configurando indícios de onerosidade excessiva e distanciamento das práticas médias de mercado, o que fundamenta a viabilidade de uma análise aprofundada para propositura de ação revisional.
+        </p>
+        
+        <div style="margin-top: 60px; text-align: center;">
+            <p>_________________________________________________</p>
+            <p><strong>Equipe de Análise</strong></p>
+            <p id="dataAtual"></p>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE FUNCIONAMENTO -->
+    <script>
+        function gerarPdf() {
+            // 1. Captura os valores digitados
+            const nome = document.getElementById('inputNome').value || 'Não informado';
+            const valor = parseFloat(document.getElementById('inputValor').value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            const taxa = parseFloat(document.getElementById('inputTaxa').value || 0);
+            const cet = parseFloat(document.getElementById('inputCet').value || 0);
+            const bacen = parseFloat(document.getElementById('inputBacen').value || 0);
+            const diferenca = (taxa - bacen).toFixed(2);
+
+            // 2. Preenche o template oculto
+            document.getElementById('outNome').innerText = nome;
+            document.getElementById('outValor').innerText = valor;
+            document.getElementById('outTaxa').innerText = taxa.toFixed(2).replace('.', ',');
+            document.getElementById('outCet').innerText = cet.toFixed(2).replace('.', ',');
+            document.getElementById('outBacen').innerText = bacen.toFixed(2).replace('.', ',');
+            document.getElementById('outDiferenca').innerText = diferenca.replace('.', ',');
+            
+            // Preenche textos da conclusão
+            document.getElementById('outTaxaTexto').innerText = taxa.toFixed(2).replace('.', ',');
+            document.getElementById('outBacenTexto').innerText = bacen.toFixed(2).replace('.', ',');
+            document.getElementById('outCetTexto').innerText = cet.toFixed(2).replace('.', ',');
+
+            // Data atual no rodapé
+            const hoje = new Date().toLocaleDateString('pt-BR');
+            document.getElementById('dataAtual').innerText = hoje;
+
+            // 3. Exibe a div, gera o PDF e esconde a div novamente
+            const elementoPdf = document.getElementById('documentoPdf');
+            elementoPdf.style.display = 'block';
+
+            const opcoes = {
+                margin:       15,
+                filename:     `Parecer_${nome.split(' ')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Gera e baixa o arquivo
+            html2pdf().set(opcoes).from(elementoPdf).save().then(() => {
+                elementoPdf.style.display = 'none'; // Oculta a div após o download
+            });
+        }
+    </script>
+</body>
+</html>
