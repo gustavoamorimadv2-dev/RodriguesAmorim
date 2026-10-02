@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funil Geral - AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body {
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    flex-shrink:0;
+    transition:width 0.4s ease;
+    position:relative;
+    z-index:10;
+    backdrop-filter:blur(30px);
+    background:rgba(255,255,255,0.06);
+    border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+
+.sidebar.expanded { width:240px; }
+
+.sidebar h2 {
+    font-size:22px;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:1px;
+    margin-bottom:30px;
+    text-align:center;
+    cursor:pointer;
+    width:100%;
+    white-space:nowrap;
+    overflow:hidden;
+    transition:opacity 0.3s;
+    opacity:0;
+}
+
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px);
+    background:transparent;
+    border:none;
+    color:rgba(255,255,255,0.7);
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:12px 15px;
+    margin:5px 10px;
+    cursor:pointer;
+    border-radius:14px;
+    transition:all 0.3s;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.sidebar button img {
+    width:24px;
+    height:24px;
+    filter:invert(1) opacity(0.7);
+    flex-shrink:0;
+    transition:transform 0.3s, filter 0.3s;
+}
+
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+header {
+    height:70px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    flex-shrink:0;
+}
+
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+.search-bar {
+    padding:15px 30px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    gap:15px;
+    align-items:center;
+    flex-shrink:0;
+}
+
+.search-bar input {
+    padding:12px 16px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    color:#fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+    backdrop-filter: blur(10px);
+    flex:1;
+}
+
+.search-bar input:focus {
+    background:rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.search-bar input::placeholder { color: rgba(255,255,255,0.5); }
+
+/* ================= COLUNAS FUNIL GERAL ================= */
+.kanban-container {
+    flex:1;
+    overflow-x:auto;
+    padding:20px 30px;
+}
+
+.kanban {
+    display:flex;
+    gap:20px;
+    min-width:max-content;
+    height:100%;
+}
+
+.column {
+    background:rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius:20px;
+    padding:15px;
+    min-width:340px;
+    width: 32vw; 
+    max-height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    overflow-y:auto;
+    transition: 0.3s;
+}
+
+.column h2 {
+    margin-bottom:10px;
+    font-size:14px;
+    color:#fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.column.drag-over {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+    box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+/* ================= CARDS ================= */
+.card {
+    display:flex;
+    background:rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border-radius:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.2);
+    overflow:hidden;
+    transition:transform 0.2s, background 0.3s, opacity 0.2s;
+    position:relative;
+    flex-direction:row;
+    width:100%;
+    min-height:180px;
+}
+
+.card:hover {
+    transform:translateY(-4px);
+    background:rgba(255,255,255,0.1);
+}
+
+.card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.card.draggable {
+    cursor: grab;
+}
+
+.card.draggable:active {
+    cursor: grabbing;
+}
+
+.card .color-bar {
+    width:8px;
+    height:100%;
+}
+
+.disponivel .color-bar { background: #10b981; } 
+.meus .color-bar { background: #3b82f6; } 
+.outros .color-bar { background: #ef4444; } 
+
+.card-content {
+    padding:20px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    overflow:hidden;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.card h3 {
+    font-size:18px;
+    margin-bottom:12px;
+    color:#fff;
+    font-weight: 700;
+    padding-right: 20px; 
+    word-break: break-word; 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drag-handle {
+    font-size: 16px;
+    opacity: 0.5;
+    cursor: grab;
+}
+
+.card p {
+    font-size:13px;
+    color:rgba(255,255,255,0.7);
+    margin:5px 0;
+}
+
+.card p strong { color: #fff; font-weight: 600; }
+
+.badge-responsavel {
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ================= MODAL DETALHES ================= */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.active {
+    display: flex;
+    animation: fadeInModal 0.2s ease-out forwards;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    position: relative;
+    color: #fff;
+    transform: scale(0.95);
+    transition: transform 0.2s ease-out;
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 28px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: 0.3s;
+    line-height: 1;
+}
+
+.close-btn:hover { color: #fff; transform: scale(1.1); }
+
+.modal-content h2 { 
+    margin-bottom: 25px; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+    padding-bottom: 15px;
+    font-weight: 800;
+}
+
+.modal-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 15px; 
+}
+
+.modal-field { 
+    background: rgba(255,255,255,0.03); 
+    padding: 15px; 
+    border-radius: 12px; 
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.modal-field.full-width {
+    grid-column: span 2;
+}
+
+.modal-field label { 
+    display: block; 
+    font-size: 12px; 
+    color: rgba(255,255,255,0.5); 
+    margin-bottom: 6px; 
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-field span { 
+    font-size: 15px; 
+    font-weight: 500; 
+    word-break: break-word; 
+    color: #f8fafc;
+}
+
+/* ================= TOAST ================= */
+.toast {
+    position:fixed;
+    right:30px;
+    bottom:30px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color:#fff;
+    padding:12px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none;
+    z-index:60;
+    font-weight: 500;
+}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import {
+    getFirestore,
+    collection,
+    getDocs,
+    doc,
+    runTransaction
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import {
+    getAuth,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const auth = getAuth(app);
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const sidebar = document.querySelector(".sidebar");
+    const searchInput = document.getElementById('searchInput');
+    const toastEl = document.getElementById('toast');
+    let currentUser = null;
+    let todosClientes = [];
+
+    // Modal Elements
+    const modalDetalhes = document.getElementById('modalDetalhes');
+    const closeModalBtn = document.getElementById('closeModal');
+
+    if(sidebar){
+        sidebar.addEventListener('mouseenter', () => sidebar.classList.add('expanded'));
+        sidebar.addEventListener('mouseleave', () => sidebar.classList.remove('expanded'));
+    }
+
+    // Modal Handlers
+    closeModalBtn.addEventListener('click', () => modalDetalhes.classList.remove('active'));
+    window.addEventListener('click', (e) => {
+        if (e.target == modalDetalhes) modalDetalhes.classList.remove('active');
+    });
+
+    function abrirModalDetalhes(cliente) {
+        document.getElementById('detalheNome').textContent = cliente.nome || 'Sem Nome';
+        document.getElementById('detalheCpf').textContent = cliente.cpf || '-';
+        document.getElementById('detalheTelefones').textContent = cliente.numeros || cliente.telefone || '-';
+        document.getElementById('detalheProcessos').textContent = cliente.processo || cliente.processos || '-';
+        
+        // Propriedade do Valor da Causa corrigida
+        document.getElementById('detalheValorCausa').textContent = cliente.valor || '-';
+        
+        document.getElementById('detalheStatus').textContent = cliente.status || '-';
+        document.getElementById('detalheResponsavel').textContent = cliente.responsavel || 'Nenhum / Livre';
+        
+        const formataData = (d) => {
+            const data = converterDataParaDate(d);
+            return data ? data.toLocaleDateString('pt-BR') : '-';
+        };
+        document.getElementById('detalheDataCadastro').textContent = formataData(cliente.dataCadastro);
+        document.getElementById('detalheDataResgate').textContent = formataData(cliente.dataUltimoResgate);
+
+        modalDetalhes.classList.add('active');
+    }
+
+    function showToast(msg){
+        toastEl.innerText = msg;
+        toastEl.style.display = 'block';
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => { toastEl.style.display = 'none'; }, 3000);
+    }
+
+
+    // ================= CACHE LOCAL ROBUSTO (INDEXEDDB) =================
+    // Compartilha a mesma base usada nas páginas Clientes/Jurídico/Andamento.
+    // Assim, se outra página já sincronizou a coleção completa recentemente,
+    // o Funil Geral reaproveita os mesmos dados sem gerar milhares de leituras.
+    const CACHE_DB_NAME = 'amr_crm_cache_db';
+    const CACHE_DB_VERSION = 1;
+    const CACHE_STORE_NAME = 'dados';
+    const CACHE_CLIENTES_KEY = 'clientes_data_v2';
+    const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 horas
+    const REFRESH_COOLDOWN_MS = 30 * 1000;
+
+    let cacheDbPromise = null;
+    let fetchTodosClientesPromise = null;
+    let ultimaSincronizacaoServidor = 0;
+    let timestampBaseCache = 0;
+
+    function abrirCacheDB() {
+        if (cacheDbPromise) return cacheDbPromise;
+
+        cacheDbPromise = new Promise((resolve, reject) => {
+            if (!('indexedDB' in window)) {
+                reject(new Error('IndexedDB não disponível neste navegador.'));
+                return;
+            }
+
+            const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+
+            request.onupgradeneeded = () => {
+                const dbCache = request.result;
+                if (!dbCache.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                    dbCache.createObjectStore(CACHE_STORE_NAME, { keyPath: 'key' });
+                }
+            };
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error || new Error('Erro ao abrir o cache local.'));
+        });
+
+        return cacheDbPromise;
+    }
+
+    async function lerCacheClientes() {
+        try {
+            const dbCache = await abrirCacheDB();
+            const registro = await new Promise((resolve, reject) => {
+                const tx = dbCache.transaction(CACHE_STORE_NAME, 'readonly');
+                const store = tx.objectStore(CACHE_STORE_NAME);
+                const req = store.get(CACHE_CLIENTES_KEY);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+
+            if (!registro || !registro.json) return null;
+            const data = JSON.parse(registro.json);
+            if (!Array.isArray(data)) return null;
+
+            return {
+                data,
+                timestamp: Number(registro.timestamp || 0)
+            };
+        } catch (error) {
+            console.warn('Não foi possível ler o cache IndexedDB:', error);
+            return null;
+        }
+    }
+
+    async function salvarCacheClientes(lista, timestamp = Date.now()) {
+        try {
+            const dbCache = await abrirCacheDB();
+            const registro = {
+                key: CACHE_CLIENTES_KEY,
+                json: JSON.stringify(lista),
+                timestamp: Number(timestamp || Date.now())
+            };
+
+            await new Promise((resolve, reject) => {
+                const tx = dbCache.transaction(CACHE_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(CACHE_STORE_NAME);
+                store.put(registro);
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('Erro ao salvar cache.'));
+                tx.onabort = () => reject(tx.error || new Error('Cache abortado.'));
+            });
+        } catch (error) {
+            // Falhar ao gravar cache não pode derrubar o CRM.
+            console.warn('Não foi possível salvar o cache IndexedDB:', error);
+        }
+    }
+
+    function cacheEstaValido(cache) {
+        if (!cache || !Array.isArray(cache.data)) return false;
+        const idade = Date.now() - Number(cache.timestamp || 0);
+        return idade >= 0 && idade < CACHE_MAX_AGE_MS;
+    }
+
+    // Firestore Timestamp vira objeto simples ao passar por JSON.stringify.
+    // Este helper mantém as regras de 5 dias funcionando tanto com dados vindos
+    // diretamente do Firestore quanto com dados restaurados do IndexedDB.
+    function converterDataParaDate(valor) {
+        if (!valor) return null;
+
+        try {
+            if (typeof valor.toDate === 'function') {
+                const d = valor.toDate();
+                return isNaN(d.getTime()) ? null : d;
+            }
+
+            if (typeof valor === 'object') {
+                const segundos = Number(valor.seconds ?? valor._seconds);
+                const nanos = Number(valor.nanoseconds ?? valor._nanoseconds ?? 0);
+                if (Number.isFinite(segundos)) {
+                    const d = new Date((segundos * 1000) + Math.floor(nanos / 1000000));
+                    return isNaN(d.getTime()) ? null : d;
+                }
+            }
+
+            const d = new Date(valor);
+            return isNaN(d.getTime()) ? null : d;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function buscarTodosClientesNoServidor() {
+        // ÚNICA leitura completa da coleção nesta página.
+        // Só ocorre sem cache válido ou após sincronização manual.
+        const snapshot = await getDocs(collection(db, 'clientes'));
+        const lista = snapshot.docs.map(docData => ({
+            id: docData.id,
+            ...docData.data()
+        }));
+
+        ultimaSincronizacaoServidor = Date.now();
+        timestampBaseCache = ultimaSincronizacaoServidor;
+        await salvarCacheClientes(lista, timestampBaseCache);
+        return lista;
+    }
+
+    async function executarCargaProtegida(forcarServidor = false) {
+        const executar = async () => {
+            // Depois de obter o lock, confere o cache de novo. Se outra aba acabou
+            // de sincronizar, esta aba não repete a leitura completa.
+            if (!forcarServidor) {
+                const cache = await lerCacheClientes();
+                if (cacheEstaValido(cache)) {
+                    timestampBaseCache = cache.timestamp;
+                    return { lista: cache.data, origem: 'cache' };
+                }
+            }
+
+            const lista = await buscarTodosClientesNoServidor();
+            return { lista, origem: 'servidor' };
+        };
+
+        if (navigator.locks && typeof navigator.locks.request === 'function') {
+            return navigator.locks.request('amr_crm_clientes_firestore_sync', executar);
+        }
+
+        return executar();
+    }
+
+    window.forcarAtualizacao = async function() {
+        const agora = Date.now();
+        if (agora - ultimaSincronizacaoServidor < REFRESH_COOLDOWN_MS) {
+            showToast('Os dados já foram sincronizados há poucos segundos.');
+            return;
+        }
+
+        showToast('Buscando dados recentes do servidor...');
+        await fetchTodosClientes({ forcarServidor: true });
+    };
+
+    // Função para calcular dias passados baseados puramente na data do banco/cache
+    function calcularDias(dataAlvo) {
+        if (!dataAlvo) return 0;
+        const data1 = converterDataParaDate(dataAlvo);
+        if (!data1) return 0;
+        const data2 = new Date();
+        const diffTempo = Math.abs(data2 - data1);
+        return Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+    }
+
+    // Carrega todos os clientes priorizando o cache compartilhado.
+    async function fetchTodosClientes(opcoes = {}){
+        const forcarServidor = Boolean(opcoes.forcarServidor);
+
+        if (fetchTodosClientesPromise) {
+            if (!forcarServidor) return fetchTodosClientesPromise;
+            try { await fetchTodosClientesPromise; } catch(e) {}
+        }
+
+        fetchTodosClientesPromise = (async () => {
+            let cacheAnterior = null;
+
+            if (!forcarServidor) {
+                cacheAnterior = await lerCacheClientes();
+                if (cacheEstaValido(cacheAnterior)) {
+                    timestampBaseCache = cacheAnterior.timestamp;
+                    todosClientes = cacheAnterior.data;
+                    renderCards();
+                    return;
+                }
+            }
+
+            try {
+                const resultado = await executarCargaProtegida(forcarServidor);
+                todosClientes = resultado.lista;
+                renderCards();
+
+                if (resultado.origem === 'servidor' && forcarServidor) {
+                    showToast('Dados sincronizados com o servidor!');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar o Funil Geral:', error);
+
+                // Se o servidor falhar, até um cache antigo é melhor do que derrubar a página.
+                const fallback = cacheAnterior || await lerCacheClientes();
+                if (fallback && Array.isArray(fallback.data)) {
+                    timestampBaseCache = fallback.timestamp;
+                    todosClientes = fallback.data;
+                    renderCards();
+                    showToast('Servidor indisponível. Exibindo dados do cache.');
+                } else {
+                    showToast('Erro ao carregar os clientes.');
+                }
+            }
+        })();
+
+        try {
+            await fetchTodosClientesPromise;
+        } finally {
+            fetchTodosClientesPromise = null;
+        }
+    }
+
+    // Ação de Resgatar Cliente (Chamada ao soltar o Drag and Drop)
+    window.resgatarCliente = async function(id) {
+        if(!currentUser) return;
+
+        const docRef = doc(db, "clientes", id);
+        const isoDate = new Date().toISOString();
+        const novoResponsavel = currentUser.email || currentUser.displayName || 'Usuário Autenticado';
+
+        const updates = {
+            userId: currentUser.uid,
+            responsavel: novoResponsavel,
+            dataUltimoResgate: isoDate,
+            status: 'lista-fria'
+        };
+
+        try {
+            // Como os cards podem vir de um cache de até 24h, a transação faz
+            // apenas UMA leitura do cliente escolhido e confirma que ele ainda
+            // está realmente disponível antes de gravar. Isso evita que duas
+            // pessoas resgatem o mesmo card usando telas desatualizadas.
+            const clienteAtualizado = await runTransaction(db, async (transaction) => {
+                const snap = await transaction.get(docRef);
+
+                if (!snap.exists()) {
+                    const erro = new Error('CLIENTE_NAO_ENCONTRADO');
+                    erro.code = 'CLIENTE_NAO_ENCONTRADO';
+                    throw erro;
+                }
+
+                const dadosAtuais = snap.data();
+                const diasDesdeCadastro = calcularDias(dadosAtuais.dataCadastro);
+                const aindaDisponivel = dadosAtuais.status === 'funil-geral' && diasDesdeCadastro > 5;
+
+                if (!aindaDisponivel) {
+                    const erro = new Error('CARD_INDISPONIVEL');
+                    erro.code = 'CARD_INDISPONIVEL';
+                    erro.dadosAtuais = { id: snap.id, ...dadosAtuais };
+                    throw erro;
+                }
+
+                transaction.update(docRef, updates);
+                return { id: snap.id, ...dadosAtuais, ...updates };
+            });
+
+            // Atualiza a memória local sem reler a coleção inteira.
+            const index = todosClientes.findIndex(c => c.id === id);
+            if (index !== -1) {
+                todosClientes[index] = { ...todosClientes[index], ...clienteAtualizado };
+            } else {
+                todosClientes.push(clienteAtualizado);
+            }
+
+            // Atualiza o cache compartilhado sem renovar artificialmente a idade
+            // da última sincronização completa.
+            await salvarCacheClientes(todosClientes, timestampBaseCache || Date.now());
+
+            showToast("🎯 Card resgatado e movido para sua coluna!");
+            renderCards();
+
+        } catch (error) {
+            if (error && error.code === 'CARD_INDISPONIVEL') {
+                const index = todosClientes.findIndex(c => c.id === id);
+                if (index !== -1 && error.dadosAtuais) {
+                    todosClientes[index] = { ...todosClientes[index], ...error.dadosAtuais };
+                    await salvarCacheClientes(todosClientes, timestampBaseCache || Date.now());
+                }
+                renderCards();
+                showToast('Este card não está mais disponível. Os dados locais foram atualizados.');
+                return;
+            }
+
+            console.error(error);
+            showToast("Erro ao resgatar o card.");
+        }
+    };
+
+    // Configurando Drag and Drop nas colunas
+    const colMeusResgates = document.getElementById('col-meus-resgates');
+    
+    colMeusResgates.addEventListener('dragover', (e) => {
+        e.preventDefault(); 
+        colMeusResgates.classList.add('drag-over');
+    });
+
+    colMeusResgates.addEventListener('dragleave', () => {
+        colMeusResgates.classList.remove('drag-over');
+    });
+
+    colMeusResgates.addEventListener('drop', (e) => {
+        e.preventDefault();
+        colMeusResgates.classList.remove('drag-over');
+        
+        const clienteId = e.dataTransfer.getData('text/plain');
+        if(clienteId) {
+            window.resgatarCliente(clienteId);
+        }
+    });
+
+    function renderCards(){
+        const colFunilGeral = document.getElementById('col-funil-geral');
+        const colMeusResgates = document.getElementById('col-meus-resgates');
+        const colOutros = document.getElementById('col-outros');
+        
+        // Limpando colunas
+        colFunilGeral.innerHTML = '<h2>FUNIL GERAL <span style="font-size:11px; opacity:0.6;">Disponíveis (Arraste)</span></h2>';
+        colMeusResgates.innerHTML = '<h2>MEUS RESGATES <span style="font-size:11px; opacity:0.6;">Solte aqui</span></h2>';
+        colOutros.innerHTML = '<h2>RESGATADOS <span style="font-size:11px; opacity:0.6;">Com outros</span></h2>';
+
+        const q = searchInput.value.toLowerCase();
+
+        todosClientes.forEach(cliente => {
+            if (cliente.nome && !cliente.nome.toLowerCase().includes(q)) return;
+
+            // NOVA REGRA BLINDADA DE DISPONIBILIDADE
+            // 1. Apenas cards que O CRM marcou como 'funil-geral'
+            // 2. A data de cadastro tem que ter estourado os 5 dias de segurança
+            const diasDesdeCadastro = calcularDias(cliente.dataCadastro);
+            const disponivel = (cliente.status === 'funil-geral') && (diasDesdeCadastro > 5);
+
+            const diasUltimoResgate = calcularDias(cliente.dataUltimoResgate);
+            const diasPassados = cliente.dataUltimoResgate ? diasUltimoResgate : diasDesdeCadastro;
+            
+            const ehMeu = cliente.userId === currentUser.uid;
+
+            // Se o card não for meu e não estiver disponível, é tratado como "Com Outro", 
+            // mas nós vamos garantir que o status dele na verdade esteja marcando que outro pegou ele.
+            // Para não sujar a tela com cards "dia-1" de terceiros que nem foram pro funil, filtramos:
+            if (!disponivel && !ehMeu && cliente.status !== 'lista-fria') {
+                return; // Esconde da tela cards ativos que estão no funil de outras pessoas.
+            }
+
+            const card = document.createElement('div');
+            
+            if (disponivel) {
+                card.className = 'card disponivel draggable';
+                card.draggable = true; 
+                
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', cliente.id);
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                });
+            } else if (ehMeu && cliente.status === 'lista-fria' && cliente.responsavel === (currentUser.email || currentUser.displayName)) {
+                // Apenas exibe meus resgates se eles foram recém resgatados (estão na minha lista-fria como meus)
+                card.className = 'card meus';
+            } else if (!disponivel && cliente.status === 'lista-fria' && cliente.responsavel) {
+                // Os resgatados de outros
+                card.className = 'card outros';
+            } else {
+                return; // Ignora cards que não encaixam em nenhuma das views do funil geral
+            }
+
+            const primeiroProcesso = cliente.processo ? cliente.processo.split(',')[0].trim() : '-';
+            const primeiroNumero = cliente.numeros ? cliente.numeros.split(',')[0].trim() : '-';
+
+            const responsavelTexto = cliente.responsavel || 'Sem responsável';
+            const dataUltimoResgateObj = converterDataParaDate(cliente.dataUltimoResgate);
+            const dataCadastroObj = converterDataParaDate(cliente.dataCadastro);
+            const dataTexto = dataUltimoResgateObj
+                                ? dataUltimoResgateObj.toLocaleDateString('pt-BR')
+                                : (dataCadastroObj ? dataCadastroObj.toLocaleDateString('pt-BR') : 'Sem registro');
+
+            let corResponsavel = "#9ca3af";
+            if (!disponivel) corResponsavel = ehMeu ? "#60a5fa" : "#f87171";
+
+            card.innerHTML = `
+                <div class="color-bar"></div>
+                <div class="card-content">
+                    <h3>
+                        ${disponivel ? '<span class="drag-handle">⠿</span>' : ''} 
+                        ${cliente.nome}
+                    </h3>
+                    <p><strong>CPF:</strong> ${cliente.cpf || '-'}</p>
+                    <p><strong>Telefone:</strong> ${primeiroNumero}</p>
+                    <p><strong>Processo:</strong> ${primeiroProcesso}</p>
+
+                    <div class="badge-responsavel">
+                        <p style="margin: 0;"><strong>Com:</strong> <span style="color: ${corResponsavel}; font-weight: 500;">${disponivel ? 'Livre' : responsavelTexto}</span></p>
+                        <p style="margin: 0; font-size: 11px; color: #9ca3af;">Ação: ${dataTexto} (${diasPassados} dias)</p>
+                    </div>
+                </div>
+            `;
+
+            // Evento para abrir o Modal (Ignora clique no ícone de Drag)
+            const contentClick = card.querySelector('.card-content');
+            contentClick.addEventListener('click', (e) => {
+                if(e.target.classList.contains('drag-handle')) return;
+                abrirModalDetalhes(cliente);
+            });
+
+            if (disponivel) {
+                colFunilGeral.appendChild(card);
+            } else if (ehMeu) {
+                colMeusResgates.appendChild(card);
+            } else {
+                colOutros.appendChild(card);
+            }
+        });
+    }
+
+    searchInput.oninput = renderCards;
+
+    /* ================= LOGIN ================= */
+    onAuthStateChanged(auth, user => {
+        if(user){
+            currentUser = user;
+            fetchTodosClientes();
+        }else{
+            window.location.href = "login.html";
+        }
+    });
+
+});
+</script>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="window.location.href='crm.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/>
+        <span>CRM</span>
+    </button>
+    <button onclick="window.location.href='funil_geral.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/filter.png"/>
+        <span>Funil Geral</span>
+    </button>
+    
+    <button>
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/>
+        <span>Configurações</span>
+    </button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Funil Geral - Resgate de Cards</h1>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-size: 14px; color: rgba(255,255,255,0.7);">
+                Arraste os cards inativos há mais de 5 dias para a coluna "Meus Resgates".
+            </div>
+            <button class="btn ghost" onclick="forcarAtualizacao()" title="Sincronizar dados com o servidor" style="width:auto; padding:10px 12px; font-size:16px;">🔄</button>
+        </div>
+    </header>
+
+    <div class="search-bar">
+        <input id="searchInput" placeholder="Buscar cliente por nome..." />
+    </div>
+
+    <div class="kanban-container">
+        <main class="kanban" id="kanban">
+            <div class="column" id="col-funil-geral"></div>
+            <div class="column" id="col-meus-resgates"></div>
+            <div class="column" id="col-outros"></div>
+        </main>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL DE DETALHES DO CLIENTE -->
+<div id="modalDetalhes" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeModal">&times;</span>
+        <h2 id="detalheNome">Nome do Cliente</h2>
+        
+        <div class="modal-grid">
+            <div class="modal-field">
+                <label>CPF</label>
+                <span id="detalheCpf"></span>
+            </div>
+            <div class="modal-field">
+                <label>Telefone(s)</label>
+                <span id="detalheTelefones"></span>
+            </div>
+            <div class="modal-field full-width">
+                <label>Processo(s)</label>
+                <span id="detalheProcessos"></span>
+            </div>
+            <div class="modal-field">
+                <label>Valor da Causa</label>
+                <span id="detalheValorCausa"></span>
+            </div>
+            <div class="modal-field">
+                <label>Status Atual</label>
+                <span id="detalheStatus"></span>
+            </div>
+            <div class="modal-field">
+                <label>Data de Cadastro</label>
+                <span id="detalheDataCadastro"></span>
+            </div>
+            <div class="modal-field">
+                <label>Última Movimentação</label>
+                <span id="detalheDataResgate"></span>
+            </div>
+            <div class="modal-field full-width">
+                <label>Responsável Pelo Resgate</label>
+                <span id="detalheResponsavel"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
