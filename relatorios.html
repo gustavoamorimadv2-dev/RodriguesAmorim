@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Relatórios - AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body {
+    display:flex; height:100vh; overflow:hidden;
+    background: radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+                radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+                linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px; display:flex; flex-direction:column; align-items:center;
+    padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10;
+    backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+.sidebar.expanded { width:240px; }
+.sidebar h2 {
+    font-size:22px; font-weight:800; color:#fff; letter-spacing:1px; margin-bottom:30px; 
+    text-align:center; cursor:pointer; width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0;
+}
+.sidebar.expanded h2 { opacity:1; }
+.sidebar button {
+    width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7);
+    display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px;
+    cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px; white-space:nowrap; overflow:hidden;
+}
+.sidebar button img { width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; transition:filter 0.3s; }
+.main.blur { filter:blur(5px) brightness(0.7); }
+
+header { 
+    height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); 
+    display:flex; align-items:center; justify-content:space-between; padding:0 30px; flex-shrink:0; 
+}
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+.content { padding:30px; overflow-y:auto; display:flex; flex-direction:column; gap:20px; }
+
+/* ================= DASHBOARD CARDS ================= */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.stat-card {
+    background:rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px); padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    display: flex; flex-direction: column; gap: 8px; position: relative; overflow: hidden;
+}
+.stat-card h3 { font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+.stat-card .value { font-size: 26px; font-weight: 800; color: #fff; z-index: 2;}
+
+.card-recebido { border-bottom: 4px solid #10b981; }
+.card-aberto { border-bottom: 4px solid #f59e0b; }
+.card-atraso { border-bottom: 4px solid #ef4444; }
+.card-processos { border-bottom: 4px solid #3b82f6; }
+
+/* ================= CHARTS GRID ================= */
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+.chart-box {
+    background:rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    height: 350px; display: flex; flex-direction: column;
+}
+.chart-box.full-width { grid-column: 1 / -1; height: 400px; }
+.chart-box h3 { font-size: 16px; margin-bottom: 15px; color: #fff; font-weight: 600; }
+.chart-container { flex: 1; position: relative; width: 100%; height: 100%; }
+
+/* ================= TABLE ================= */
+.table-wrap {
+    background:rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px); border-radius: 16px; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    overflow-x: auto;
+}
+.table-wrap h3 { font-size: 16px; margin-bottom: 15px; color: #fff; font-weight: 600; }
+table { width:100%; border-collapse:collapse; text-align: left; }
+thead th { padding:12px 15px; font-weight:600; color:rgba(255,255,255,0.6); border-bottom:1px solid rgba(255,255,255,0.1); font-size:13px; text-transform: uppercase; }
+tbody td { padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.05); color:#fff; font-size:14px; vertical-align: middle;}
+.col-money { text-align: right; font-weight: 600; }
+.text-pago { color: #10b981; }
+.text-aberto { color: #f59e0b; }
+.text-atraso { color: #ef4444; }
+
+/* Toast */
+.toast{
+    position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff;
+    padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none; z-index:9999; font-size:14px; font-weight: 500;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="location.href='crm.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/><span>CRM</span></button>
+    <button onclick="location.href='relatorios.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png"/><span>Relatórios</span></button>
+    <button onclick="location.href='agenda.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/><span>Agenda</span></button>
+    <button onclick="location.href='contatos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/contacts.png"/><span>Contatos</span></button>
+    <button onclick="window.location.href='clientes.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/><span>Clientes</span></button>
+    <button onclick="window.location.href='processos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/><span>Processos</span></button>
+    <button><img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/><span>Configurações</span></button>
+</div>
+
+<main class="main" id="mainContent">
+<header>
+    <h1>Dashboard Operacional e Financeiro</h1>
+</header>
+<div class="content">
+    
+    <div class="stats-grid">
+        <div class="stat-card card-processos">
+            <h3>Processos Fechados</h3>
+            <div class="value" id="valFechados">0</div>
+            <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 5px;" id="valAndamento">0 em andamento</p>
+        </div>
+        <div class="stat-card card-recebido">
+            <h3>Total Recebido</h3>
+            <div class="value text-pago" id="valRecebido">R$ 0,00</div>
+        </div>
+        <div class="stat-card card-aberto">
+            <h3>Total a Receber (No Prazo)</h3>
+            <div class="value text-aberto" id="valAberto">R$ 0,00</div>
+        </div>
+        <div class="stat-card card-atraso">
+            <h3>Inadimplência (Em Atraso)</h3>
+            <div class="value text-atraso" id="valAtraso">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-box">
+            <h3>Desempenho por Colaborador / Vendedor</h3>
+            <div class="chart-container"><canvas id="chartColaboradores"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <h3>Status Global de Cadastros</h3>
+            <div class="chart-container"><canvas id="chartStatus"></canvas></div>
+        </div>
+    </div>
+
+    <section class="table-wrap">
+        <h3>Detalhamento de Clientes e Recebíveis</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th>Status Processo</th>
+                    <th class="col-money">Total Pago</th>
+                    <th class="col-money">Total a Receber</th>
+                    <th class="col-money">Total em Atraso</th>
+                </tr>
+            </thead>
+            <tbody id="clientesTable">
+                <tr><td colspan="6" style="text-align:center;padding:18px;color:rgba(255,255,255,0.4)">Carregando relatórios...</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+// Config Firebase (Mantido conforme seu arquivo original)
+const firebaseConfig = {
+   apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// DOM Sidebar
+const sidebar = document.getElementById("sidebar");
+const mainContent = document.getElementById("mainContent");
+sidebar.addEventListener('mouseenter', () => { sidebar.classList.add('expanded'); mainContent.classList.add('blur'); });
+sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('expanded'); mainContent.classList.remove('blur'); });
+
+// Configuração Global Chart.js para Dark Mode
+Chart.defaults.color = 'rgba(255,255,255,0.6)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.05)';
+
+// Instâncias dos Gráficos
+let chartColaboradores, chartStatus;
+const toastEl = document.getElementById('toast');
+
+// Helpers
+function showToast(msg){
+    toastEl.textContent=msg;
+    toastEl.style.display='block';
+    clearTimeout(toastEl._t);
+    toastEl._t=setTimeout(()=>toastEl.style.display='none',3000);
+}
+function formatBRL(value){ return Number(value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+function obterStatusEfetivo(parcela) {
+    if (parcela.status === "Pago") return "Pago";
+    if (parcela.vencimento) {
+        const dataVencimento = new Date(parcela.vencimento + "T23:59:59");
+        const hoje = new Date();
+        if (dataVencimento < hoje) return "Atrasado";
+    }
+    return "Pendente";
+}
+
+// Carregar Dados e Processar Relatórios
+async function carregarDados(){
+    try{
+        const q = query(collection(db, "clientes")); // Busca todos os clientes
+        const snapshot = await getDocs(q);
+        const allClients = snapshot.docs.map(d=>({id:d.id, ...d.data()}));
+        
+        processarRelatorios(allClients);
+        
+    } catch(e){ 
+        console.error(e); 
+        showToast('Erro ao carregar banco de dados para os relatórios.'); 
+    }
+}
+
+function processarRelatorios(clientes) {
+    let totais = { recebido: 0, aberto: 0, atraso: 0, andamento: 0, fechado: 0 };
+    let colaboradores = {}; // Para o gráfico de vendedores
+    let dadosTabela = [];
+
+    clientes.forEach(c => {
+        // 1. Contagem de Status de Processo
+        const isFechado = c.status === 'fechado';
+        if (isFechado) totais.fechado++;
+        else totais.andamento++;
+
+        // 2. Agrupamento por Colaborador/Vendedor
+        const vendedor = c.vendedor && c.vendedor.trim() !== "" ? c.vendedor : "Não Informado";
+        if (!colaboradores[vendedor]) {
+            colaboradores[vendedor] = { quantidade: 0, valorGerado: 0 };
+        }
+        colaboradores[vendedor].quantidade++;
+
+        // 3. Processamento Financeiro do Cliente
+        let financeiroCliente = { pago: 0, aberto: 0, atraso: 0 };
+        const honorarios = c.honorarios || [];
+
+        honorarios.forEach(h => {
+            const val = parseFloat(h.valor.replace(/\./g, '').replace(',', '.')) || 0;
+            const statusParc = obterStatusEfetivo(h);
+
+            if (statusParc === "Pago") {
+                financeiroCliente.pago += val;
+                totais.recebido += val;
+                colaboradores[vendedor].valorGerado += val;
+            } else if (statusParc === "Atrasado") {
+                financeiroCliente.atraso += val;
+                totais.atraso += val;
+            } else {
+                financeiroCliente.aberto += val;
+                totais.aberto += val;
+            }
+        });
+
+        // Adiciona à lista da tabela
+        dadosTabela.push({
+            nome: c.nome || "Cliente sem nome",
+            vendedor: vendedor,
+            statusProcesso: isFechado ? "Fechado" : "Em Andamento",
+            isFechado: isFechado,
+            financeiro: financeiroCliente
+        });
+    });
+
+    atualizarCardsTopo(totais);
+    renderizarGraficos(totais, colaboradores);
+    renderizarTabela(dadosTabela);
+}
+
+function atualizarCardsTopo(totais) {
+    document.getElementById('valFechados').innerText = totais.fechado;
+    document.getElementById('valAndamento').innerText = `${totais.andamento} processos em andamento`;
+    document.getElementById('valRecebido').innerText = formatBRL(totais.recebido);
+    document.getElementById('valAberto').innerText = formatBRL(totais.aberto);
+    document.getElementById('valAtraso').innerText = formatBRL(totais.atraso);
+}
+
+function renderizarGraficos(totais, colaboradores) {
+    const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+    // Gráfico 1: Colaboradores (BarChart)
+    const nomesVendedores = Object.keys(colaboradores);
+    const valorPorVendedor = nomesVendedores.map(v => colaboradores[v].valorGerado);
+
+    if(chartColaboradores) chartColaboradores.destroy();
+    chartColaboradores = new Chart(document.getElementById('chartColaboradores').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: nomesVendedores,
+            datasets: [{ 
+                label: 'Receita Gerada (R$)', 
+                data: valorPorVendedor, 
+                backgroundColor: '#3b82f6', 
+                borderRadius: 6
+            }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR') } } }
+        }
+    });
+
+    // Gráfico 2: Status dos Processos (Doughnut)
+    if(chartStatus) chartStatus.destroy();
+    chartStatus = new Chart(document.getElementById('chartStatus').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Fechados', 'Em Andamento'],
+            datasets: [{ 
+                data: [totais.fechado, totais.andamento], 
+                backgroundColor: ['#10b981', '#3b82f6'], 
+                borderWidth: 0 
+            }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false, 
+            plugins: { legend: { position: 'bottom' } } 
+        }
+    });
+}
+
+function renderizarTabela(dados) {
+    const tbody = document.getElementById('clientesTable');
+    tbody.innerHTML = '';
+
+    if(dados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:18px;color:rgba(255,255,255,0.4)">Nenhum cliente registrado.</td></tr>';
+        return;
+    }
+
+    // Ordenar tabela: Fechados primeiro
+    dados.sort((a, b) => (a.isFechado === b.isFechado) ? 0 : a.isFechado ? -1 : 1);
+
+    dados.forEach(c => {
+        const badgeStatus = c.isFechado 
+            ? `<span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">Fechado</span>`
+            : `<span style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">Em Andamento</span>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${c.nome}</strong></td>
+            <td><span style="color: rgba(255,255,255,0.6);">${c.vendedor}</span></td>
+            <td>${badgeStatus}</td>
+            <td class="col-money text-pago">${c.financeiro.pago > 0 ? formatBRL(c.financeiro.pago) : '-'}</td>
+            <td class="col-money text-aberto">${c.financeiro.aberto > 0 ? formatBRL(c.financeiro.aberto) : '-'}</td>
+            <td class="col-money text-atraso">${c.financeiro.atraso > 0 ? formatBRL(c.financeiro.atraso) : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Iniciar a busca ao carregar a página
+carregarDados();
+</script>
+
+</body>
+</html>
