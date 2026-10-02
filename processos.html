@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Processos - CRM AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body { 
+    display:flex; height:100vh; overflow:hidden; transition:filter 0.3s; 
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px; display:flex; flex-direction:column; align-items:center;
+    padding:20px 0; flex-shrink:0; transition:width 0.4s ease; position:relative; z-index:10;
+    backdrop-filter:blur(30px); background:rgba(255,255,255,0.06); border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+.sidebar.expanded { width:240px; }
+.sidebar h2 {
+    font-size:22px; font-weight:800; color:#fff;
+    letter-spacing:1px; margin-bottom:30px; text-align:center; cursor:pointer;
+    width:100%; white-space:nowrap; overflow:hidden; transition:opacity 0.3s; opacity:0;
+}
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px); background:transparent; border:none; color:rgba(255,255,255,0.7);
+    display:flex; align-items:center; gap:15px; padding:12px 15px; margin:5px 10px;
+    cursor:pointer; border-radius:14px; transition:all 0.3s; font-size:14px;
+    white-space:nowrap; overflow:hidden;
+}
+.sidebar button img { width:24px; height:24px; filter:invert(1) opacity(0.7); flex-shrink:0; transition:transform 0.3s, filter 0.3s; }
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; transition:filter 0.3s; }
+.main.blur { filter:blur(5px) brightness(0.7); }
+
+header { 
+    height:70px; background:transparent; border-bottom:1px solid rgba(255,255,255,0.08); 
+    display:flex; align-items:center; justify-content:space-between; padding:0 30px; flex-shrink:0; 
+}
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+/* ================= SEARCH ================= */
+#searchInput {
+    padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; color:#fff; font-size: 14px; outline: none; transition: 0.3s;
+    backdrop-filter: blur(10px); width: 280px;
+}
+#searchInput:focus { background:rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+#searchInput::placeholder { color: rgba(255,255,255,0.5); }
+
+/* ================= KANBAN COLUNAS ================= */
+.kanban-container { flex: 1; overflow-x: auto; padding: 30px; display: flex; gap: 30px; align-items: flex-start; }
+.column {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 20px;
+    min-width: 380px;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.column-header { 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.column-header h2 { font-size: 15px; color: #fff; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0;}
+.column-header .count { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.cards-list { display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 5px; flex: 1; }
+
+/* ================= CARDS ================= */
+.card { 
+    display:flex; background:rgba(255,255,255,0.05); backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,0.08); border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.15);
+    cursor:pointer; overflow:hidden; transition:transform 0.3s, background 0.3s; 
+    min-height:160px; flex-direction:row; position:relative; width:100%; flex-shrink: 0;
+}
+.card:hover { transform:translateY(-5px); background:rgba(255,255,255,0.08); }
+.card .color-bar { width:6px; height:100%; border-radius:16px 0 0 16px; background:#10b981; }
+
+.card-content { padding:20px; flex:1; display:flex; flex-direction:column; justify-content:flex-start; }
+.card h3 { font-size:18px; margin-bottom:12px; color:#fff; font-weight:700; padding-right: 90px; word-break: break-word;}
+.card p { font-size:13px; color:rgba(255,255,255,0.7); margin:4px 0; }
+.card p strong { color: #fff; font-weight: 600; }
+
+.latest-update {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.latest-update .title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
+.latest-update .text { font-size: 13px; color: #fff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+.latest-update .date { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px;}
+
+/* ================= MODAL ================= */
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); justify-content:center; align-items:center; z-index:50; }
+.modal { background:#0f172a; border:1px solid rgba(255,255,255,0.1); padding:24px; border-radius:24px; min-width:320px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 50px rgba(0,0,0,0.5); }
+.modal h3 { margin-bottom:5px; font-size:20px; font-weight:700; color:#fff; }
+.modal .subtitle { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+
+.process-section { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 16px; margin-bottom: 20px; }
+.process-section h4 { font-size: 15px; color: #10b981; margin-bottom: 12px; }
+
+.modal input, .modal textarea { 
+    width:100%; padding:12px 16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px; color:#fff; font-size:14px; outline:none; transition:0.3s; margin-bottom: 12px; font-family: inherit;
+}
+.modal input:focus, .modal textarea:focus { background:rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+.modal input::placeholder, .modal textarea::placeholder { color: rgba(255,255,255,0.4); }
+
+/* ================= TIMELINE DE ANDAMENTOS ================= */
+.timeline {
+    margin-top: 20px;
+    padding-left: 18px;
+    border-left: 2px solid rgba(16, 185, 129, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+.timeline::-webkit-scrollbar { width: 4px; }
+
+.hist-card { 
+    position: relative; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.05); 
+    padding:12px 15px; border-radius:12px; font-size:13px; color:#fff; display:flex; flex-direction: column; gap: 5px;
+}
+.hist-card::before {
+    content: ''; position: absolute; left: -25px; top: 16px; width: 10px; height: 10px;
+    background: #10b981; border-radius: 50%; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+.hist-card span.date { font-size:11px; color:rgba(255,255,255,0.4); font-weight: 500;}
+
+/* ================= BUTTONS ================= */
+.modal .actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+.btn { padding:10px 18px; border-radius:12px; border:0; cursor:pointer; font-weight:600; font-size:14px; transition:0.3s; }
+.btn.primary { background:#fff; color:#111827; }
+.btn.primary:hover { transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,255,255,0.2); }
+.btn.ghost { background:rgba(255,255,255,0.12); color:#fff; }
+.btn.ghost:hover { background:rgba(255,255,255,0.2); }
+.btn-green { background:#25d366; color:#fff; display: flex; align-items: center; gap: 8px;}
+.btn-green:hover { background:#20b958; transform:translateY(-2px); box-shadow:0 5px 15px rgba(37, 211, 102, 0.3); }
+
+/* Toast */
+.toast {
+    position:fixed; right:30px; bottom:30px; background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color:#fff;
+    padding:12px 20px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none; z-index:9999; font-size:14px; font-weight: 500;
+}
+
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const colAberto = document.getElementById("col-aberto");
+const colAtualizado = document.getElementById("col-atualizado");
+const countAberto = document.getElementById("countAberto");
+const countAtualizado = document.getElementById("countAtualizado");
+
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalTitle = document.getElementById("modalTitle");
+const processosForm = document.getElementById("processosForm");
+const processosContainer = document.getElementById("processosContainer");
+const msgWhatsapp = document.getElementById("msgWhatsapp");
+
+const header = document.querySelector("header");
+const mainContent = document.querySelector(".main");
+const sidebar = document.querySelector(".sidebar");
+const toastEl = document.getElementById("toast");
+
+// Sidebar hover + blur
+sidebar.addEventListener('mouseenter', () => { sidebar.classList.add('expanded'); mainContent.classList.add('blur'); });
+sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('expanded'); mainContent.classList.remove('blur'); });
+
+// Search Input creation
+const searchInput = document.createElement("input");
+searchInput.id = "searchInput";
+searchInput.placeholder = "Pesquisar por nome ou processo...";
+header.appendChild(searchInput);
+
+let clienteAtual = null;
+
+function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.style.display = 'block';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.style.display = 'none', 3000);
+}
+
+// Calcula os dias desde a última atualização no WPP
+function getDias(isoDate) {
+    if (!isoDate) return 999;
+    const diffMs = new Date().getTime() - new Date(isoDate).getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+async function carregarClientes() {
+    colAberto.innerHTML = "";
+    colAtualizado.innerHTML = "";
+    let totalAberto = 0;
+    let totalAtualizado = 0;
+
+    const snapshot = await getDocs(collection(db,"clientes"));
+    
+    snapshot.forEach(docSnap => {
+        const cliente = { id: docSnap.id, ...docSnap.data() };
+        
+        // Regra: Só entram aqui os clientes que foram "fechados" no CRM
+        if (cliente.status === "fechado") {
+            
+            let statusCol = cliente.statusAndamento || 'aberto';
+            const diasUltimo = getDias(cliente.dataUltimoAndamento);
+
+            // Regra do Sistema: Volta para 'Em Aberto' automaticamente após 10 dias
+            if (statusCol === 'atualizado' && diasUltimo >= 10) {
+                statusCol = 'aberto';
+                updateDoc(doc(db, "clientes", cliente.id), { statusAndamento: 'aberto' }); // Atualiza no banco silenciosamente
+            }
+
+            const card = criarElementoCard(cliente, statusCol, diasUltimo);
+
+            if (statusCol === 'atualizado') {
+                colAtualizado.appendChild(card);
+                totalAtualizado++;
+            } else {
+                colAberto.appendChild(card);
+                totalAberto++;
+            }
+        }
+    });
+
+    countAberto.innerText = totalAberto;
+    countAtualizado.innerText = totalAtualizado;
+}
+
+function criarElementoCard(cliente, statusCol, diasUltimo) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = () => abrirModal(cliente);
+
+    const colorBar = document.createElement("div");
+    colorBar.className = "color-bar";
+    
+    // Cor condicional da barra lateral e textos dependendo da coluna
+    if (statusCol === 'aberto') {
+        colorBar.style.background = "#ef4444"; // Vermelho - Pendente
+    } else {
+        colorBar.style.background = "#10b981"; // Verde - Atualizado
+    }
+    card.appendChild(colorBar);
+
+    let ultimaMov = "Aguardando primeira atualização...";
+    let dataMov = "";
+    
+    // Puxa a última informação interna apenas como referência visual no Card
+    if (cliente.processos) {
+        const numProcessos = Object.keys(cliente.processos);
+        if (numProcessos.length > 0) {
+            const primeiroProcesso = numProcessos[0];
+            const historico = cliente.processos[primeiroProcesso].historico || [];
+            if(historico.length > 0) {
+                const lastIndex = historico.length - 1;
+                ultimaMov = historico[lastIndex].text;
+                dataMov = historico[lastIndex].data;
+            }
+        }
+    }
+
+    let tagDias = "";
+    if (statusCol === 'atualizado') {
+        tagDias = `<span style="font-size:10px; background:rgba(16,185,129,0.2); color:#10b981; padding:4px 8px; border-radius:10px; position:absolute; top:15px; right:15px; font-weight:700;">Atualizado há ${diasUltimo}d</span>`;
+    } else {
+        tagDias = `<span style="font-size:10px; background:rgba(239,68,68,0.2); color:#ef4444; padding:4px 8px; border-radius:10px; position:absolute; top:15px; right:15px; font-weight:700;">Pendente</span>`;
+    }
+
+    const titleColor = statusCol === 'aberto' ? '#ef4444' : '#10b981';
+
+    const content = document.createElement("div");
+    content.className = "card-content";
+    content.innerHTML = `
+        ${tagDias}
+        <h3>${cliente.nome}</h3>
+        <p><strong>CPF:</strong> ${cliente.cpf||"-"}</p>
+        <p><strong>Processo:</strong> ${cliente.processo||"-"}</p>
+        
+        <div class="latest-update">
+            <span class="title" style="color: ${titleColor}">Último Andamento Interno</span>
+            <span class="text">${ultimaMov}</span>
+            <span class="date">${dataMov}</span>
+        </div>
+    `;
+    card.appendChild(content);
+
+    return card;
+}
+
+searchInput.addEventListener("input", () => {
+    const termo = searchInput.value.toLowerCase();
+    const cards = document.querySelectorAll(".card");
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(termo) ? "flex" : "none";
+    });
+});
+
+async function abrirModal(cliente) {
+    clienteAtual = cliente;
+    const docRef = doc(db,"clientes",cliente.id);
+    const docSnap = await getDoc(docRef);
+    const clienteData = docSnap.exists() ? docSnap.data() : {};
+
+    modalTitle.textContent = `Andamento: ${cliente.nome}`;
+    processosContainer.innerHTML = "";
+    msgWhatsapp.value = ""; // Limpa a caixa do whatsapp sempre que abrir o modal
+
+    const processos = cliente.processo ? cliente.processo.split(",").map(p => p.trim()) : [];
+    
+    processos.forEach(numero => {
+        if(!numero) return; 
+        
+        const valor = clienteData?.processos?.[numero]?.valorCausa || "";
+        const historico = clienteData?.processos?.[numero]?.historico || [];
+        const historicoReverso = [...historico].reverse(); 
+
+        const section = document.createElement("div");
+        section.className = "process-section";
+        section.innerHTML = `
+            <h4>Processo Nº ${numero}</h4>
+            <input type="text" placeholder="Valor da causa (Ex: R$ 50.000,00)" data-numero="${numero}" data-field="valorCausa" value="${valor}"/>
+            <input type="text" placeholder="Registro interno: Descreva a nova movimentação (Não vai p/ cliente)" data-numero="${numero}" data-field="novaMovimentacao" value=""/>
+            
+            <div class="timeline" id="hist-${numero}">
+                ${historicoReverso.map(mov => `
+                    <div class="hist-card">
+                        ${mov.text}
+                        <span class="date">${mov.data}</span>
+                    </div>
+                `).join("")}
+            </div>
+        `;
+        processosContainer.appendChild(section);
+    });
+
+    modalBackdrop.style.display = "flex";
+}
+
+function agoraFormatado() {
+    const d = new Date();
+    return d.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+}
+
+// Previne o "Enter" de atualizar a página aleatoriamente
+processosForm.onsubmit = (e) => e.preventDefault();
+
+document.getElementById("btnCancel").onclick = () => { modalBackdrop.style.display = "none"; };
+document.getElementById("btnApenasSalvar").onclick = () => salvarAndamento(false);
+document.getElementById("btnEnviarWa").onclick = () => salvarAndamento(true);
+
+async function salvarAndamento(enviarWhatsapp) {
+    if (!clienteAtual) return;
+
+    const textoWa = msgWhatsapp.value.trim();
+    
+    if (enviarWhatsapp && !textoWa) {
+        showToast("Escreva a mensagem do WhatsApp na caixa verde antes de enviar!");
+        return;
+    }
+
+    const btnApenas = document.getElementById("btnApenasSalvar");
+    const btnWa = document.getElementById("btnEnviarWa");
+    
+    btnApenas.disabled = true;
+    btnWa.disabled = true;
+
+    // Dispara o WhatsApp Web instantaneamente antes de carregar o Firebase para o pop-up blocker não travar
+    if (enviarWhatsapp) {
+        const num = clienteAtual.numeros ? clienteAtual.numeros.split(',')[0].replace(/\D/g, '') : '';
+        if (num) {
+            window.open(`https://wa.me/55${num}?text=${encodeURIComponent(textoWa)}`, '_blank');
+        } else {
+            showToast("Aviso: Cliente não tem telefone cadastrado. Movimentando card assim mesmo.");
+        }
+    }
+
+    const payload = {};
+    const historicoUpdates = {};
+
+    // Atualiza colunas e data se o WhatsApp foi enviado
+    if (enviarWhatsapp) {
+        payload.statusAndamento = 'atualizado';
+        payload.dataUltimoAndamento = new Date().toISOString();
+    }
+
+    // Varre os inputs internos
+    processosContainer.querySelectorAll("input").forEach(input => {
+        const numero = input.dataset.numero;
+        const field = input.dataset.field;
+        const value = input.value.trim();
+
+        if (field === "valorCausa") {
+            payload[`processos.${numero}.valorCausa`] = value;
+        }
+
+        if (field === "novaMovimentacao" && value !== "") {
+            if (!historicoUpdates[numero]) historicoUpdates[numero] = [];
+            historicoUpdates[numero].push({ text: value, data: agoraFormatado() });
+        }
+    });
+
+    try {
+        const docRef = doc(db,"clientes",clienteAtual.id);
+        
+        // Salva os campos normais e a troca de coluna se houver
+        if (Object.keys(payload).length > 0) {
+            await updateDoc(docRef, payload);
+        }
+
+        // Salva o histórico das anotações internas
+        for (const numero in historicoUpdates) {
+            for (const mov of historicoUpdates[numero]) {
+                await updateDoc(docRef, { [`processos.${numero}.historico`]: arrayUnion(mov) });
+            }
+        }
+
+        showToast(enviarWhatsapp ? "Enviado! O card foi atualizado." : "Anotação salva com sucesso!");
+        modalBackdrop.style.display = "none";
+        
+        // Recarrega as colunas instantaneamente
+        carregarClientes(); 
+
+    } catch (error) {
+        console.error("Erro ao salvar processo:", error);
+        showToast("Erro de conexão ao salvar. Tente novamente.");
+    } finally {
+        btnApenas.disabled = false;
+        btnWa.disabled = false;
+    }
+}
+
+// Fechar modal clicando fora
+modalBackdrop.addEventListener('click', (e) => {
+    if(e.target === modalBackdrop) {
+        modalBackdrop.style.display = 'none';
+    }
+});
+
+carregarClientes();
+</script>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="location.href='index.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/><span>CRM</span></button>
+    <button onclick="window.location.href='relatorios.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/combo-chart.png"/><span>Relatórios</span></button>
+    <button onclick="window.location.href='agenda.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/calendar.png"/><span>Agenda</span></button>
+    <button onclick="window.location.href='contatos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/contacts.png"/><span>Contatos</span></button>
+    <button onclick="window.location.href='clientes.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/><span>Clientes</span></button>
+    <button class="active-menu" onclick="window.location.href='processos.html'"><img src="https://img.icons8.com/ios-filled/50/ffffff/file.png"/><span>Processos</span></button>
+    <button><img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/><span>Configurações</span></button>
+</div>
+
+<div class="main">
+    <header>
+        <div>
+            <h1>Acompanhamento Processual</h1>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 5px;">Gestão de andamentos e comunicados aos clientes do jurídico.</div>
+        </div>
+    </header>
+
+    <div class="kanban-container">
+        
+        <!-- COLUNA: EM ABERTO -->
+        <div class="column">
+            <div class="column-header">
+                <h2>Em Aberto <span style="font-size: 10px; color: rgba(239, 68, 68, 0.8); text-transform:none; margin-left: 5px;">(Aguardando andamento)</span></h2>
+                <span class="count" id="countAberto">0</span>
+            </div>
+            <div id="col-aberto" class="cards-list"></div>
+        </div>
+
+        <!-- COLUNA: ATUALIZADOS -->
+        <div class="column">
+            <div class="column-header">
+                <h2>Atualizados <span style="font-size: 10px; color: rgba(16, 185, 129, 0.8); text-transform:none; margin-left: 5px;">(Retorna automático em 10 dias)</span></h2>
+                <span class="count" id="countAtualizado">0</span>
+            </div>
+            <div id="col-atualizado" class="cards-list"></div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <h3 id="modalTitle">Processos</h3>
+        <p class="subtitle">Registre as movimentações internas ou informe o cliente.</p>
+        
+        <form id="processosForm">
+            <div id="processosContainer"></div>
+            
+            <div class="process-section" style="border-color: #25d366; background: rgba(37, 211, 102, 0.05);">
+                <h4 style="color: #25d366; display: flex; align-items: center; gap: 8px;">
+                    <img src="https://img.icons8.com/ios-glyphs/30/25d366/whatsapp.png" style="width: 20px;">
+                    Mensagem de Andamento para o Cliente
+                </h4>
+                <textarea id="msgWhatsapp" rows="4" placeholder="Olá, passando para informar que tivemos uma atualização no seu processo referente a..."></textarea>
+                <span style="font-size: 11px; color: rgba(255,255,255,0.5);">Esta mensagem abrirá direto no WhatsApp Web e moverá o card para "Atualizados".</span>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn ghost" id="btnCancel">Fechar</button>
+                <button type="button" class="btn primary" id="btnApenasSalvar" title="Salva apenas o histórico interno sem notificar o cliente.">Apenas Salvar Interno</button>
+                <button type="button" class="btn btn-green" id="btnEnviarWa">
+                    Salvar e Enviar WhatsApp
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
