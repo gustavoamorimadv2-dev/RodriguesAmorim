@@ -72,7 +72,7 @@ header h1{ font-size:24px; color:#fff; font-weight:800; }
     cursor: pointer;
 }
 .func-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.08); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-.func-card h3 { font-size: 18px; margin-bottom: 2px; color: #fff; }
+.func-card h3 { font-size: 18px; margin-bottom: 2px; color: #fff; word-break: break-word; overflow-wrap: anywhere; }
 .func-card p.email { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 15px; }
 .func-card p.cargo { font-size: 12px; color: #6ee7b7; font-weight: 600; margin-bottom: 5px; text-transform: uppercase; }
 
@@ -555,17 +555,118 @@ document.addEventListener('DOMContentLoaded', () => {
         gridFuncionarios.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Carregando dados da equipe...</p>';
 
         try {
+            // Mantém as três leituras que o painel já utilizava.
             const funcSnap = await getDocs(collection(db, "funcionarios"));
-            const funcionariosAtivos = funcSnap.docs.map(d => ({ id: d.id, statusConta: 'Ativo', ...d.data() }));
+            const funcionariosAtivos = funcSnap.docs.map(d => ({
+                id: d.id,
+                statusConta: 'Ativo',
+                origemCadastro: 'funcionarios',
+                ...d.data()
+            }));
 
             const preSnap = await getDocs(collection(db, "pre_cadastros"));
-            const preCadastros = preSnap.docs.map(d => ({ id: d.id, statusConta: 'Aguardando 1º Acesso', ...d.data() }));
-
-            const todosFuncionarios = [...funcionariosAtivos, ...preCadastros];
-            todosFuncionariosCache = todosFuncionarios;
+            const preCadastros = preSnap.docs.map(d => ({
+                id: d.id,
+                statusConta: 'Aguardando 1º Acesso',
+                origemCadastro: 'pre_cadastros',
+                ...d.data()
+            }));
 
             const clientesSnap = await getDocs(collection(db, "clientes"));
-            window.todosClientes = clientesSnap.docs.map(d => ({ id: d.id, ...d.data() })); 
+            window.todosClientes = clientesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // ==============================================================
+            // USUÁRIOS DO CRM
+            // ==============================================================
+            // Além das coleções funcionarios/pre_cadastros, o painel passa a
+            // reconhecer automaticamente os usuários que já fizeram cadastros
+            // de clientes. O vínculo é feito pelo UID e, principalmente, pelo
+            // e-mail salvo em "criadoPor" no momento do cadastro.
+            //
+            // Dessa forma, mesmo que a coleção "funcionarios" esteja vazia,
+            // os usuários que realmente utilizam o CRM aparecem no painel.
+            const todosFuncionarios = [...funcionariosAtivos, ...preCadastros];
+
+            window.todosClientes.forEach(cliente => {
+                const emailCliente = normalizarEmail(
+                    cliente.criadoPor ||
+                    cliente.emailUsuario ||
+                    cliente.usuarioEmail ||
+                    cliente.cadastradoPorEmail
+                );
+
+                const uidCliente = (cliente.userId || '').toString().trim();
+
+                // Para esta tela o identificador visível é o e-mail.
+                // Clientes antigos sem e-mail continuam contando na visão geral,
+                // mas não geram um cartão sem identificação.
+                if (!emailCliente) return;
+
+                const existente = todosFuncionarios.find(func => {
+                    const emailFunc = normalizarEmail(func.email);
+                    const funcId = (func.id || '').toString().trim();
+                    const authUid = (func.authUid || func.uid || '').toString().trim();
+
+                    return emailFunc === emailCliente ||
+                           (uidCliente && (funcId === uidCliente || authUid === uidCliente));
+                });
+
+                if (existente) {
+                    // Completa dados faltantes sem alterar o documento no Firebase.
+                    if (!existente.email) existente.email = emailCliente;
+                    if (!existente.authUid && uidCliente) existente.authUid = uidCliente;
+                    return;
+                }
+
+                // Usuário encontrado através dos próprios cadastros do CRM.
+                todosFuncionarios.push({
+                    id: uidCliente || `email::${emailCliente}`,
+                    authUid: uidCliente || '',
+                    email: emailCliente,
+                    nome: emailCliente,
+                    cargo: 'Usuário CRM',
+                    statusConta: 'Ativo',
+                    origemCadastro: 'clientes'
+                });
+            });
+
+            // Remove eventuais duplicidades de e-mail/UID mantendo preferencialmente
+            // o cadastro oficial de funcionarios ou pre_cadastros.
+            const usuariosUnicos = [];
+            todosFuncionarios.forEach(func => {
+                const emailFunc = normalizarEmail(func.email);
+                const uidFunc = (func.authUid || func.uid || func.id || '').toString().trim();
+
+                const duplicado = usuariosUnicos.find(u => {
+                    const emailU = normalizarEmail(u.email);
+                    const uidU = (u.authUid || u.uid || u.id || '').toString().trim();
+                    return (emailFunc && emailU === emailFunc) || (uidFunc && uidU === uidFunc);
+                });
+
+                if (!duplicado) {
+                    usuariosUnicos.push(func);
+                } else {
+                    // Se o primeiro veio apenas dos clientes e agora existe um cadastro
+                    // oficial, preserva o cadastro oficial e seus dados/cargo.
+                    const atualEhDerivado = duplicado.origemCadastro === 'clientes';
+                    const novoEhOficial = func.origemCadastro !== 'clientes';
+                    if (atualEhDerivado && novoEhOficial) {
+                        const idx = usuariosUnicos.indexOf(duplicado);
+                        usuariosUnicos[idx] = {
+                            ...duplicado,
+                            ...func,
+                            email: func.email || duplicado.email,
+                            authUid: func.authUid || duplicado.authUid || ''
+                        };
+                    } else {
+                        if (!duplicado.email && func.email) duplicado.email = func.email;
+                        if (!duplicado.authUid && func.authUid) duplicado.authUid = func.authUid;
+                    }
+                }
+            });
+
+            usuariosUnicos.sort((a, b) => normalizarEmail(a.email).localeCompare(normalizarEmail(b.email), 'pt-BR'));
+            todosFuncionariosCache = usuariosUnicos;
 
             // ================== LÓGICA DO PAINEL GERAL ==================
             let totalListaFria = 0;
@@ -614,16 +715,19 @@ document.addEventListener('DOMContentLoaded', () => {
             mapaFuncionarios = {};
             mapaFuncionariosEmail = {};
 
-            if (todosFuncionarios.length === 0) {
-                gridFuncionarios.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Nenhum funcionário cadastrado ainda.</p>';
+            if (usuariosUnicos.length === 0) {
+                gridFuncionarios.innerHTML = '<p style="color: rgba(255,255,255,0.5);">Nenhum usuário com cadastro identificado ainda.</p>';
             } else {
-                todosFuncionarios.forEach(func => {
-                    mapaFuncionarios[func.id] = func.nome;
-                    mapaFuncionariosEmail[func.id] = normalizarEmail(func.email);
+                usuariosUnicos.forEach(func => {
+                    const emailExibicao = normalizarEmail(func.email) || 'E-mail não identificado';
+                    const idUsuario = (func.id || func.authUid || `email::${emailExibicao}`).toString();
+                    const uidExibicao = (func.authUid || func.uid || '').toString().trim();
 
-                    // Conta os clientes pelo UID do Auth e também pelo e-mail que ficou
-                    // gravado em "criadoPor". Assim cadastros feitos por usuários que
-                    // entraram com e-mail continuam aparecendo no desempenho correto.
+                    // No painel, o nome do usuário passa a ser o próprio e-mail.
+                    mapaFuncionarios[idUsuario] = emailExibicao;
+                    if (uidExibicao) mapaFuncionarios[uidExibicao] = emailExibicao;
+                    mapaFuncionariosEmail[idUsuario] = emailExibicao;
+
                     const clientesDoFunc = window.todosClientes.filter(c => clientePertenceAoFuncionario(c, func));
                     
                     const cadastrosHoje = clientesDoFunc.filter(c => c.dataCadastro && c.dataCadastro.startsWith(dataHojeStr)).length;
@@ -642,35 +746,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     const naListaFria = clientesDoFunc.filter(c => c.status === 'lista-fria').length;
                     const fechados = clientesDoFunc.filter(c => c.status === 'fechado').length;
                     
-                    const cargoExibicao = func.cargo ? func.cargo : 'Vendedor';
+                    const cargoExibicao = func.cargo ? func.cargo : 'Usuário CRM';
 
                     const card = document.createElement('div');
                     card.className = 'func-card';
-                    card.setAttribute('onclick', `window.abrirRelatorio('${func.id}', '${func.nome}')`);
+                    card.onclick = () => window.abrirRelatorio(idUsuario, emailExibicao);
                     
                     const corStatus = func.statusConta === 'Ativo' ? '#10b981' : '#f59e0b';
 
-                    // PERMISSÕES PARA EDITAR: Administrador, Diretor ou CEO
-                    const podeEditar = ['Diretor', 'CEO', 'Administrador'].includes(window.currentUserCargo) || window.isSuperAdmin;
+                    // Mantém o botão de edição somente para cadastros que realmente
+                    // existem em funcionarios/pre_cadastros. Usuários descobertos a
+                    // partir dos clientes não possuem um documento de funcionário para editar.
+                    const podeEditar = (['Diretor', 'CEO', 'Administrador'].includes(window.currentUserCargo) || window.isSuperAdmin)
+                        && func.origemCadastro !== 'clientes';
                     
                     let btnEditarHTML = '';
                     if(podeEditar) {
                         btnEditarHTML = `
-                            <button class="btn btn-outline" style="width: 100%; margin-top: 5px; font-size: 12px; border-color: rgba(245, 158, 11, 0.5); color: #fcd34d;" onclick="window.abrirModalEditar(event, '${func.id}', '${func.statusConta}', '${func.nome}', '${cargoExibicao}')">
+                            <button class="btn btn-outline btn-editar-func" style="width: 100%; margin-top: 5px; font-size: 12px; border-color: rgba(245, 158, 11, 0.5); color: #fcd34d;">
                                 ✏️ Editar Cadastro
                             </button>
                         `;
                     }
 
                     card.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div>
-                                <h3>${func.nome}</h3>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                            <div style="min-width:0; flex:1;">
+                                <h3>${emailExibicao}</h3>
                                 <p class="cargo">${cargoExibicao}</p>
                             </div>
-                            <span style="font-size:10px; background:${corStatus}20; color:${corStatus}; border:1px solid ${corStatus}40; padding:2px 6px; border-radius:10px; font-weight:600;">${func.statusConta}</span>
+                            <span style="font-size:10px; background:${corStatus}20; color:${corStatus}; border:1px solid ${corStatus}40; padding:2px 6px; border-radius:10px; font-weight:600; flex-shrink:0;">${func.statusConta || 'Ativo'}</span>
                         </div>
-                        <p class="email">${func.email}</p>
+                        <p class="email">${uidExibicao ? `UID: ${uidExibicao}` : 'Identificado pelo e-mail dos cadastros'}</p>
 
                         <div style="flex:1;">
                             <div class="stat-row">
@@ -699,11 +806,28 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
 
-                        <button class="btn btn-outline" style="width: 100%; margin-top: 15px; font-size: 12px;" onclick="window.abrirModalTarefa(event, '${func.id}', '${func.nome}')">
+                        <button class="btn btn-outline btn-criar-tarefa" style="width: 100%; margin-top: 15px; font-size: 12px;">
                             + Criar Tarefa
                         </button>
                         ${btnEditarHTML}
                     `;
+
+                    const btnTarefaCard = card.querySelector('.btn-criar-tarefa');
+                    if (btnTarefaCard) {
+                        btnTarefaCard.onclick = (event) => window.abrirModalTarefa(event, idUsuario, emailExibicao);
+                    }
+
+                    const btnEditarCard = card.querySelector('.btn-editar-func');
+                    if (btnEditarCard) {
+                        btnEditarCard.onclick = (event) => window.abrirModalEditar(
+                            event,
+                            func.id,
+                            func.statusConta,
+                            func.nome || '',
+                            cargoExibicao
+                        );
+                    }
+
                     gridFuncionarios.appendChild(card);
                 });
             }
