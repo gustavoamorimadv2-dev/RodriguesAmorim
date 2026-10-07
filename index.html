@@ -221,6 +221,75 @@ header h1{
     flex:1;
 }
 
+/* ================= RESULTADOS DA BUSCA GLOBAL ================= */
+.global-search-results{
+    display:none;
+    margin:0 30px;
+    max-height:260px;
+    overflow-y:auto;
+    background:rgba(15,23,42,0.98);
+    border:1px solid rgba(255,255,255,0.12);
+    border-top:none;
+    border-radius:0 0 14px 14px;
+    box-shadow:0 16px 35px rgba(0,0,0,0.35);
+    z-index:30;
+    flex-shrink:0;
+}
+
+.global-search-item{
+    padding:12px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+}
+
+.global-search-item:last-child{
+    border-bottom:none;
+}
+
+.global-search-main{
+    min-width:0;
+}
+
+.global-search-name{
+    font-size:14px;
+    font-weight:700;
+    color:#fff;
+    margin-bottom:4px;
+}
+
+.global-search-meta{
+    font-size:12px;
+    color:rgba(255,255,255,0.65);
+    line-height:1.5;
+    word-break:break-word;
+}
+
+.global-search-badge{
+    white-space:nowrap;
+    font-size:11px;
+    font-weight:700;
+    padding:5px 8px;
+    border-radius:999px;
+    background:rgba(59,130,246,0.16);
+    border:1px solid rgba(59,130,246,0.35);
+    color:#93c5fd;
+}
+
+.global-search-badge.own{
+    background:rgba(16,185,129,0.14);
+    border-color:rgba(16,185,129,0.35);
+    color:#6ee7b7;
+}
+
+.global-search-empty{
+    padding:14px 16px;
+    font-size:13px;
+    color:rgba(255,255,255,0.65);
+}
+
 select option {
     background: #111827;
     color: #fff;
@@ -789,6 +858,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnAdd){
         btnAdd.onclick = () => {
             openModal(false);
+            // Carrega a base global uma única vez por sessão para validar processo duplicado.
+            if (!clientesGlobaisCarregados) carregarClientesGlobais(true);
         };
     }
     
@@ -829,6 +900,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentUser = null;
     let todosClientesCache = []; 
+    let clientesGlobaisCache = [];
+    let clientesGlobaisCarregados = false;
 
     /* ================= VARIÁVEIS AGENTE WHATSAPP ================= */
     const btnAgente = document.getElementById('btnAgente');
@@ -889,6 +962,35 @@ document.addEventListener('DOMContentLoaded', () => {
             id: docData.id,
             ...docData.data()
         }));
+    }
+
+    async function getClientesGlobais(){
+        if(!currentUser){
+            return [];
+        }
+
+        const snapshot = await getDocs(collection(db, "clientes"));
+        return snapshot.docs.map(docData => ({
+            id: docData.id,
+            ...docData.data()
+        }));
+    }
+
+    async function carregarClientesGlobais(silencioso = false){
+        if (clientesGlobaisCarregados) return true;
+
+        try {
+            clientesGlobaisCache = await getClientesGlobais();
+            clientesGlobaisCarregados = true;
+            return true;
+        } catch (error) {
+            console.error("Erro ao carregar clientes globais:", error);
+            clientesGlobaisCarregados = false;
+            if (!silencioso) {
+                showToast("Não foi possível consultar todos os clientes do escritório. Verifique as permissões do Firestore.");
+            }
+            return false;
+        }
     }
 
     async function saveCliente(cliente){
@@ -1246,7 +1348,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const cleanVal = val.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
             if(cleanVal === '') return;
 
-            const existe = todosClientesCache.some(c => {
+            const baseDuplicidade = clientesGlobaisCarregados ? clientesGlobaisCache : todosClientesCache;
+            const existe = baseDuplicidade.some(c => {
                if (clientForm.dataset.editId && c.id === clientForm.dataset.editId) return false;
                if (!c.processo) return false;
                const processosCadastrados = c.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
@@ -1465,6 +1568,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // <-- CORRIGIDO: Remove do cache local para manter a busca correta
                         todosClientesCache = todosClientesCache.filter(c => c.id !== cliente.id);
+                        clientesGlobaisCache = clientesGlobaisCache.filter(c => c.id !== cliente.id);
                         atualizarContadores();
                         atualizarInfosHoje();
                     } catch (error) {}
@@ -1578,6 +1682,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function render(){
         const clientes = await getClientes();
         todosClientesCache = clientes; 
+
+        // O Kanban continua mostrando SOMENTE os clientes do funcionário logado.
+        // A base global só é carregada quando o usuário pesquisar ou abrir um novo cadastro.
+        if (!clientesGlobaisCarregados) clientesGlobaisCache = [...clientes];
 
         let countListaFriaHoje = 0;
         let countDia1Hoje = 0;
@@ -1693,19 +1801,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const processos = Array.from(document.querySelectorAll('.inputProcesso')).map(i => i.value.trim()).filter(v => v);
             if (processos.length > 0) {
+                if (!clientesGlobaisCarregados) {
+                    const carregouGlobal = await carregarClientesGlobais(false);
+                    if (!carregouGlobal) {
+                        showToast("Não foi possível validar o processo na base geral. O cliente não foi salvo.");
+                        return;
+                    }
+                }
+
                 let processoDuplicado = null;
-                
-                const clientesGlobais = await getDocs(collection(db, "clientes"));
+                const baseDuplicidade = clientesGlobaisCache;
                 
                 for (let proc of processos) {
                     const cleanInputProc = proc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
                     if(!cleanInputProc) continue;
                     
-                    const clienteExistente = clientesGlobais.docs.find(doc => {
-                        if (clientForm.dataset.editId && doc.id === clientForm.dataset.editId) return false;
-                        const data = doc.data();
-                        if (!data.processo) return false;
-                        return data.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()).includes(cleanInputProc);
+                    const clienteExistente = baseDuplicidade.find(cliente => {
+                        if (clientForm.dataset.editId && cliente.id === clientForm.dataset.editId) return false;
+                        if (!cliente.processo) return false;
+                        return cliente.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()).includes(cleanInputProc);
                     });
                     
                     if (clienteExistente) { processoDuplicado = proc; break; }
@@ -1756,6 +1870,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Atualiza a memória e recria só esse card (Zero leituras na nuvem)
                 const index = todosClientesCache.findIndex(c => c.id === novo.id);
                 if(index !== -1) todosClientesCache[index] = novo;
+
+                const globalIndex = clientesGlobaisCache.findIndex(c => c.id === novo.id);
+                if(globalIndex !== -1) clientesGlobaisCache[globalIndex] = novo;
+                else clientesGlobaisCache.push(novo);
                 
                 const cardAntigo = document.querySelector(`.card[data-id="${novo.id}"]`);
                 if(cardAntigo) cardAntigo.remove();
@@ -1769,6 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Adiciona na memória local (Zero leituras na nuvem)
                 todosClientesCache.push(novo);
+                clientesGlobaisCache.push(novo);
                 criarCard(novo);
             }
             
@@ -1872,23 +1991,109 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ================= FILTROS ================= */
+    const globalSearchResults = document.getElementById('globalSearchResults');
+
+    function normalizarBusca(valor){
+        return (valor || '')
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    }
+
+    function escapeHtml(valor){
+        return (valor ?? '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderResultadosBuscaGlobal(rawQ){
+        if (!globalSearchResults) return;
+
+        const q = normalizarBusca(rawQ);
+        if (!q) {
+            globalSearchResults.style.display = 'none';
+            globalSearchResults.innerHTML = '';
+            return;
+        }
+
+        const base = clientesGlobaisCarregados ? clientesGlobaisCache : todosClientesCache;
+        const encontrados = base.filter(cliente => {
+            const nome = normalizarBusca(cliente.nome);
+            const cpf = normalizarBusca(cliente.cpf);
+            const processo = normalizarBusca(cliente.processo);
+            const numeros = normalizarBusca(cliente.numeros);
+            return nome.includes(q) || cpf.includes(q) || processo.includes(q) || numeros.includes(q);
+        }).slice(0, 100);
+
+        globalSearchResults.innerHTML = '';
+        globalSearchResults.style.display = 'block';
+
+        if (!clientesGlobaisCarregados) {
+            const aviso = document.createElement('div');
+            aviso.className = 'global-search-empty';
+            aviso.style.color = '#fbbf24';
+            aviso.innerText = 'A busca global não pôde ser carregada. Exibindo somente os seus clientes.';
+            globalSearchResults.appendChild(aviso);
+        }
+
+        if (encontrados.length === 0) {
+            const vazio = document.createElement('div');
+            vazio.className = 'global-search-empty';
+            vazio.innerText = 'Nenhum cliente cadastrado encontrado para esta busca.';
+            globalSearchResults.appendChild(vazio);
+            return;
+        }
+
+        encontrados.forEach(cliente => {
+            const item = document.createElement('div');
+            item.className = 'global-search-item';
+
+            const isOwn = currentUser && cliente.userId === currentUser.uid;
+            const processoTexto = cliente.processo || '-';
+            const cpfTexto = cliente.cpf || '-';
+            const statusTexto = (cliente.status || 'sem-status').replace(/-/g, ' ');
+
+            item.innerHTML = `
+                <div class="global-search-main">
+                    <div class="global-search-name">${escapeHtml(cliente.nome || 'Sem nome')}</div>
+                    <div class="global-search-meta">
+                        CPF/CNPJ: ${escapeHtml(cpfTexto)} &nbsp;•&nbsp; Processo: ${escapeHtml(processoTexto)} &nbsp;•&nbsp; Status: ${escapeHtml(statusTexto)}
+                    </div>
+                </div>
+                <span class="global-search-badge ${isOwn ? 'own' : ''}">${isOwn ? 'Seu cliente' : 'Já cadastrado'}</span>
+            `;
+
+            globalSearchResults.appendChild(item);
+        });
+    }
+
     function filtragemAplicada(){
         const rawQ = searchInput.value;
         const q = rawQ.toLowerCase();
         const filterS = filterStatus.value;
         
+        // O quadro continua filtrando SOMENTE os cards do funcionário logado.
         Object.values(cardsMap).forEach(card => {
             const matchSearch = (card.dataset.nome || '').includes(q) || (card.dataset.cpf || '').includes(q) || (card.dataset.processo || '').includes(q);
             const matchStatus = !filterS || card.dataset.status === filterS;
             card.style.display = (matchSearch && matchStatus) ? 'flex' : 'none';
         });
 
-        // NOVA IMPLEMENTAÇÃO: Verificar no cache se o processo já existe (Zero leituras no Firebase)
+        // A busca informativa usa TODOS os clientes cadastrados no escritório.
+        renderResultadosBuscaGlobal(rawQ);
+
+        // Verifica processo em toda a base global carregada, sem novas leituras a cada tecla.
         let processoExiste = false;
         const cleanQ = rawQ.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const baseDuplicidade = clientesGlobaisCarregados ? clientesGlobaisCache : todosClientesCache;
 
         if (cleanQ !== '') {
-            processoExiste = todosClientesCache.some(c => {
+            processoExiste = baseDuplicidade.some(c => {
                 if (!c.processo) return false;
                 const processosCadastrados = c.processo.split(',').map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase());
                 return processosCadastrados.includes(cleanQ);
@@ -1896,15 +2101,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (processoExiste) {
-            searchInput.style.color = '#ef4444'; // Vermelho se existir
+            searchInput.style.color = '#ef4444';
             searchInput.style.fontWeight = '600'; 
         } else {
-            searchInput.style.color = '#fff'; // Branco padrão
+            searchInput.style.color = '#fff';
             searchInput.style.fontWeight = 'normal';
         }
     }
 
-    searchInput.oninput = filtragemAplicada;
+    searchInput.oninput = async () => {
+        if (searchInput.value.trim() && !clientesGlobaisCarregados) {
+            await carregarClientesGlobais(true);
+        }
+        filtragemAplicada();
+    };
     filterStatus.onchange = filtragemAplicada;
 
     /* ================= LOGIN ================= */
@@ -2007,6 +2217,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <option value="fechado">Fechado</option>
     </select>
 </div>
+
+<div id="globalSearchResults" class="global-search-results"></div>
 
 <div class="kanban-container">
 <main class="kanban" id="kanban">
