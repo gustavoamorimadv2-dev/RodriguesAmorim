@@ -726,16 +726,17 @@ import {
 /* ================= CONFIGURAÇÃO DE DOCUMENTOS DO CLIENTE ================= */
 const DOCUMENTOS_CONFIG = [
     // Obrigatórios
+    { id: 'contrato', label: 'Contrato de honorários', obrigatorio: true },
     { id: 'procuracao', label: 'Procuração', obrigatorio: true },
     { id: 'declaracao_hipossuficiencia', label: 'Declaração de hipossuficiência', obrigatorio: true },
-    { id: 'contrato', label: 'Contrato de honorários', obrigatorio: true },
-    { id: 'identidade', label: 'Documento de identificação', obrigatorio: true },
+    { id: 'comprovante_pagamento', label: 'Comprovante de pagamento', obrigatorio: true },
+    { id: 'identidade', label: 'RG', obrigatorio: true },
     { id: 'comprovante_residencia', label: 'Comprovante de residência', obrigatorio: true },
-    { id: 'extratos_bancarios', label: 'Últimos 3 extratos bancários', obrigatorio: true },
-    { id: 'comprovante_renda', label: 'Últimos 3 comprovantes de renda', obrigatorio: true },
-    { id: 'imposto_renda', label: 'Última Declaração de Imposto de Renda e recibo de entrega', obrigatorio: true },
     
     // Complementares
+    { id: 'extratos_bancarios', label: 'Últimos 3 extratos bancários', obrigatorio: false },
+    { id: 'comprovante_renda', label: 'Últimos 3 comprovantes de renda', obrigatorio: false },
+    { id: 'imposto_renda', label: 'Última Declaração de Imposto de Renda e recibo de entrega', obrigatorio: false },
     { id: 'despesas_mensais', label: 'Comprovantes de despesas mensais', obrigatorio: false },
     { id: 'faturas_cartao', label: 'Últimas 3 faturas do cartão de crédito', obrigatorio: false },
     { id: 'peticao_inicial', label: 'Petição Inicial', obrigatorio: false },
