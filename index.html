@@ -896,7 +896,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const docsListContainer = document.getElementById('docsListContainer');
     const uploadProgress = document.getElementById('uploadProgress');
     
-    let currentDocs = {}; 
+    let currentDocs = {};
+    let uploadInProgress = false;
+    let pendingDocumentWrite = Promise.resolve();
+    let modalSession = 0;
     window.currentUploadDocId = null; 
 
     let currentUser = null;
@@ -1110,6 +1113,57 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    /* ================= PERSISTÊNCIA SEGURA DE DOCUMENTOS ================= */
+    function uploadErrorMessage(error) {
+        const code = error && error.code ? error.code : 'erro-desconhecido';
+        const messages = {
+            'storage/unauthorized': 'Sem permissão no Firebase Storage. Confira as regras de acesso.',
+            'storage/unauthenticated': 'Sessão expirada. Faça login novamente.',
+            'storage/quota-exceeded': 'A cota do Firebase Storage foi excedida.',
+            'storage/bucket-not-found': 'Bucket do Firebase Storage não encontrado. Verifique a configuração.',
+            'storage/retry-limit-exceeded': 'Tempo de envio excedido. Verifique a conexão.',
+            'permission-denied': 'Sem permissão para atualizar os documentos no Firestore.',
+            'unavailable': 'Firebase temporariamente indisponível. Tente novamente.'
+        };
+        return `${messages[code] || error.message || 'Falha desconhecida'} (${code})`;
+    }
+
+    function atualizarDocumentoNoCache(clienteId, documentos) {
+        [todosClientesCache, clientesGlobaisCache].forEach(cache => {
+            const cliente = cache.find(item => item.id === clienteId);
+            if (cliente) cliente.documentos = JSON.parse(JSON.stringify(documentos));
+        });
+        const cardAntigo = document.querySelector(`.card[data-id="${clienteId}"]`);
+        const cliente = todosClientesCache.find(item => item.id === clienteId);
+        if (cardAntigo && cliente) {
+            cardAntigo.remove();
+            criarCard(cliente);
+            filtragemAplicada();
+            atualizarContadores();
+        }
+    }
+
+    // Para clientes já cadastrados, grava o vínculo imediatamente.
+    // A fila impede duas atualizações simultâneas de sobrescreverem documentos.
+    function persistirDocumentosDoCliente(clienteId, documentos) {
+        if (!clienteId) return Promise.resolve();
+        const snapshot = JSON.parse(JSON.stringify(documentos));
+        const gravacao = pendingDocumentWrite.catch(() => {}).then(async () => {
+            await updateDoc(doc(db, 'clientes', clienteId), { documentos: snapshot });
+            atualizarDocumentoNoCache(clienteId, snapshot);
+        });
+        pendingDocumentWrite = gravacao;
+        return gravacao;
+    }
+
+    function documentoEstaSendoEnviado() {
+        if (uploadInProgress) {
+            showToast('Aguarde o término do envio dos documentos.');
+            return true;
+        }
+        return false;
+    }
+
     /* ================= UPLOAD ESPECÍFICO ================= */
 
     function renderDocsList() {
@@ -1164,9 +1218,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const btnRem = document.createElement('button');
                     btnRem.type = 'button';
                     btnRem.innerText = 'X';
-                    btnRem.onclick = () => {
+                    btnRem.onclick = async () => {
+                        if (documentoEstaSendoEnviado()) return;
+                        const antes = JSON.parse(JSON.stringify(currentDocs));
                         currentDocs[docConf.id].splice(idx, 1);
                         renderDocsList();
+                        const clienteId = clientForm.dataset.editId;
+                        if (clienteId) {
+                            try {
+                                await persistirDocumentosDoCliente(clienteId, currentDocs);
+                                showToast('Vínculo do documento removido do cadastro.');
+                            } catch (error) {
+                                console.error('Erro ao remover documento do cadastro:', error);
+                                currentDocs = antes;
+                                renderDocsList();
+                                showToast('Não foi possível salvar a remoção: ' + uploadErrorMessage(error));
+                            }
+                        }
                     };
                     fRow.appendChild(btnRem);
                     filesContainer.appendChild(fRow);
@@ -1186,49 +1254,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     inputFile.onchange = async (e) => {
-        if (!storage) {
-            showToast("Erro: Serviço de arquivos do Firebase não configurado");
+        const files = Array.from(e.target.files || []);
+        inputFile.value = '';
+        if (!files.length) return;
+        if (uploadInProgress) {
+            showToast('Aguarde a conclusão do envio anterior.');
+            return;
+        }
+        if (!storage || !currentUser) {
+            showToast('Storage indisponível ou usuário não autenticado.');
             return;
         }
 
-        const files = Array.from(e.target.files);
-        if (!files.length || !currentUser) return;
-        
+        const selectedDocId = window.currentUploadDocId || 'outros';
+        const session = modalSession;
+        const clienteId = clientForm.dataset.editId || null;
+        uploadInProgress = true;
         uploadProgress.style.display = 'block';
         uploadProgress.style.color = '#f59e0b';
-        uploadProgress.innerText = `Enviando ${files.length} arquivo(s)... Aguarde.`;
-        
-        let errorOccurred = false;
-
+        let errors = [];
+        let uploaded = 0;
+        const submitBtn = clientForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        if (btnCancel) btnCancel.disabled = true;
         try {
-            for (let file of files) {
+            for (const file of files) {
+                uploadProgress.innerText = `Enviando documento ${uploaded + errors.length + 1} de ${files.length}: ${file.name}`;
                 try {
-                    const uniqueName = Date.now() + "_" + file.name;
+                    // Mantém o caminho anterior para não exigir mudança nas regras do Storage.
+                    const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2, 12)}_${file.name.replace(/[\/]/g, '_')}`;
                     const storageRef = ref(storage, `documentos/${currentUser.uid}/${uniqueName}`);
-                    await uploadBytes(storageRef, file);
+                    await uploadBytes(storageRef, file, { contentType: file.type || 'application/octet-stream' });
                     const url = await getDownloadURL(storageRef);
-                    
-                    const docId = window.currentUploadDocId || 'outros';
-                    if (!currentDocs[docId]) currentDocs[docId] = [];
-                    currentDocs[docId].push({ name: file.name, url: url });
-
+                    if (modalSession !== session) throw new Error('O cadastro mudou durante o envio.');
+                    const antes = JSON.parse(JSON.stringify(currentDocs));
+                    if (!Array.isArray(currentDocs[selectedDocId])) currentDocs[selectedDocId] = [];
+                    currentDocs[selectedDocId].push({ name: file.name, url });
+                    try {
+                        if (clienteId) await persistirDocumentosDoCliente(clienteId, currentDocs);
+                    } catch (error) {
+                        currentDocs = antes;
+                        throw error;
+                    }
+                    uploaded++;
+                    renderDocsList();
                 } catch (error) {
-                    console.error("Erro no upload:", error);
-                    errorOccurred = true;
-                    showToast("Erro ao enviar: " + file.name);
+                    console.error('Falha ao enviar ou vincular documento:', file.name, error);
+                    errors.push(`${file.name}: ${uploadErrorMessage(error)}`);
                 }
             }
-        } finally {
-            if (errorOccurred) {
+            if (errors.length) {
                 uploadProgress.style.color = '#ef4444';
-                uploadProgress.innerText = 'Erro ao salvar. Verifique permissões.';
-                setTimeout(() => { uploadProgress.style.display = 'none'; }, 5000);
+                uploadProgress.innerText = `${uploaded} enviado(s), ${errors.length} com erro. ${errors.join(' | ')}`;
+                showToast('Falha em documento(s): ' + errors[0]);
             } else {
                 uploadProgress.style.color = '#10b981';
-                uploadProgress.innerText = 'Upload concluído com sucesso!';
-                setTimeout(() => { uploadProgress.style.display = 'none'; }, 2000);
+                uploadProgress.innerText = clienteId
+                    ? 'Documentos enviados e vinculados ao cliente no Firestore.'
+                    : 'Documentos enviados. Clique em Salvar para vinculá-los ao novo cliente.';
+                showToast(uploadProgress.innerText);
             }
-            inputFile.value = ''; 
+        } finally {
+            uploadInProgress = false;
+            if (submitBtn) submitBtn.disabled = false;
+            if (btnCancel) btnCancel.disabled = false;
             renderDocsList();
         }
     };
@@ -1245,6 +1334,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ================= MODAL ================= */
 
     function openModal(edit = false, data = null){
+        if (documentoEstaSendoEnviado()) return;
+        modalSession++;
+        uploadProgress.style.display = 'none';
         modalBackdrop.style.display = 'flex';
         document.getElementById('modalTitle').innerText = edit ? "Editar Cliente" : "Novo Cliente";
         processosContainer.innerHTML = '';
@@ -1311,6 +1403,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeModal(){
+        if (documentoEstaSendoEnviado()) return;
+        modalSession++;
         modalBackdrop.style.display = 'none';
         uploadProgress.style.display = 'none';
     }
@@ -1791,6 +1885,7 @@ document.addEventListener('DOMContentLoaded', () => {
    /* ================= FORM ================= */
     clientForm.onsubmit = async function(e){
         e.preventDefault();
+        if (documentoEstaSendoEnviado()) return;
         const submitBtn = clientForm.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn.innerText;
         submitBtn.disabled = true;
@@ -1899,7 +1994,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // REMOVIDO o "await render()" que causava o vazamento de leituras!
             
         } catch (error) {
-            showToast("Erro inesperado ao salvar!");
+            console.error('Erro ao salvar cliente e documentos:', error);
+            showToast('Erro ao salvar cliente: ' + uploadErrorMessage(error));
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = originalBtnText;
