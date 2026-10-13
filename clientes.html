@@ -84,6 +84,17 @@ header h1 { font-size:24px; color:#fff; font-weight:800; }
 .resumo-atraso { border-bottom: 4px solid #ef4444; cursor: pointer; }
 .resumo-atraso:hover { transform: translateY(-2px); background: rgba(239, 68, 68, 0.1); }
 
+/* ================= PREVISÃO DE RECEITA E AVISOS ================= */
+.resumo-previsto { border-bottom:4px solid #38bdf8; cursor:pointer; }
+.resumo-previsto .value { color:#7dd3fc; }
+.resumo-previsto:hover { background:rgba(56,189,248,.12); transform:translateY(-2px); }
+.card.vencimento-proximo { border:2px solid #f59e0b; box-shadow:0 0 0 1px rgba(245,158,11,.2),0 8px 30px rgba(245,158,11,.15); }
+.card.vencimento-proximo .color-bar { background:#f59e0b !important; }
+.aviso-vencimento { border:1px solid rgba(245,158,11,.6); background:rgba(245,158,11,.16); color:#fbbf24; padding:9px 10px; margin:6px 0; border-radius:9px; font-size:12px; font-weight:700; line-height:1.4; }
+.previsao-tabela { width:100%; border-collapse:collapse; font-size:13px; }
+.previsao-tabela th,.previsao-tabela td { padding:12px 8px; border-bottom:1px solid rgba(255,255,255,.1); text-align:left; }
+.previsao-tabela th { color:#94a3b8; }
+.previsao-tabela td:last-child,.previsao-tabela th:last-child { text-align:right; }
 /* ================= SEARCH ================= */
 .search-container { padding: 25px 30px 0 30px; flex-shrink: 0; display: flex; gap: 15px; flex-wrap: wrap; }
 
@@ -253,6 +264,11 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
         <div class="resumo-card resumo-aberto">
             <span class="title">Total em Aberto</span>
             <span class="value" id="resumoAberto">R$ 0,00</span>
+        </div>
+        <div class="resumo-card resumo-previsto" onclick="abrirModalReceitaPrevista()" title="Abrir detalhamento da previsão de recebimentos">
+            <span class="title">Receita prevista · próximo mês</span>
+            <span class="value" id="resumoPrevisto">R$ 0,00</span>
+            <span style="font-size:11px;color:#94a3b8;">Somente a próxima parcela não paga por cliente · ver detalhes ↗</span>
         </div>
         <div class="resumo-card resumo-atraso" onclick="toggleFiltroAtrasados()" title="Clique para filtrar apenas devedores">
             <span class="title">Total em Atraso</span>
@@ -463,6 +479,16 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
     </div>
 </div>
 
+<div class="modal-backdrop" id="modalReceitaPrevista" onclick="if(event.target===this)fecharModalReceitaPrevista()">
+    <div class="modal modal-large">
+        <div class="modal-header"><h3>Receita prevista — próximo mês</h3><button class="btn-close" onclick="fecharModalReceitaPrevista()">✖</button></div>
+        <p style="color:#94a3b8;font-size:13px;line-height:1.6;margin-bottom:16px">Considera somente a parcela não paga com vencimento mais antigo de cada cliente. Quando ela for marcada como paga, a próxima passa a ser considerada. Parcelas atrasadas permanecem na fila até serem quitadas. Apenas vencimentos do próximo mês entram no total.</p>
+        <h2 id="previsaoTotalModal" style="color:#7dd3fc;margin-bottom:8px">R$ 0,00</h2>
+        <p id="previsaoQuantidade" style="font-size:12px;color:#94a3b8;margin-bottom:15px"></p>
+        <div style="overflow-x:auto"><table class="previsao-tabela"><thead><tr><th>Cliente</th><th>Vencimento</th><th>Situação</th><th>Próxima parcela</th></tr></thead><tbody id="previsaoLinhas"></tbody></table></div>
+        <div class="actions"><button class="btn ghost" onclick="fecharModalReceitaPrevista()">Fechar</button></div>
+    </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -555,6 +581,50 @@ function obterStatusEfetivo(parcela) {
     return "Pendente";
 }
 
+// Calcula exclusivamente com os clientes já carregados, sem leituras extras no Firebase.
+function obterDataParcela(valor) {
+    if (!valor) return null;
+    const texto = String(valor);
+    const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
+    if (!partes) return null;
+    const data = new Date(Number(partes[1]), Number(partes[2])-1, Number(partes[3]));
+    if (data.getFullYear() !== Number(partes[1]) || data.getMonth() !== Number(partes[2])-1 || data.getDate() !== Number(partes[3])) return null;
+    return data;
+}
+function hojeSemHorario() { const hoje=new Date(); return new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate()); }
+function proximaParcelaNaoPaga(cliente) {
+    const parcelas = Array.isArray(cliente.honorarios) ? cliente.honorarios : [];
+    return parcelas.filter(h=>h && obterStatusEfetivo(h)!=='Pago' && obterDataParcela(h.vencimento))
+        .sort((a,b)=>obterDataParcela(a.vencimento)-obterDataParcela(b.vencimento))[0] || null;
+}
+function previsaoProximoMes() {
+    const hoje=hojeSemHorario();
+    const primeiro=new Date(hoje.getFullYear(),hoje.getMonth()+1,1);
+    const limite=new Date(hoje.getFullYear(),hoje.getMonth()+2,1);
+    const itens=[];
+    clientesData.forEach(cliente=>{
+        const parcela=proximaParcelaNaoPaga(cliente);
+        if(!parcela)return;
+        const data=obterDataParcela(parcela.vencimento);
+        if(data>=primeiro && data<limite)itens.push({cliente,parcela,data,valor:converterMoedaParaFloat(String(parcela.valor||'0'))||0});
+    });
+    itens.sort((a,b)=>a.data-b.data);
+    return {itens,total:itens.reduce((s,i)=>s+i.valor,0),mes:primeiro.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})};
+}
+function escapePrevisao(valor) { return String(valor??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function atualizarReceitaPrevista() {
+    const previsao=previsaoProximoMes();
+    const resumo=document.getElementById('resumoPrevisto');
+    if(resumo)resumo.textContent=formatarFloatParaMoeda(previsao.total);
+    const titulo=document.querySelector('#modalReceitaPrevista h3');
+    if(titulo)titulo.textContent='Receita prevista — '+previsao.mes;
+    document.getElementById('previsaoTotalModal').textContent=formatarFloatParaMoeda(previsao.total);
+    document.getElementById('previsaoQuantidade').textContent=previsao.itens.length+' cliente(s) com próxima parcela no mês selecionado';
+    document.getElementById('previsaoLinhas').innerHTML=previsao.itens.map(i=>`<tr><td>${escapePrevisao(i.cliente.nome||'Sem nome')}</td><td>${i.data.toLocaleDateString('pt-BR')}</td><td>${escapePrevisao(obterStatusEfetivo(i.parcela))}</td><td>${formatarFloatParaMoeda(i.valor)}</td></tr>`).join('') || '<tr><td colspan="4">Nenhuma próxima parcela prevista para o mês.</td></tr>';
+}
+window.abrirModalReceitaPrevista=function(){atualizarReceitaPrevista();document.getElementById('modalReceitaPrevista').style.display='flex';};
+window.fecharModalReceitaPrevista=function(){document.getElementById('modalReceitaPrevista').style.display='none';};
+
 function atualizarResumoFinanceiro(listaClientes) {
     let totalPago = 0;
     let totalAberto = 0;
@@ -579,6 +649,7 @@ function atualizarResumoFinanceiro(listaClientes) {
     document.getElementById('resumoPago').textContent = formatarFloatParaMoeda(totalPago);
     document.getElementById('resumoAberto').textContent = formatarFloatParaMoeda(totalAberto);
     document.getElementById('resumoAtraso').textContent = formatarFloatParaMoeda(totalAtraso);
+    atualizarReceitaPrevista();
 }
 
 function extrairDocumentos(docsOriginais) {
@@ -1080,6 +1151,11 @@ function exibirClientes(lista) {
         
         card.className = `card ${isRenunciar ? 'renunciar' : ''}`;
         card.id = `card-cliente-${cliente.id}`;
+        const proxima = proximaParcelaNaoPaga(cliente);
+        const dataProxima = proxima ? obterDataParcela(proxima.vencimento) : null;
+        const diasAteVencimento = dataProxima ? Math.round((dataProxima-hojeSemHorario())/86400000) : null;
+        const avisoProximo = diasAteVencimento !== null && diasAteVencimento >= 0 && diasAteVencimento <= 5;
+        if (avisoProximo) card.classList.add('vencimento-proximo');
         
         let dataFechamentoStr = "";
         
@@ -1134,6 +1210,7 @@ function exibirClientes(lista) {
                     ${dataFechamentoStr ? `<span class="card-date">${isFechado ? 'Fechado em:' : 'Data:'} ${dataFechamentoStr}</span>` : ''}
                 </div>
                 <h2>${cliente.nome || "Sem nome"}</h2>
+                ${avisoProximo ? `<div class="aviso-vencimento">⚠️ Próxima parcela ${diasAteVencimento===0?'vence hoje':`vence em ${diasAteVencimento} dia(s)`} · ${dataProxima.toLocaleDateString('pt-BR')} · ${formatarFloatParaMoeda(converterMoedaParaFloat(String(proxima.valor||'0'))||0)}</div>` : ''}
                 <p><strong>CPF:</strong> ${cliente.cpf || "-"}</p>
                 <p><strong>Vendedor:</strong> ${cliente.vendedor || "Não informado"}</p>
                 ${cliente.observacoes ? `<p style="font-size:11px; margin-top:6px; margin-bottom:6px; padding:6px; border-radius:6px; background:rgba(255,255,255,0.05); border-left:3px solid #f59e0b; color:rgba(255,255,255,0.8); line-height: 1.4;"><strong>Obs:</strong> ${cliente.observacoes.substring(0, 65)}${cliente.observacoes.length > 65 ? '...' : ''}</p>` : ''}
@@ -1435,6 +1512,7 @@ window.gerarAVista = async function() {
         const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
         if (idxCache > -1) clientesData[idxCache] = clienteAtual;
         atualizarResumoFinanceiro(clientesData);
+        aplicarFiltros();
         
         atualizarCacheLocal();
         renderizarHonorarios();
@@ -1547,6 +1625,7 @@ window.atualizarDadosParcela = async function(index, campo, valor) {
         const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
         if (idxCache > -1) clientesData[idxCache] = clienteAtual;
         atualizarResumoFinanceiro(clientesData);
+        aplicarFiltros();
         
         atualizarCacheLocal();
         showToast("Parcela atualizada!");
@@ -1568,6 +1647,7 @@ window.atualizarStatusParcela = async function(index, novoStatus) {
         const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
         if (idxCache > -1) clientesData[idxCache] = clienteAtual;
         atualizarResumoFinanceiro(clientesData);
+        aplicarFiltros();
         
         atualizarCacheLocal();
         renderizarHonorarios(); 
@@ -1589,6 +1669,7 @@ window.removerParcela = async function(index) {
         const idxCache = clientesData.findIndex(c => c.id === clienteAtual.id);
         if (idxCache > -1) clientesData[idxCache] = clienteAtual;
         atualizarResumoFinanceiro(clientesData);
+        aplicarFiltros();
         
         atualizarCacheLocal();
         renderizarHonorarios();
