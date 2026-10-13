@@ -1253,6 +1253,8 @@ document.addEventListener('DOMContentLoaded', () => {
         docsListContainer.appendChild(compDiv);
     }
 
+    // Motor de upload transferido do CRM (2).
+    // A configuração Firebase e os registros de clientes continuam sendo os desta página.
     inputFile.onchange = async (e) => {
         const files = Array.from(e.target.files || []);
         inputFile.value = '';
@@ -1262,56 +1264,63 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (!storage || !currentUser) {
-            showToast('Storage indisponível ou usuário não autenticado.');
+            showToast('Serviço de arquivos indisponível ou usuário não autenticado.');
             return;
         }
 
-        const selectedDocId = window.currentUploadDocId || 'outros';
-        const session = modalSession;
+        const docId = window.currentUploadDocId || 'outros';
         const clienteId = clientForm.dataset.editId || null;
-        uploadInProgress = true;
-        uploadProgress.style.display = 'block';
-        uploadProgress.style.color = '#f59e0b';
-        let errors = [];
-        let uploaded = 0;
+        const session = modalSession;
         const submitBtn = clientForm.querySelector('button[type="submit"]');
+        uploadInProgress = true;
         if (submitBtn) submitBtn.disabled = true;
         if (btnCancel) btnCancel.disabled = true;
+        uploadProgress.style.display = 'block';
+        uploadProgress.style.color = '#f59e0b';
+        uploadProgress.innerText = `Enviando ${files.length} arquivo(s)... Aguarde.`;
+
+        let enviados = 0;
+        const erros = [];
         try {
+            // Mesmo procedimento funcional do CRM (2): ref -> uploadBytes -> getDownloadURL.
             for (const file of files) {
-                uploadProgress.innerText = `Enviando documento ${uploaded + errors.length + 1} de ${files.length}: ${file.name}`;
                 try {
-                    // Mantém o caminho anterior para não exigir mudança nas regras do Storage.
-                    const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2, 12)}_${file.name.replace(/[\/]/g, '_')}`;
+                    const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}_${file.name.replace(/[\\/]/g, '_')}`;
                     const storageRef = ref(storage, `documentos/${currentUser.uid}/${uniqueName}`);
-                    await uploadBytes(storageRef, file, { contentType: file.type || 'application/octet-stream' });
+                    await uploadBytes(storageRef, file);
                     const url = await getDownloadURL(storageRef);
-                    if (modalSession !== session) throw new Error('O cadastro mudou durante o envio.');
-                    const antes = JSON.parse(JSON.stringify(currentDocs));
-                    if (!Array.isArray(currentDocs[selectedDocId])) currentDocs[selectedDocId] = [];
-                    currentDocs[selectedDocId].push({ name: file.name, url });
-                    try {
-                        if (clienteId) await persistirDocumentosDoCliente(clienteId, currentDocs);
-                    } catch (error) {
-                        currentDocs = antes;
-                        throw error;
-                    }
-                    uploaded++;
+                    if (session !== modalSession) throw new Error('Cadastro alterado durante o envio.');
+
+                    if (!Array.isArray(currentDocs[docId])) currentDocs[docId] = [];
+                    currentDocs[docId].push({ name: file.name, url: url });
+                    enviados++;
                     renderDocsList();
+                    uploadProgress.innerText = `Enviados ${enviados} de ${files.length} arquivo(s)...`;
                 } catch (error) {
-                    console.error('Falha ao enviar ou vincular documento:', file.name, error);
-                    errors.push(`${file.name}: ${uploadErrorMessage(error)}`);
+                    console.error('Erro no upload do documento:', file.name, error);
+                    erros.push(`${file.name}: ${uploadErrorMessage(error)}`);
                 }
             }
-            if (errors.length) {
+
+            // Mantém a persistência imediata da index para clientes existentes;
+            // no novo cadastro os documentos continuam sendo gravados ao salvar o cliente.
+            if (enviados && clienteId) {
+                try {
+                    await persistirDocumentosDoCliente(clienteId, currentDocs);
+                } catch (error) {
+                    console.error('Upload realizado, mas vínculo no Firestore falhou:', error);
+                    erros.push(`Arquivos enviados, mas não vinculados ao cliente: ${uploadErrorMessage(error)}`);
+                }
+            }
+            if (erros.length) {
                 uploadProgress.style.color = '#ef4444';
-                uploadProgress.innerText = `${uploaded} enviado(s), ${errors.length} com erro. ${errors.join(' | ')}`;
-                showToast('Falha em documento(s): ' + errors[0]);
+                uploadProgress.innerText = `${enviados} enviado(s). ${erros.length} erro(s): ${erros.join(' | ')}`;
+                showToast('Erro no envio: ' + erros[0]);
             } else {
                 uploadProgress.style.color = '#10b981';
                 uploadProgress.innerText = clienteId
-                    ? 'Documentos enviados e vinculados ao cliente no Firestore.'
-                    : 'Documentos enviados. Clique em Salvar para vinculá-los ao novo cliente.';
+                    ? 'Upload concluído! Documentos vinculados ao cliente.'
+                    : 'Upload concluído! Salve o cadastro para vincular os documentos.';
                 showToast(uploadProgress.innerText);
             }
         } finally {
