@@ -730,7 +730,7 @@ const DOCUMENTOS_CONFIG = [
     { id: 'procuracao', label: 'Procuração', obrigatorio: true },
     { id: 'declaracao_hipossuficiencia', label: 'Declaração de hipossuficiência', obrigatorio: true },
     { id: 'comprovante_pagamento', label: 'Comprovante de pagamento', obrigatorio: true },
-    { id: 'identidade', label: 'RG', obrigatorio: true },
+    { id: 'identidade', label: 'RG/CNH', obrigatorio: true },
     { id: 'comprovante_residencia', label: 'Comprovante de residência', obrigatorio: true },
     
     // Complementares
@@ -808,6 +808,41 @@ document.addEventListener('DOMContentLoaded', () => {
         'fechado'
     ];
 
+    // Valida apenas as seis categorias de documentos obrigatórios.
+    // Os documentos complementares permanecem disponíveis, mas são opcionais.
+    function obterDocumentosObrigatoriosPendentes(documentos) {
+        const documentosOrganizados = documentos && !Array.isArray(documentos) ? documentos : {};
+        return DOCUMENTOS_CONFIG
+            .filter(configuracao => configuracao.obrigatorio)
+            .filter(configuracao => {
+                const arquivos = documentosOrganizados[configuracao.id];
+                return !Array.isArray(arquivos) || arquivos.length === 0;
+            })
+            .map(configuracao => configuracao.label);
+    }
+
+    function possuiAlgumDocumentoAnexado(documentos) {
+        if (Array.isArray(documentos)) return documentos.length > 0;
+        if (!documentos || typeof documentos !== 'object') return false;
+        return Object.values(documentos).some(arquivos => Array.isArray(arquivos) && arquivos.length > 0);
+    }
+
+    function obterNomeDaEtapa(status) {
+        const nomes = {
+            'lista-fria': 'Lista Fria',
+            'dia-1': 'Dia 1',
+            'dia-2': 'Dia 2',
+            'dia-3': 'Dia 3',
+            'dia-4': 'Dia 4',
+            'dia-5': 'Dia 5',
+            'em-negociacao': 'Em Negociação',
+            'contrato-assinado': 'Contrato Assinado',
+            'fechado': 'Fechado',
+            'funil-geral': 'Funil Geral'
+        };
+        return nomes[status] || status || 'Lista Fria';
+    }
+
     function atualizarContadores() {
         STATUS.forEach(s => {
             const col = document.getElementById(s);
@@ -852,6 +887,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputClasse = document.getElementById('inputClasse');
     const inputValor = document.getElementById('inputValor');
     const inputEstado = document.getElementById('inputEstado');
+    const inputDestinoCadastro = document.getElementById('inputDestinoCadastro');
+    const opcaoManterEtapa = document.getElementById('opcaoManterEtapa');
 
     const btnAdd = document.getElementById('btnAdd');
     const btnCancel = document.getElementById('btnCancel');
@@ -1411,6 +1448,12 @@ document.addEventListener('DOMContentLoaded', () => {
         telefonesContainer.innerHTML = '';
 
         const infoExtra = document.getElementById('infoExtra');
+
+        // Nunca herdar a seleção do cadastro anterior quando o modal for reaberto.
+        inputDestinoCadastro.value = '';
+        opcaoManterEtapa.textContent = edit && data
+            ? `Manter etapa atual: ${obterNomeDaEtapa(data.status)}`
+            : 'Lista Fria (padrão para novo cliente)';
 
         if(edit && data){
             inputNome.value = data.nome || "";
@@ -1997,6 +2040,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const telefones = Array.from(document.querySelectorAll('.inputTelefone')).map(i => i.value.trim()).filter(v => v);
 
+            // O menu permite cadastrar diretamente em Contrato Assinado ou Fechado,
+            // e também alterar a etapa de um cliente já cadastrado.
+            const clienteAnterior = clientForm.dataset.editId
+                ? todosClientesCache.find(cliente => cliente.id === clientForm.dataset.editId)
+                : null;
+            const statusAnterior = clienteAnterior ? (clienteAnterior.status || 'lista-fria') : 'lista-fria';
+            const etapaSelecionada = inputDestinoCadastro.value;
+            const statusDestino = etapaSelecionada || statusAnterior;
+            const houveMudancaDeEtapa = statusDestino !== statusAnterior;
+
+            if (clienteAnterior && statusAnterior === 'fechado' && statusDestino !== 'fechado') {
+                showToast('Negado: um contrato fechado não pode retroceder de etapa.');
+                return;
+            }
+
+            if (houveMudancaDeEtapa && statusDestino === 'contrato-assinado' && !possuiAlgumDocumentoAnexado(currentDocs)) {
+                showToast('Para enviar diretamente para Contrato Assinado, anexe ao menos um documento.');
+                return;
+            }
+
+            if (houveMudancaDeEtapa && statusDestino === 'fechado') {
+                const documentosPendentes = obterDocumentosObrigatoriosPendentes(currentDocs);
+                if (documentosPendentes.length > 0) {
+                    showToast(`Não foi possível fechar o cliente. Anexe os documentos obrigatórios: ${documentosPendentes.join(', ')}`);
+                    return;
+                }
+            }
+
             const novo = {
                 nome: nome,
                 cpf: inputCPF.value.trim(),
@@ -2028,6 +2099,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     novo.dataContratoAssinado = antigo.dataContratoAssinado || null;
                     novo.status = antigo.status || "lista-fria";
                 }
+
+                // Preserva os demais dados do cliente e altera apenas a etapa solicitada.
+                novo.status = statusDestino;
+                if (houveMudancaDeEtapa && statusDestino === 'contrato-assinado') {
+                    novo.dataContratoAssinado = new Date().toISOString();
+                }
+                if (houveMudancaDeEtapa && statusDestino === 'fechado') {
+                    novo.fechadoPor = currentUser ? (currentUser.email || '') : '';
+                    novo.vendedor = novo.fechadoPor;
+                    novo.dataFechamento = new Date().toISOString();
+                }
+
                 await saveCliente(novo);
                 showToast("Cliente atualizado!");
 
@@ -2045,7 +2128,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             }else{
                 novo.dataCadastro = new Date().toISOString();
-                novo.status = "lista-fria";
+                novo.status = statusDestino;
+                if (statusDestino === 'contrato-assinado') {
+                    novo.dataContratoAssinado = novo.dataCadastro;
+                }
+                if (statusDestino === 'fechado') {
+                    novo.fechadoPor = currentUser ? (currentUser.email || '') : '';
+                    novo.vendedor = novo.fechadoPor;
+                    novo.dataFechamento = novo.dataCadastro;
+                }
                 await saveCliente(novo);
                 showToast("Cliente adicionado!");
                 
@@ -2115,15 +2206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const clienteDragged = todosClientesCache.find(c => c.id === draggedCard.dataset.id);
                 if (clienteDragged) {
                     const docsDoCliente = clienteDragged.documentos || {};
-                    let pendentes = [];
-                    
-                    DOCUMENTOS_CONFIG.forEach(docConf => {
-                        if (docConf.obrigatorio) {
-                            if (!docsDoCliente[docConf.id] || docsDoCliente[docConf.id].length === 0) {
-                                pendentes.push(docConf.label);
-                            }
-                        }
-                    });
+                    const pendentes = obterDocumentosObrigatoriosPendentes(docsDoCliente);
 
                     if (pendentes.length > 0) {
                         showToast(`Bloqueado! Faltam os seguintes documentos obrigatórios: ${pendentes.join(', ')}`);
@@ -2462,6 +2545,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="Sergipe">Sergipe</option>
                     <option value="Tocantins">Tocantins</option>
                 </select>
+            </div>
+
+            <!-- DESTINO DO CARD NO MOMENTO DO CADASTRO OU DA EDIÇÃO -->
+            <div class="row">
+                <label for="inputDestinoCadastro" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:#fff;">
+                    Etapa do card ao salvar
+                </label>
+                <select id="inputDestinoCadastro">
+                    <option id="opcaoManterEtapa" value="">Lista Fria (padrão para novo cliente)</option>
+                    <option value="contrato-assinado">Mover diretamente para Contrato Assinado</option>
+                    <option value="fechado">Mover diretamente para Fechado</option>
+                </select>
+                <p style="font-size:11px; color:rgba(255,255,255,0.65); margin-top:8px; line-height:1.5;">
+                    Contrato Assinado exige ao menos um documento. Fechado exige todos os seis documentos obrigatórios.
+                    Ao editar, manter a etapa atual não altera o status do card.
+                </p>
             </div>
 
             <!-- NOVA SEÇÃO DE DOCUMENTOS -->
