@@ -718,7 +718,7 @@ import {
 import {
     getStorage,
     ref,
-    uploadBytes,
+    uploadBytesResumable,
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
@@ -1122,10 +1122,68 @@ document.addEventListener('DOMContentLoaded', () => {
             'storage/quota-exceeded': 'A cota do Firebase Storage foi excedida.',
             'storage/bucket-not-found': 'Bucket do Firebase Storage não encontrado. Verifique a configuração.',
             'storage/retry-limit-exceeded': 'Tempo de envio excedido. Verifique a conexão.',
+            'storage/upload-timeout': 'O Storage não concluiu o envio no prazo. Confira o bucket, as regras e a conexão.',
+            'storage/response-timeout': 'O Firebase não respondeu no prazo. Confira as regras e a conexão.',
+            'storage/canceled': 'Envio cancelado.',
             'permission-denied': 'Sem permissão para atualizar os documentos no Firestore.',
             'unavailable': 'Firebase temporariamente indisponível. Tente novamente.'
         };
         return `${messages[code] || error.message || 'Falha desconhecida'} (${code})`;
+    }
+
+    // Upload monitorado: encerra tentativas paradas em vez de deixar a tela travada.
+    function enviarArquivoMonitorado(storageRef, file, posicao, total) {
+        return new Promise((resolve, reject) => {
+            let finished = false;
+            let inactivityTimer;
+            let absoluteTimer;
+            let task;
+            const clear = () => {
+                clearTimeout(inactivityTimer);
+                clearTimeout(absoluteTimer);
+            };
+            const fail = (err) => {
+                if (finished) return;
+                finished = true;
+                clear();
+                if (task) task.cancel();
+                reject(err);
+            };
+            const resetInactivity = () => {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => fail(Object.assign(
+                    new Error('Sem resposta do Storage por 30 segundos. Confira a conexão, o bucket e as regras.'),
+                    {code:'storage/upload-timeout'})), 30000);
+            };
+            try {
+                task = uploadBytesResumable(storageRef, file, { contentType: file.type || 'application/octet-stream' });
+                absoluteTimer = setTimeout(() => fail(Object.assign(
+                    new Error('O envio excedeu 2 minutos. Verifique sua conexão e o Firebase Storage.'),
+                    {code:'storage/upload-timeout'})), 120000);
+                resetInactivity();
+                task.on('state_changed', snapshot => {
+                    if (finished) return;
+                    resetInactivity();
+                    const pct = snapshot.totalBytes ? Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100) : 0;
+                    uploadProgress.innerText = `Enviando arquivo ${posicao} de ${total}: ${pct}% (${file.name})`;
+                }, fail, () => {
+                    if (finished) return;
+                    finished = true;
+                    clear();
+                    resolve(task.snapshot.ref);
+                });
+            } catch (error) { fail(error); }
+        });
+    }
+
+    function comPrazo(promise, ms, message) {
+        let timer;
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => { timer = setTimeout(() => reject(
+                Object.assign(new Error(message), {code:'storage/response-timeout'})
+            ), ms); })
+        ]).finally(() => clearTimeout(timer));
     }
 
     function atualizarDocumentoNoCache(clienteId, documentos) {
@@ -1149,7 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!clienteId) return Promise.resolve();
         const snapshot = JSON.parse(JSON.stringify(documentos));
         const gravacao = pendingDocumentWrite.catch(() => {}).then(async () => {
-            await updateDoc(doc(db, 'clientes', clienteId), { documentos: snapshot });
+            await comPrazo(updateDoc(doc(db, 'clientes', clienteId), { documentos: snapshot }), 25000, 'O Firestore demorou demais para gravar o vínculo do documento.');
             atualizarDocumentoNoCache(clienteId, snapshot);
         });
         pendingDocumentWrite = gravacao;
@@ -1287,8 +1345,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}_${file.name.replace(/[\\/]/g, '_')}`;
                     const storageRef = ref(storage, `documentos/${currentUser.uid}/${uniqueName}`);
-                    await uploadBytes(storageRef, file);
-                    const url = await getDownloadURL(storageRef);
+                    const uploadedRef = await enviarArquivoMonitorado(storageRef, file, enviados + 1, files.length);
+                    uploadProgress.innerText = `Arquivo enviado. Obtendo link: ${file.name}`;
+                    const url = await comPrazo(getDownloadURL(uploadedRef), 20000, 'O Storage não forneceu o link do documento.');
                     if (session !== modalSession) throw new Error('Cadastro alterado durante o envio.');
 
                     if (!Array.isArray(currentDocs[docId])) currentDocs[docId] = [];
