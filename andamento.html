@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setor de Andamento - AMR ADV</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body {
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at top left,#2f3f73 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#0f766e 0%,transparent 25%),
+        linear-gradient(135deg,#0f172a,#111827,#020617);
+    color: #fff;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width:80px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    flex-shrink:0;
+    transition:width 0.4s ease;
+    position:relative;
+    z-index:10;
+    backdrop-filter:blur(30px);
+    background:rgba(255,255,255,0.06);
+    border-right:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 40px rgba(0,0,0,0.25);
+}
+
+.sidebar.expanded { width:240px; }
+
+.sidebar h2 {
+    font-size:22px;
+    font-weight:800;
+    color:#fff;
+    letter-spacing:1px;
+    margin-bottom:30px;
+    text-align:center;
+    cursor:pointer;
+    width:100%;
+    white-space:nowrap;
+    overflow:hidden;
+    transition:opacity 0.3s;
+    opacity:0;
+}
+
+.sidebar.expanded h2 { opacity:1; }
+
+.sidebar button {
+    width:calc(100% - 20px);
+    background:transparent;
+    border:none;
+    color:rgba(255,255,255,0.7);
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:12px 15px;
+    margin:5px 10px;
+    cursor:pointer;
+    border-radius:14px;
+    transition:all 0.3s;
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+}
+
+.sidebar button img {
+    width:24px;
+    height:24px;
+    filter:invert(1) opacity(0.7);
+    flex-shrink:0;
+    transition:transform 0.3s, filter 0.3s;
+}
+
+.sidebar button span { display:inline-block; opacity:0; transition:opacity 0.3s; font-weight:600; }
+.sidebar.expanded button span { opacity:1; }
+.sidebar button:hover img { transform:scale(1.1); filter:invert(1) opacity(1); }
+.sidebar button:hover { background:rgba(255,255,255,0.1); color:#fff; }
+
+/* ================= MAIN ================= */
+.main {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+header {
+    height:70px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 30px;
+    flex-shrink:0;
+}
+
+header h1 { font-size:24px; color:#fff; font-weight:800; }
+
+.search-bar {
+    padding:15px 30px;
+    background:transparent;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex;
+    gap:15px;
+    align-items:center;
+    flex-shrink:0;
+}
+
+.search-bar input {
+    padding:12px 16px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    color:#fff;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+    backdrop-filter: blur(10px);
+    flex:1;
+}
+
+.search-bar input:focus {
+    background:rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.search-bar input::placeholder { color: rgba(255,255,255,0.5); }
+
+/* ================= KANBAN COLUNAS ================= */
+.kanban-container {
+    flex:1;
+    overflow-x:auto;
+    padding:20px 30px;
+}
+
+.kanban {
+    display:flex;
+    gap:20px;
+    min-width:max-content;
+    height:100%;
+}
+
+.column {
+    background:rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius:20px;
+    padding:20px;
+    min-width:400px;
+    flex: 1; 
+    max-width: 50%;
+    max-height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    overflow-y:auto;
+}
+
+.column h2 {
+    margin-bottom:10px;
+    font-size:14px;
+    color:#fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+/* NOVO: Sub-Grid para os cards dentro das colunas */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    width: 100%;
+    align-items: start;
+}
+
+/* ================= CARDS ================= */
+.card {
+    display:flex;
+    background:rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    border-radius:16px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.2);
+    overflow:hidden;
+    transition:transform 0.3s, background 0.3s, border-color 0.3s;
+    position:relative;
+    flex-direction:column;
+    width:100%;
+    min-height: 200px;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform:translateY(-4px);
+    background:rgba(255,255,255,0.1);
+}
+
+/* Indicadores de Cor - Movido para a esquerda igual à página de clientes */
+.aberto { border-left: 5px solid #ef4444; }
+.aberto:hover { border-color: #f87171; }
+
+.concluido { border-left: 5px solid #10b981; }
+.concluido:hover { border-color: #34d399; }
+
+.card-header {
+    background: rgba(0, 0, 0, 0.1); 
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.card-header h3 {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    width: 100%;
+}
+
+.badge-tempo {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.card-content {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.card-content p {
+    font-size:13px;
+    color:rgba(255,255,255,0.7);
+    margin:5px 0;
+}
+
+.card-content p strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Seção do Último Andamento e Observação */
+.ultimo-andamento, .card-observacao {
+    margin-top: 15px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.ultimo-andamento {
+    border-left: 3px solid rgba(255,255,255,0.2);
+}
+
+.card-observacao {
+    border-left: 3px solid #3b82f6;
+    margin-top: 10px;
+}
+
+.ultimo-andamento strong, .card-observacao strong {
+    display: block;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.ultimo-andamento p, .card-observacao p {
+    font-size: 12px !important;
+    color: rgba(255,255,255,0.9) !important;
+    margin: 0 !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.card-footer {
+    padding: 15px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.1);
+}
+
+/* ================= MODAL ================= */
+.modal-backdrop {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    justify-content:center;
+    align-items:center;
+    z-index:50;
+}
+
+.modal {
+    background:#0f172a;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding:24px;
+    border-radius:24px;
+    min-width:320px;
+    max-width:600px;
+    width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+    max-height:90vh;
+    overflow-y:auto;
+}
+
+.modal h3 {
+    margin-bottom:10px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+/* Painel de Informações do Cliente no Modal */
+.modal-client-info {
+    background: rgba(255,255,255,0.05);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal-client-info p {
+    margin: 0;
+}
+
+.modal-client-info strong {
+    color: #fff;
+}
+
+.modal textarea {
+    width:100%;
+    padding:12px 16px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    color:#fff;
+    font-size: 14px;
+    outline: none;
+    min-height: 150px;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+.modal textarea#inputObservacoes {
+    min-height: 80px;
+    margin-bottom: 10px;
+}
+
+.modal textarea:focus {
+    background:rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.modal .actions {
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
+
+/* ================= BUTTONS ================= */
+.btn {
+    padding:10px 16px;
+    border-radius:10px;
+    border:0;
+    cursor:pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn.primary { background:#fff; color:#111827; }
+.btn.primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,255,255,0.2); }
+
+.btn.ghost { background:rgba(255,255,255,0.12); color:#fff; width: auto;}
+.btn.ghost:hover { background:rgba(255,255,255,0.2); }
+
+.btn-green {
+    background: #10b981;
+    color: #fff;
+    border: none;
+}
+
+.btn-green:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-blue {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+}
+.btn-blue:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* ================= TOAST ================= */
+.toast {
+    position:fixed;
+    right:30px;
+    bottom:30px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color:#fff;
+    padding:12px 20px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+    display:none;
+    z-index:60;
+    font-weight: 500;
+}
+
+/* ===== FILA DE ANDAMENTO — ADIÇÃO SEM ALTERAR A ESTRUTURA EXISTENTE ===== */
+.queue-panel{padding:14px 30px 0;flex-shrink:0}.queue-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.queue-stat{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 14px}.queue-stat-label{font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55)}.queue-stat-value{font-size:24px;font-weight:800;margin-top:3px}.queue-stat-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px}.queue-controls{display:flex;align-items:center;gap:9px;margin-top:9px}.queue-controls select{background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 10px;outline:none}.queue-controls option{background:#111827;color:#fff}.queue-help{font-size:11px;color:rgba(255,255,255,.48)}.queue-fixed{margin-top:9px;padding:10px 12px;border:1px solid rgba(245,158,11,.22);background:rgba(245,158,11,.055);border-radius:12px}.queue-fixed-head{display:flex;align-items:center;justify-content:space-between}.queue-fixed-title{font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.5px}.queue-fixed-count{font-size:10px;padding:3px 7px;border-radius:7px;background:rgba(245,158,11,.15);color:#fcd34d}.queue-fixed-list{display:flex;gap:7px;overflow-x:auto;margin-top:8px}.queue-fixed-item{min-width:175px;padding:7px 8px;border-radius:8px;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.06)}.queue-fixed-item strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.queue-fixed-item span{display:block;font-size:9px;color:rgba(255,255,255,.48);margin-top:2px}.queue-fixed-item select{width:100%;margin-top:5px;padding:4px 5px;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:9px}.queue-pos{font-size:10px;color:rgba(255,255,255,.42);margin-top:7px}.queue-pass-button{display:flex;gap:7px}.queue-status-button{width:auto!important;padding-left:10px!important;padding-right:10px!important}.queue-empty{padding:25px;text-align:center;color:rgba(255,255,255,.4);font-size:12px}@media(max-width:900px){.queue-stats{grid-template-columns:repeat(2,1fr)}.queue-panel{padding-left:15px;padding-right:15px}}
+
+
+/* ===== MENSAGENS PRONTAS DE ANDAMENTO — ADIÇÃO ===== */
+
+/* ===== MODAL DE ESCOLHA DA MENSAGEM — ADIÇÃO ===== */
+.modal-mensagem-escolha {
+    background:#0f172a;
+    border:1px solid rgba(255,255,255,0.1);
+    padding:24px;
+    border-radius:24px;
+    min-width:320px;
+    max-width:620px;
+    width:calc(100% - 30px);
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+}
+
+.modal-mensagem-escolha h3 {
+    margin-bottom:8px;
+    font-size:20px;
+    font-weight:700;
+}
+
+.modal-mensagem-escolha > p {
+    margin-bottom:20px;
+    color:rgba(255,255,255,0.6);
+    font-size:13px;
+    line-height:1.5;
+}
+
+.opcoes-mensagens-prontas {
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.opcao-mensagem-pronta {
+    width:100%;
+    padding:16px;
+    text-align:left;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:14px;
+    color:#fff;
+    cursor:pointer;
+    transition:all 0.25s;
+}
+
+.opcao-mensagem-pronta:hover {
+    background:rgba(255,255,255,0.11);
+    border-color:rgba(255,255,255,0.25);
+    transform:translateY(-2px);
+}
+
+.opcao-mensagem-pronta strong {
+    display:block;
+    font-size:14px;
+    margin-bottom:6px;
+}
+
+.opcao-mensagem-pronta span {
+    display:block;
+    color:rgba(255,255,255,0.55);
+    font-size:11px;
+    line-height:1.5;
+}
+
+.opcao-mensagem-pronta.cancelar {
+    text-align:center;
+    background:rgba(255,255,255,0.03);
+    color:rgba(255,255,255,0.7);
+}
+
+.mensagens-prontas-box {
+    margin-bottom: 15px;
+    padding: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+}
+
+.mensagens-prontas-box label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgba(255,255,255,0.75);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mensagens-prontas-box select {
+    width: 100%;
+    padding: 11px 13px;
+    background: #111827;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    outline: none;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.mensagens-prontas-box select:focus {
+    border-color: rgba(255,255,255,0.3);
+}
+
+.mensagens-prontas-preview {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.18);
+    border-radius: 9px;
+    color: rgba(255,255,255,0.65);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.mensagens-prontas-preview strong {
+    color: #fff;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import {
+    getFirestore,
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    updateDoc
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import {
+    getAuth,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
+/* ================= FIREBASE ================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
+    authDomain: "rodrigues-amr.firebaseapp.com",
+    projectId: "rodrigues-amr",
+    storageBucket: "rodrigues-amr.firebasestorage.app",
+    messagingSenderId: "263843276361",
+    appId: "1:263843276361:web:c23cd06dc288ac28c94198",
+    measurementId: "G-DV2CHKJTKF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+const auth = getAuth(app);
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    const sidebar = document.querySelector(".sidebar");
+    const searchInput = document.getElementById('searchInput');
+    const colAberto = document.getElementById('col-aberto');
+    const colConcluido = document.getElementById('col-concluido');
+    const toastEl = document.getElementById('toast');
+    
+    // Elementos do Modal
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalClientInfo = document.getElementById('modalClientInfo');
+    const inputAndamento = document.getElementById('inputAndamento');
+    const inputObservacoes = document.getElementById('inputObservacoes');
+    const btnFecharModal = document.getElementById('btnFecharModal');
+    const btnEnviarAndamento = document.getElementById('btnEnviarAndamento');
+    const btnSalvarObs = document.getElementById('btnSalvarObs');
+    const selectMensagemPronta = document.getElementById('selectMensagemPronta');
+    const modalEscolhaMensagem = document.getElementById('modalEscolhaMensagem');
+    const previewMensagemPronta = document.getElementById('previewMensagemPronta');
+
+    let currentUser = null;
+    let clientesFechados = [];
+    let clienteSelecionado = null;
+    let mensagemProntaSelecionada = '';
+
+    // Fila: os campos abaixo são adicionados somente aos documentos quando o
+    // cliente passa pelo andamento. O restante do CRM continua intacto.
+    let filaRetornoModo = 'final';
+    let filaAtiva = [];
+    let clientesForaFila = [];
+
+    if(sidebar){
+        sidebar.addEventListener('mouseenter', () => sidebar.classList.add('expanded'));
+        sidebar.addEventListener('mouseleave', () => sidebar.classList.remove('expanded'));
+    }
+
+    function showToast(msg){
+        toastEl.innerText = msg;
+        toastEl.style.display = 'block';
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => { toastEl.style.display = 'none'; }, 3000);
+    }
+
+    // ================= CACHE LOCAL ROBUSTO (INDEXEDDB) =================
+    // Usa um cache próprio dos clientes fechados e, quando disponível, reaproveita
+    // também o cache completo criado pela página Clientes/Jurídico.
+    const CACHE_DB_NAME = 'amr_crm_cache_db_rodrigues_amr';
+    const CACHE_DB_VERSION = 1;
+    const CACHE_STORE_NAME = 'dados';
+    const CACHE_CLIENTES_ALL_KEY = 'rodrigues_amr_clientes_data_v2';
+    const CACHE_FECHADOS_KEY = 'rodrigues_amr_clientes_fechados_v2';
+    const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 horas
+    const REFRESH_COOLDOWN_MS = 30 * 1000;
+
+    let cacheDbPromise = null;
+    let fetchClientesPromise = null;
+    let ultimaSincronizacaoServidor = 0;
+    let timestampBaseCache = 0;
+
+    function abrirCacheDB() {
+        if (cacheDbPromise) return cacheDbPromise;
+        cacheDbPromise = new Promise((resolve, reject) => {
+            if (!('indexedDB' in window)) {
+                reject(new Error('IndexedDB não disponível neste navegador.'));
+                return;
+            }
+            const request = indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+            request.onupgradeneeded = () => {
+                const dbCache = request.result;
+                if (!dbCache.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                    dbCache.createObjectStore(CACHE_STORE_NAME, { keyPath: 'key' });
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error || new Error('Erro ao abrir o cache local.'));
+        });
+        return cacheDbPromise;
+    }
+
+    async function lerRegistroCache(key) {
+        try {
+            const dbCache = await abrirCacheDB();
+            const registro = await new Promise((resolve, reject) => {
+                const tx = dbCache.transaction(CACHE_STORE_NAME, 'readonly');
+                const store = tx.objectStore(CACHE_STORE_NAME);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+            if (!registro || !registro.json) return null;
+            const data = JSON.parse(registro.json);
+            if (!Array.isArray(data)) return null;
+            return { data, timestamp: Number(registro.timestamp || 0), key };
+        } catch (error) {
+            console.warn('Não foi possível ler o cache IndexedDB:', error);
+            return null;
+        }
+    }
+
+    async function salvarRegistroCache(key, lista, timestamp) {
+        try {
+            const dbCache = await abrirCacheDB();
+            const json = JSON.stringify(lista);
+            await new Promise((resolve, reject) => {
+                const tx = dbCache.transaction(CACHE_STORE_NAME, 'readwrite');
+                const store = tx.objectStore(CACHE_STORE_NAME);
+                store.put({ key, timestamp, json });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error || new Error('Gravação do cache abortada.'));
+            });
+        } catch (error) {
+            console.warn('Não foi possível salvar o cache IndexedDB:', error);
+        }
+    }
+
+    function cacheValido(cache) {
+        if (!cache || !Array.isArray(cache.data)) return false;
+        const idade = Date.now() - Number(cache.timestamp || 0);
+        return idade >= 0 && idade < CACHE_MAX_AGE_MS;
+    }
+
+    async function migrarCacheAntigoGlobalSeExistir() {
+        try {
+            const existente = await lerRegistroCache(CACHE_CLIENTES_ALL_KEY);
+            if (existente) return existente;
+            const cachedData = localStorage.getItem('rodrigues_amr_crm_clientes_data');
+            const cacheTimestamp = localStorage.getItem('rodrigues_amr_crm_clientes_timestamp');
+            if (!cachedData) return null;
+            const parsedData = JSON.parse(cachedData);
+            if (!Array.isArray(parsedData)) return null;
+            const timestamp = Number(cacheTimestamp || Date.now());
+            await salvarRegistroCache(CACHE_CLIENTES_ALL_KEY, parsedData, timestamp);
+            return { data: parsedData, timestamp, key: CACHE_CLIENTES_ALL_KEY };
+        } catch (error) {
+            console.warn('Não foi possível migrar o cache antigo:', error);
+            return null;
+        } finally {
+            try { localStorage.removeItem('rodrigues_amr_crm_clientes_data'); } catch(e) {}
+        }
+    }
+
+    async function lerMelhorCacheFechados(aceitarExpirado = false) {
+        const cacheFechados = await lerRegistroCache(CACHE_FECHADOS_KEY);
+        let cacheTodos = await lerRegistroCache(CACHE_CLIENTES_ALL_KEY);
+        if (!cacheTodos) cacheTodos = await migrarCacheAntigoGlobalSeExistir();
+
+        const candidatos = [];
+        if (cacheFechados && (aceitarExpirado || cacheValido(cacheFechados))) {
+            candidatos.push({ data: cacheFechados.data, timestamp: cacheFechados.timestamp, origem: 'cache-fechados' });
+        }
+        if (cacheTodos && (aceitarExpirado || cacheValido(cacheTodos))) {
+            candidatos.push({
+                data: cacheTodos.data.filter(c => c.status === 'fechado'),
+                timestamp: cacheTodos.timestamp,
+                origem: 'cache-global'
+            });
+        }
+
+        if (!candidatos.length) return null;
+        candidatos.sort((a, b) => b.timestamp - a.timestamp);
+        return candidatos[0];
+    }
+
+    function normalizarFechadosDoSnapshot(snapshot) {
+        return snapshot.docs.map(docData => {
+            const data = docData.data();
+            try {
+                if (data.dataFechamento && typeof data.dataFechamento.toDate === 'function') {
+                    data.dataFechamento = data.dataFechamento.toDate().toISOString();
+                }
+                if (data.ultimoAndamento && typeof data.ultimoAndamento.toDate === 'function') {
+                    data.ultimoAndamento = data.ultimoAndamento.toDate().toISOString();
+                }
+                if (data.dataUltimoAndamento && typeof data.dataUltimoAndamento.toDate === 'function') {
+                    data.dataUltimoAndamento = data.dataUltimoAndamento.toDate().toISOString();
+                }
+            } catch(e) {}
+            return { id: docData.id, ...data };
+        });
+    }
+
+    async function atualizarCachesAposGravacao(clienteId, patch) {
+        const idx = clientesFechados.findIndex(c => c.id === clienteId);
+        if (idx > -1) Object.assign(clientesFechados[idx], patch);
+
+        // Atualiza o cache desta página sem renovar artificialmente a validade dos dados.
+        const ts = timestampBaseCache || Date.now();
+        await salvarRegistroCache(CACHE_FECHADOS_KEY, clientesFechados, ts);
+
+        // Se existir cache global, atualiza só este cliente e preserva o timestamp original.
+        const globalCache = await lerRegistroCache(CACHE_CLIENTES_ALL_KEY);
+        if (globalCache && Array.isArray(globalCache.data)) {
+            const globalIdx = globalCache.data.findIndex(c => c.id === clienteId);
+            if (globalIdx > -1) {
+                Object.assign(globalCache.data[globalIdx], patch);
+                await salvarRegistroCache(CACHE_CLIENTES_ALL_KEY, globalCache.data, globalCache.timestamp || ts);
+            }
+        }
+    }
+
+    async function buscarFechadosNoServidor() {
+        // ÚNICA consulta de leitura ao Firestore nesta página.
+        const q = query(collection(db, 'clientes'), where('status', '==', 'fechado'));
+        const snapshot = await getDocs(q);
+        const lista = normalizarFechadosDoSnapshot(snapshot);
+        ultimaSincronizacaoServidor = Date.now();
+        timestampBaseCache = ultimaSincronizacaoServidor;
+        await salvarRegistroCache(CACHE_FECHADOS_KEY, lista, timestampBaseCache);
+        return lista;
+    }
+
+    async function executarCargaProtegida(forcarServidor = false) {
+        const executar = async () => {
+            if (!forcarServidor) {
+                const cache = await lerMelhorCacheFechados(false);
+                if (cache) {
+                    timestampBaseCache = cache.timestamp;
+                    return { lista: cache.data, origem: cache.origem };
+                }
+            }
+            const lista = await buscarFechadosNoServidor();
+            return { lista, origem: 'servidor' };
+        };
+
+        if (navigator.locks && typeof navigator.locks.request === 'function') {
+            return navigator.locks.request('rodrigues_amr_crm_clientes_firestore_sync', executar);
+        }
+        return executar();
+    }
+
+    window.forcarAtualizacao = async function() {
+        const agora = Date.now();
+        if (agora - ultimaSincronizacaoServidor < REFRESH_COOLDOWN_MS) {
+            showToast('Os dados já foram sincronizados há poucos segundos.');
+            return;
+        }
+        showToast('Buscando dados recentes do servidor...');
+        await fetchClientesFechados({ forcarServidor: true });
+    };
+
+
+
+    function statusFila(cliente){
+        const valor = String(cliente.statusAndamento || '').trim().toLowerCase();
+        return ['revogado','arquivado','inadimplente'].includes(valor) ? valor : '';
+    }
+
+    function estaForaDaFila(cliente){ return !!statusFila(cliente); }
+
+    function numeroFila(cliente, fallback){
+        const n = Number(cliente.filaOrdem);
+        return Number.isFinite(n) && n > 0 ? n : fallback;
+    }
+
+    function montarFila(){
+        clientesForaFila = clientesFechados.filter(estaForaDaFila);
+        const ativos = clientesFechados.filter(c => !estaForaDaFila(c));
+
+        // A primeira carga usa a ordem que já veio do sistema. Depois que um
+        // cliente passa, filaOrdem recebe o maior número + 1, portanto ele
+        // nunca volta para a posição antiga.
+        filaAtiva = ativos.map((c,i) => ({cliente:c,ordem:numeroFila(c,i+1)}));
+        filaAtiva.sort((a,b) => a.ordem - b.ordem);
+        filaAtiva = filaAtiva.map(x => x.cliente);
+    }
+
+    function clienteEstaPendente(cliente){
+        return calcularDiasAndamento(cliente.dataUltimoAndamento) >= 10;
+    }
+
+    function ordemParaFila(cliente, index){
+        const temPassagem = !!cliente.filaUltimaPassagem;
+        const pendente = clienteEstaPendente(cliente);
+
+        // Sem passagem anterior: mantém a ordem inicial.
+        if(!temPassagem) return numeroFila(cliente,index+1);
+
+        // Se já passou e ainda está no ciclo de 10 dias, permanece atrás dos
+        // clientes que precisam ser atendidos.
+        if(!pendente) return numeroFila(cliente,index+1);
+
+        // Ao completar 10 dias ele entra novamente na fila. No modo FINAL,
+        // clientes que estão retornando ficam depois dos que ainda não passaram.
+        // No modo INÍCIO, entram antes.
+        const base = numeroFila(cliente,index+1);
+        if(filaRetornoModo === 'inicio') return -1000000000 + base;
+        return 1000000000 + base;
+    }
+
+    function montarFilaOrdenada(){
+        const itens = filaAtiva.map((cliente,index) => ({
+            cliente,
+            ordem: ordemParaFila(cliente,index),
+            pendente: clienteEstaPendente(cliente)
+        }));
+
+        // Primeiro os que precisam de andamento; depois os que já passaram.
+        // Dentro dos pendentes, respeita a posição mecânica da fila.
+        itens.sort((a,b) => {
+            if(a.pendente !== b.pendente) return a.pendente ? -1 : 1;
+            return a.ordem - b.ordem;
+        });
+
+        return itens;
+    }
+
+    function atualizarPainelFila(){
+        const ativos = clientesFechados.filter(c => !estaForaDaFila(c));
+        const pendentes = ativos.filter(clienteEstaPendente);
+        const passaram = ativos.length - pendentes.length;
+
+        const total = document.getElementById('queueTotal');
+        const faltam = document.getElementById('queueFaltam');
+        const passaramEl = document.getElementById('queuePassaram');
+        const fora = document.getElementById('queueFora');
+        const fixedCount = document.getElementById('queueFixedCount');
+
+        if(total) total.textContent = ativos.length;
+        if(faltam) faltam.textContent = pendentes.length;
+        if(passaramEl) passaramEl.textContent = passaram;
+        if(fora) fora.textContent = clientesForaFila.length;
+        if(fixedCount) fixedCount.textContent = clientesForaFila.length;
+
+        const lista = document.getElementById('queueFixedList');
+        if(!lista) return;
+        lista.innerHTML = '';
+
+        clientesForaFila.slice().sort((a,b) => String(a.nome||'').localeCompare(String(b.nome||''))).forEach(cliente => {
+            const item = document.createElement('div');
+            item.className = 'queue-fixed-item';
+            item.innerHTML = `<strong title="${String(cliente.nome||'').replace(/"/g,'&quot;')}">${cliente.nome || 'Sem nome'}</strong><span>${cliente.processo || cliente.cpf || 'Sem identificação'}</span>`;
+            const select = document.createElement('select');
+            select.innerHTML = `<option value="revogado">Revogado</option><option value="arquivado">Arquivado</option><option value="inadimplente">Inadimplente</option><option value="">Voltar para fila</option>`;
+            select.value = statusFila(cliente);
+            select.onchange = async () => await alterarStatusFila(cliente,select.value);
+            item.appendChild(select);
+            lista.appendChild(item);
+        });
+    }
+
+    async function alterarStatusFila(cliente,novoStatus){
+        try{
+            const patch = {statusAndamento: novoStatus || ''};
+            await updateDoc(doc(db,'clientes',cliente.id),patch);
+            Object.assign(cliente,patch);
+            await atualizarCachesAposGravacao(cliente.id,patch);
+            montarFila();
+            renderCards();
+            showToast(novoStatus ? `Cliente marcado como ${novoStatus}.` : 'Cliente voltou para a fila.');
+        }catch(error){
+            console.error('Erro ao alterar status da fila:',error);
+            showToast('Erro ao alterar o status da fila.');
+        }
+    }
+
+    function marcarFilaRetorno(){
+        const select = document.getElementById('filaRetornoModo');
+        if(select) filaRetornoModo = select.value || 'final';
+        renderCards();
+    }
+
+    function calcularDiasAndamento(dataAndamento) {
+        if (!dataAndamento) return 999; 
+        const data1 = new Date(dataAndamento);
+        const data2 = new Date();
+        const diffTempo = Math.abs(data2 - data1);
+        return Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+    }
+
+    async function fetchClientesFechados(opcoes = {}){
+        const forcarServidor = Boolean(opcoes.forcarServidor);
+
+        if (fetchClientesPromise) {
+            if (!forcarServidor) return fetchClientesPromise;
+            try { await fetchClientesPromise; } catch(e) {}
+        }
+
+        fetchClientesPromise = (async () => {
+            let cacheAnterior = null;
+
+            if (!forcarServidor) {
+                cacheAnterior = await lerMelhorCacheFechados(false);
+                if (cacheAnterior) {
+                    timestampBaseCache = cacheAnterior.timestamp;
+                    clientesFechados = cacheAnterior.data;
+                    renderCards();
+                    return;
+                }
+            }
+
+            try {
+                const resultado = await executarCargaProtegida(forcarServidor);
+                clientesFechados = resultado.lista;
+                renderCards();
+                if (resultado.origem === 'servidor' && forcarServidor) {
+                    showToast('Dados sincronizados com o servidor!');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar clientes:', error);
+                const fallback = cacheAnterior || await lerMelhorCacheFechados(true);
+                if (fallback) {
+                    timestampBaseCache = fallback.timestamp;
+                    clientesFechados = fallback.data;
+                    renderCards();
+                    showToast('Servidor indisponível. Exibindo dados do cache local.');
+                    return;
+                }
+                showToast('Erro ao carregar os processos fechados.');
+            }
+        })();
+
+        try {
+            return await fetchClientesPromise;
+        } finally {
+            fetchClientesPromise = null;
+        }
+    }
+
+
+    // ================= MENSAGENS PRONTAS DE ANDAMENTO =================
+    function obterPrimeiroNome(cliente){
+        const nomeCompleto = String(cliente?.nome || '').trim();
+        return nomeCompleto ? nomeCompleto.split(/\s+/)[0] : 'cliente';
+    }
+
+    function obterNumeroProcesso(cliente){
+        return cliente?.processo || cliente?.numeroProcesso || 'Não informado';
+    }
+
+    function gerarMensagemAndamento(tipo, cliente, andamentoAtual){
+        const nome = obterPrimeiroNome(cliente);
+        const numeroProcesso = obterNumeroProcesso(cliente);
+        const descricaoAndamento = String(andamentoAtual || '').trim() || '[DESCREVER O ANDAMENTO]';
+
+        if(tipo === 'sem_movimentacao'){
+            return `Olá, ${nome}! Tudo bem? Estamos entrando em contato para manter você atualizado(a) sobre o seu processo nº ${numeroProcesso}. No momento, não houve nova movimentação relevante no processo desde a última atualização. Continuamos acompanhando regularmente e, assim que houver qualquer novidade, informaremos você por aqui. Não é necessária nenhuma providência neste momento. Atenciosamente, Grupo Nascimento e Souza.`;
+        }
+
+        return `Olá, ${nome}! Tudo bem? Passando para atualizar você sobre o andamento do seu processo nº ${numeroProcesso}. No momento, houve a seguinte movimentação: ${descricaoAndamento}.  Seguimos acompanhando o processo de perto e, caso seja necessária alguma providência da sua parte, avisaremos você por aqui. Ficamos à disposição! Grupo Nascimento e Souza.`;
+    }
+
+    function atualizarMensagemPronta(){
+        if(!selectMensagemPronta || !previewMensagemPronta || !clienteSelecionado) return;
+
+        const tipo = selectMensagemPronta.value;
+        if(!tipo){
+            previewMensagemPronta.innerHTML = '<strong>Pré-visualização</strong>Selecione uma mensagem pronta para preencher o campo de WhatsApp.';
+            return;
+        }
+
+        const mensagem = gerarMensagemAndamento(tipo, clienteSelecionado, inputAndamento.value);
+        previewMensagemPronta.innerHTML = `<strong>Pré-visualização</strong>${mensagem.replace(/\n/g, '<br>')}`;
+        inputAndamento.value = mensagem;
+    }
+
+    if(selectMensagemPronta){
+        selectMensagemPronta.onchange = () => {
+            atualizarMensagemPronta();
+        };
+    }
+
+    if(inputAndamento){
+        inputAndamento.addEventListener('input', () => {
+            if(!clienteSelecionado || !selectMensagemPronta || !selectMensagemPronta.value) return;
+
+            if(selectMensagemPronta.value === 'com_movimentacao'){
+                const textoAtual = inputAndamento.value;
+                const marcador = '[DESCREVER O ANDAMENTO]';
+
+                if(textoAtual.includes(marcador)){
+                    atualizarMensagemPronta();
+                }else if(previewMensagemPronta){
+                    previewMensagemPronta.innerHTML = `<strong>Pré-visualização</strong>${textoAtual.replace(/\n/g, '<br>')}`;
+                }
+            }
+        });
+    }
+
+
+    function abrirModalEscolhaMensagem(cliente){
+        clienteSelecionado = cliente;
+        mensagemProntaSelecionada = '';
+
+        if(selectMensagemPronta){
+            selectMensagemPronta.value = '';
+        }
+
+        if(previewMensagemPronta){
+            previewMensagemPronta.innerHTML = '<strong>Pré-visualização</strong>Selecione uma mensagem pronta para preencher o campo de WhatsApp.';
+        }
+
+        if(modalEscolhaMensagem){
+            modalEscolhaMensagem.style.display = 'flex';
+        }
+    }
+
+    function fecharModalEscolhaMensagem(){
+        if(modalEscolhaMensagem){
+            modalEscolhaMensagem.style.display = 'none';
+        }
+        clienteSelecionado = null;
+        mensagemProntaSelecionada = '';
+    }
+
+    function selecionarMensagemPronta(tipo){
+        if(!clienteSelecionado) return;
+
+        mensagemProntaSelecionada = tipo;
+
+        if(selectMensagemPronta){
+            selectMensagemPronta.value = tipo;
+        }
+
+        if(modalEscolhaMensagem){
+            modalEscolhaMensagem.style.display = 'none';
+        }
+
+        modalTitle.innerText = `Andamento: ${clienteSelecionado.nome}`;
+
+        if(tipo === 'com_movimentacao'){
+            inputAndamento.value = gerarMensagemAndamento(tipo, clienteSelecionado, '[DESCREVER O ANDAMENTO]');
+        }else{
+            inputAndamento.value = gerarMensagemAndamento(tipo, clienteSelecionado, '');
+        }
+
+        inputObservacoes.value = clienteSelecionado.obs || '';
+
+        modalBackdrop.style.display = 'flex';
+
+        if(previewMensagemPronta){
+            previewMensagemPronta.innerHTML = `<strong>Mensagem selecionada</strong>${inputAndamento.value.replace(/\n/g, '<br>')}`;
+        }
+    }
+
+    /*
+     * As funções acima estão dentro de um <script type="module">.
+     * Por isso, funções locais do módulo não ficam disponíveis para onclick=""
+     * inline no HTML. Estas três referências expõem somente as funções dos
+     * botões do modal de escolha, sem alterar a lógica existente.
+     */
+    window.selecionarMensagemPronta = selecionarMensagemPronta;
+    window.fecharModalEscolhaMensagem = fecharModalEscolhaMensagem;
+
+    function abrirModal(cliente) {
+        clienteSelecionado = cliente;
+        
+        // Título e saudação padrão
+        modalTitle.innerText = `Andamento: ${cliente.nome}`;
+        inputAndamento.value = `Olá ${cliente.nome.split(' ')[0]}, tudo bem?\nAqui é do setor de andamento da AMR ADV. \n\nA atualização do seu processo é: \n\n`;
+        inputObservacoes.value = cliente.obs || '';
+
+        if(selectMensagemPronta){
+            selectMensagemPronta.value = '';
+        }
+
+        if(previewMensagemPronta){
+            previewMensagemPronta.innerHTML = '<strong>Pré-visualização</strong>Selecione uma mensagem pronta para preencher o campo de WhatsApp.';
+        }
+        
+        // Renderizar Detalhes do Cliente no Modal
+        modalClientInfo.innerHTML = `
+            <p><strong>CPF/CNPJ:</strong> ${cliente.cpf || 'Não informado'}</p>
+            <p><strong>Telefone:</strong> ${cliente.numeros || 'Não informado'}</p>
+            <p><strong>Estado:</strong> ${cliente.estado || 'Não informado'}</p>
+            <p><strong>Classe:</strong> ${cliente.classe || 'Não informado'}</p>
+            <p style="grid-column: span 2; word-break: break-all;"><strong>Processo(s):</strong> ${cliente.processo || 'Não informado'}</p>
+            <p style="grid-column: span 2;">
+                <strong>Status da fila:</strong>
+                <select id="modalStatusFila" style="margin-left:8px;padding:5px 7px;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:7px;">
+                    <option value="">Na fila</option>
+                    <option value="revogado">Revogado</option>
+                    <option value="arquivado">Arquivado</option>
+                    <option value="inadimplente">Inadimplente</option>
+                </select>
+            </p>
+        `;
+
+        abrirModalEscolhaMensagem(cliente);
+
+        const statusSelect = document.getElementById('modalStatusFila');
+        if(statusSelect){
+            statusSelect.value = statusFila(cliente);
+            statusSelect.onchange = async () => {
+                await alterarStatusFila(cliente,statusSelect.value);
+                modalBackdrop.style.display = 'none';
+                clienteSelecionado = null;
+            };
+        }
+    }
+
+    btnFecharModal.onclick = () => {
+        modalBackdrop.style.display = 'none';
+        clienteSelecionado = null;
+        mensagemProntaSelecionada = '';
+    };
+
+    btnSalvarObs.onclick = async () => {
+        if(!clienteSelecionado) return;
+
+        const novaObs = inputObservacoes.value.trim();
+
+        try {
+            btnSalvarObs.disabled = true;
+            btnSalvarObs.innerText = "Salvando...";
+
+            const docRef = doc(db, "clientes", clienteSelecionado.id);
+            await updateDoc(docRef, { 
+                obs: novaObs
+            });
+            
+            await atualizarCachesAposGravacao(clienteSelecionado.id, { obs: novaObs });
+            clienteSelecionado.obs = novaObs;
+            renderCards();
+            showToast("Observação salva com sucesso!");
+            
+        } catch (error) {
+            console.error("Erro ao salvar observação:", error);
+            showToast("Erro ao registrar a observação.");
+        } finally {
+            btnSalvarObs.disabled = false;
+            btnSalvarObs.innerText = "💾 Salvar Observação";
+        }
+    };
+
+    btnEnviarAndamento.onclick = async () => {
+        if(!clienteSelecionado) return;
+
+        const texto = inputAndamento.value.trim();
+        const novaObs = inputObservacoes.value.trim();
+
+        if(!texto) {
+            showToast("Escreva o andamento antes de enviar.");
+            return;
+        }
+
+        if(!clienteSelecionado.numeros) {
+            showToast("Cliente não possui número de telefone cadastrado.");
+            return;
+        }
+
+        const numeroLimpo = clienteSelecionado.numeros.split(',')[0].replace(/\D/g, '');
+        
+        if(!numeroLimpo) {
+            showToast("Número de telefone inválido.");
+            return;
+        }
+
+        const mensagemFinal = texto;
+
+        try {
+            btnEnviarAndamento.disabled = true;
+            btnEnviarAndamento.innerText = "Salvando...";
+
+            const dataAgora = new Date().toISOString();
+            const docRef = doc(db, "clientes", clienteSelecionado.id);
+            // Sempre que passa, recebe uma nova posição no FINAL da fila.
+            // Isso é o que impede o cliente de voltar para o mesmo lugar.
+            const maiorOrdem = clientesFechados.reduce((maior,c) => {
+                const n = Number(c.filaOrdem);
+                return Number.isFinite(n) ? Math.max(maior,n) : maior;
+            }, clientesFechados.length);
+            const novaFilaOrdem = maiorOrdem + 1;
+
+            await updateDoc(docRef, { 
+                dataUltimoAndamento: dataAgora,
+                ultimoAndamentoTexto: mensagemFinal,
+                obs: novaObs,
+                statusAndamento: '',
+                filaOrdem: novaFilaOrdem,
+                filaUltimaPassagem: dataAgora,
+                filaUltimaPassagemPor: currentUser?.email || ''
+            });
+
+            await atualizarCachesAposGravacao(clienteSelecionado.id, {
+                dataUltimoAndamento: dataAgora,
+                ultimoAndamentoTexto: mensagemFinal,
+                obs: novaObs,
+                statusAndamento: '',
+                filaOrdem: novaFilaOrdem,
+                filaUltimaPassagem: dataAgora,
+                filaUltimaPassagemPor: currentUser?.email || ''
+            });
+
+            const waUrl = `https://wa.me/55${numeroLimpo}?text=${encodeURIComponent(mensagemFinal)}`;
+            window.open(waUrl, '_blank');
+
+            showToast("Andamento e observações salvos. WhatsApp aberto!");
+            modalBackdrop.style.display = 'none';
+            renderCards();
+            
+        } catch (error) {
+            console.error("Erro ao salvar andamento:", error);
+            showToast("Erro ao registrar o andamento no sistema.");
+        } finally {
+            btnEnviarAndamento.disabled = false;
+            btnEnviarAndamento.innerHTML = "↗️ Enviar via WhatsApp";
+        }
+    };
+
+    function renderCards(){
+        montarFila();
+        atualizarPainelFila();
+
+        colAberto.innerHTML = `<h2>ANDAMENTOS EM ABERTO — FILA DE ATENDIMENTO</h2><div class="cards-grid" id="grid-aberto"></div>`;
+        colConcluido.innerHTML = `<h2>JÁ PASSARAM — AGUARDANDO 10 DIAS</h2><div class="cards-grid" id="grid-concluido"></div>`;
+
+        const gridAberto = document.getElementById('grid-aberto');
+        const gridConcluido = document.getElementById('grid-concluido');
+        const rawQ = searchInput.value || '';
+        const qTexto = rawQ.toLowerCase();
+
+        let processoExiste = false;
+        const cleanQ = rawQ.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+        if(cleanQ){
+            processoExiste = clientesFechados.some(c => {
+                if(!c.processo) return false;
+                return String(c.processo).split(',').map(p => p.replace(/[^a-zA-Z0-9]/g,'').toLowerCase()).includes(cleanQ);
+            });
+        }
+        searchInput.style.color = processoExiste ? '#ef4444' : '#fff';
+        searchInput.style.fontWeight = processoExiste ? '600' : 'normal';
+
+        const ordenados = montarFilaOrdenada();
+        let pendenteCount = 0;
+
+        ordenados.forEach((item,index) => {
+            const cliente = item.cliente;
+            const pendente = item.pendente;
+            if(pendente) pendenteCount++;
+
+            const matchNome = cliente.nome && String(cliente.nome).toLowerCase().includes(qTexto);
+            const matchCpf = cliente.cpf && String(cliente.cpf).toLowerCase().includes(qTexto);
+            const matchProcesso = cliente.processo && String(cliente.processo).toLowerCase().includes(qTexto);
+            if(qTexto && !(matchNome || matchCpf || matchProcesso)) return;
+
+            const diasPassados = calcularDiasAndamento(cliente.dataUltimoAndamento);
+            const card = document.createElement('div');
+            card.className = `card ${pendente ? 'aberto' : 'concluido'}`;
+
+            const cpf = cliente.cpf || 'Não informado';
+            const estado = cliente.estado || 'Não informado';
+            const todosProcessos = cliente.processo || 'Não informado';
+            const textoAndamento = cliente.ultimoAndamentoTexto || '';
+            const textoObs = cliente.obs || 'Nenhuma observação registrada.';
+            const posicao = pendente ? ordenados.filter(x => x.pendente).findIndex(x => x.cliente.id === cliente.id) + 1 : 0;
+
+            const badgeTexto = pendente ? `Falta passar — ${diasPassados}d` : `Já passou — ${diasPassados === 0 ? 'hoje' : diasPassados + 'd'}`;
+            const badgeColor = pendente ? '#fca5a5' : '#6ee7b7';
+            const badgeBg = pendente ? 'rgba(239,68,68,.15)' : 'rgba(16,185,129,.15)';
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3 title="${String(cliente.nome||'').replace(/"/g,'&quot;')}">${cliente.nome || 'Sem nome'}</h3>
+                    <span class="badge-tempo" style="color:${badgeColor};background:${badgeBg};">${badgeTexto}</span>
+                </div>
+                <div class="card-content">
+                    <p><strong>CPF/CNPJ:</strong> ${cpf}</p>
+                    <p><strong>Estado:</strong> ${estado}</p>
+                    <p style="word-break:break-all;"><strong>Processo:</strong> ${todosProcessos}</p>
+                    <div class="queue-pos">${pendente ? `Posição na fila: ${posicao}º` : 'Aguardando completar 10 dias para retornar à fila'}</div>
+                    <div class="card-observacao"><strong>Observações Internas</strong><p title="${String(textoObs).replace(/"/g,'&quot;')}">${textoObs}</p></div>
+                    ${textoAndamento ? `<div class="ultimo-andamento"><strong>Último Andamento Enviado</strong><p title="${String(textoAndamento).replace(/"/g,'&quot;')}">${textoAndamento}</p></div>` : `<div class="ultimo-andamento" style="opacity:.5;"><strong>Último Andamento Enviado</strong><p style="font-style:italic;">Nenhum andamento registrado ainda no sistema.</p></div>`}
+                </div>
+                <div class="card-footer">
+                    <div class="queue-pass-button">
+                        <button class="btn ${pendente ? 'btn-blue' : 'btn-green'} btn-abrir-andamento">💬 ${pendente ? 'Escrever Andamento' : 'Novo Andamento'}</button>
+                        <button class="btn ghost queue-status-button btn-retirar-fila" title="Retirar da fila">⋮</button>
+                    </div>
+                </div>`;
+
+            card.querySelector('.btn-abrir-andamento').onclick = e => { e.stopPropagation(); abrirModal(cliente); };
+            card.querySelector('.btn-retirar-fila').onclick = async e => {
+                e.stopPropagation();
+                const escolha = prompt(`Retirar "${cliente.nome || 'cliente'}" da fila.\n\n1 - Revogado\n2 - Arquivado\n3 - Inadimplente\n\nCancelar = não alterar`);
+                const mapa = {'1':'revogado','2':'arquivado','3':'inadimplente'};
+                if(mapa[escolha]) await alterarStatusFila(cliente,mapa[escolha]);
+            };
+            card.onclick = () => abrirModal(cliente);
+
+            if(pendente) gridAberto.appendChild(card); else gridConcluido.appendChild(card);
+        });
+
+        if(!gridAberto.children.length) gridAberto.innerHTML = `<div class="queue-empty">Nenhum cliente precisa de andamento neste momento.</div>`;
+        if(!gridConcluido.children.length) gridConcluido.innerHTML = `<div class="queue-empty">Nenhum cliente está aguardando o próximo ciclo.</div>`;
+    }
+
+    searchInput.oninput = renderCards;
+
+    /* ================= LOGIN ================= */
+    onAuthStateChanged(auth, user => {
+        if(user){
+            currentUser = user;
+            fetchClientesFechados();
+        }else{
+            window.location.href = "login.html";
+        }
+    });
+
+});
+</script>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <h2 onclick="window.location.href='dashboard.html'">AMR ADV</h2>
+    <button onclick="window.location.href='index.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/dashboard.png"/>
+        <span>CRM</span>
+    </button>
+    <button onclick="window.location.href='funil_geral.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/filter.png"/>
+        <span>Funil Geral</span>
+    </button>
+    <button onclick="window.location.href='andamento.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/task.png"/>
+        <span>Andamento</span>
+    </button>
+    <button onclick="window.location.href='clientes.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/user-group-man-man.png"/>
+        <span>Clientes</span>
+    </button>
+    <button onclick="window.location.href='app.html'">
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/phone.png"/>
+        <span>App</span>
+    </button>
+    <button>
+        <img src="https://img.icons8.com/ios-filled/50/ffffff/settings.png"/>
+        <span>Configurações</span>
+    </button>
+</div>
+
+<div class="main">
+    <header>
+        <h1>Setor de Andamento</h1>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="font-size: 14px; color: rgba(255,255,255,0.7);">
+                <!-- <-- ALTERADO DE 5 PARA 10 DIAS -->
+                Fila automática: ao passar, o cliente vai para o final; após 10 dias, retorna ao ciclo.
+            </div>
+            <button class="btn ghost" onclick="forcarAtualizacao()" title="Sincronizar dados com o servidor" style="width:auto; padding:10px 14px;">🔄 Sincronizar</button>
+        </div>
+    </header>
+
+    <div class="search-bar">
+        <input id="searchInput" placeholder="Buscar cliente por nome, CPF ou processo..." />
+    </div>
+
+    <section class="queue-panel">
+        <div class="queue-stats">
+            <div class="queue-stat"><div class="queue-stat-label">Clientes na fila</div><div class="queue-stat-value" id="queueTotal">0</div><div class="queue-stat-sub">clientes ativos</div></div>
+            <div class="queue-stat"><div class="queue-stat-label">Faltam passar</div><div class="queue-stat-value" id="queueFaltam">0</div><div class="queue-stat-sub">precisam de andamento</div></div>
+            <div class="queue-stat"><div class="queue-stat-label">Já passaram</div><div class="queue-stat-value" id="queuePassaram">0</div><div class="queue-stat-sub">aguardando 10 dias</div></div>
+            <div class="queue-stat"><div class="queue-stat-label">Fora da fila</div><div class="queue-stat-value" id="queueFora">0</div><div class="queue-stat-sub">revogado, arquivado ou inadimplente</div></div>
+        </div>
+        <div class="queue-controls">
+            <label style="font-size:11px;color:rgba(255,255,255,.55);">Quando completar 10 dias:</label>
+            <select id="filaRetornoModo" onchange="marcarFilaRetorno()">
+                <option value="final" selected>voltar para o FINAL da fila</option>
+                <option value="inicio">voltar para o INÍCIO da fila</option>
+            </select>
+            <span class="queue-help">A posição anterior não é preservada.</span>
+        </div>
+        <div class="queue-fixed">
+            <div class="queue-fixed-head"><div class="queue-fixed-title">Lista fixa — não precisam mais de andamento</div><div class="queue-fixed-count" id="queueFixedCount">0</div></div>
+            <div class="queue-fixed-list" id="queueFixedList"></div>
+        </div>
+    </section>
+
+    <div class="kanban-container">
+        <main class="kanban" id="kanban">
+            <div class="column" id="col-aberto">
+                <!-- Conteúdo renderizado pelo JS -->
+            </div>
+
+            <div class="column" id="col-concluido">
+                <!-- Conteúdo renderizado pelo JS -->
+            </div>
+        </main>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalEscolhaMensagem">
+    <div class="modal-mensagem-escolha">
+        <h3>Escolha a mensagem para enviar</h3>
+        <p>Selecione o modelo de mensagem que deseja utilizar para este cliente. Os dados do nome e do processo serão preenchidos automaticamente.</p>
+
+        <div class="opcoes-mensagens-prontas">
+            <button id="btnMensagemComMovimentacao" class="opcao-mensagem-pronta" type="button" onclick="selecionarMensagemPronta('com_movimentacao')">
+                <strong>Mensagem 1 — Com movimentação</strong>
+                <span>Informa ao cliente que houve uma movimentação no processo e permite descrever o andamento ocorrido.</span>
+            </button>
+
+            <button id="btnMensagemSemMovimentacao" class="opcao-mensagem-pronta" type="button" onclick="selecionarMensagemPronta('sem_movimentacao')">
+                <strong>Mensagem 2 — Sem nova movimentação</strong>
+                <span>Informa que não houve nova movimentação relevante e que o escritório continua acompanhando o processo.</span>
+            </button>
+
+            <button id="btnCancelarEscolhaMensagem" class="opcao-mensagem-pronta cancelar" type="button" onclick="fecharModalEscolhaMensagem()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <h3 id="modalTitle">Escrever Andamento</h3>
+        
+        <div class="modal-client-info" id="modalClientInfo"></div>
+        
+        <h4 style="color:#fff; margin-bottom: 10px; font-size: 14px;">Observações Internas</h4>
+        <textarea id="inputObservacoes" placeholder="Digite observações sobre o cliente ou processo aqui..."></textarea>
+        <div class="actions" style="margin-bottom: 20px;">
+            <button class="btn btn-blue" id="btnSalvarObs" style="width: auto; padding: 6px 16px; font-size: 13px;">
+                💾 Salvar Observação
+            </button>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+        
+        <h4 style="color:#fff; margin-bottom: 10px; font-size: 14px;">Andamento (WhatsApp)</h4>
+        <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 15px;">
+            A mensagem abaixo será enviada para o WhatsApp do cliente. Salvar move o card para "Concluídos".
+        </p>
+        
+        <div class="mensagens-prontas-box">
+            <label for="selectMensagemPronta">Escolha uma mensagem pronta para enviar</label>
+            <select id="selectMensagemPronta">
+                <option value="">Selecione uma mensagem...</option>
+                <option value="com_movimentacao">Mensagem 1 — Com movimentação</option>
+                <option value="sem_movimentacao">Mensagem 2 — Sem nova movimentação</option>
+            </select>
+            <div class="mensagens-prontas-preview" id="previewMensagemPronta">
+                <strong>Pré-visualização</strong>
+                Selecione uma mensagem pronta para preencher o campo de WhatsApp.
+            </div>
+        </div>
+
+        <textarea id="inputAndamento" placeholder="Digite o andamento do processo aqui..."></textarea>
+        
+        <div class="actions">
+            <button class="btn ghost" id="btnFecharModal">Cancelar</button>
+            <button class="btn btn-green" id="btnEnviarAndamento" style="width: auto;">
+                ↗️ Enviar via WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</body>
+</html>
