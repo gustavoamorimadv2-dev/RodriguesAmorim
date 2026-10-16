@@ -40,7 +40,7 @@ async function main(){
    scaling:{minInstanceCount:1,maxInstanceCount:1},executionEnvironment:'EXECUTION_ENVIRONMENT_GEN2',timeout:'540s',maxInstanceRequestConcurrency:40,
    containers:[{image:state.image,ports:[{containerPort:8080}],resources:{limits:{cpu:'1',memory:'2Gi'},cpuIdle:false,startupCpuBoost:true},env:Object.entries({
     GOOGLE_CLOUD_PROJECT:project,AUTOMATION_DATABASE:'whatsapp-automation',SESSION_BUCKET:state.sessionBucket,
-    WHATSAPP_ALLOWED_UIDS:state.allowedUids.join(','),CRM_ORIGINS:'https://www.gruporodriguesamorim.com,https://gruporodriguesamorim.com',
+    WHATSAPP_ALLOWED_UIDS:state.allowedUids.join(','),CRM_ORIGINS:'https://www.gruporodriguesamorim.com,https://gruporodriguesamorim.com,https://rodrigues-amr.web.app,https://rodrigues-amr.firebaseapp.com',
     SCHEDULER_EMAIL:state.schedulerEmail,SERVICE_URL:serviceUrl || 'https://pending.invalid',CHROME_PATH:'/usr/bin/chromium'
    }).map(([name,value])=>({name,value}))}]
   }
