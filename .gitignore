@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+!.env.example
+whatsapp-service/data/
+.wwebjs_cache/
+*service-account*.json
+firebase-debug.log*
+.firebase/
+deployment/runtime.json

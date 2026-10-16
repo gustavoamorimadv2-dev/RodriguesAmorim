@@ -1,0 +1,21 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "whatsapp-billing",
+      "runtime": "nodejs22",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "*.local"
+      ]
+    }
+  ],
+  "firestore": [
+    {
+      "database": "whatsapp-automation",
+      "rules": "deployment/firestore.rules"
+    }
+  ]
+}
