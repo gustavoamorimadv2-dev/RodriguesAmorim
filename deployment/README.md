@@ -34,3 +34,17 @@ Requer Firebase CLI autenticado, permissão de administração no projeto, fatur
 Verifique `/health` (200), `/api/whatsapp` sem token (401), `/internal/billing` sem token (401), negação de CORS para origem desconhecida, regras do banco privado e status ativo da função/job. O teste de navegador do build não conecta WhatsApp nem envia mensagens. Após a publicação, a leitura do QR e a ativação ficam para o administrador.
 
 Para pausar envios, desative a opção no painel. Para cessar custos contínuos, desative o job e reduza a instância mínima do Cloud Run para zero ou exclua os recursos; apenas desativar os lembretes não desliga a infraestrutura.
+
+## Endereço seguro do CRM
+
+A configuração do domínio original no GitHub Pages apresenta certificado incompatível em HTTPS. A integração não libera origens HTTP. O CRM também é publicado no site Firebase Hosting existente `rodrigues-amr`, com HTTPS válido, e o botão na versão HTTP encaminha para a versão segura. O usuário precisa entrar no CRM nessa origem antes de conectar o telefone. DNS e certificado do domínio original não foram alterados.
+
+Para atualizar o frontend seguro: `node deployment/prepare-hosting.cjs`, seguido de `firebase deploy --only hosting --project rodrigues-amr --non-interactive`. A pasta gerada contém somente páginas HTML e assets públicos, sem fontes do backend, arquivos de ambiente ou configurações de implantação.
+
+## Verificações de produção
+
+`node deployment/verify.cjs --run-scheduler` confere endpoints, bloqueio de HTTP, CORS do Firebase Hosting, função e job ativos; só aciona o teste se os lembretes estiverem desativados. O teste completo Scheduler → Cloud Function → serviço retornou HTTP 200 sem envio de mensagens.
+
+`node deployment/verify-qr.cjs` roda a imagem em um contêiner isolado e comprova que whatsapp-web.js gera um QR real. O código é descartado, não aparece em logs e nenhum telefone é pareado. Esse teste passou na imagem publicada. A leitura do QR pelo administrador e a restauração de uma sessão efetivamente pareada precisam da participação do usuário.
+
+A política do repositório `gcf-artifacts`, criado nesta implantação, remove imagens de função com mais de sete dias.

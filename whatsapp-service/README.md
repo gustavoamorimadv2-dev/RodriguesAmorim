@@ -15,7 +15,7 @@ A URL HTTPS aceita tráfego público porque o navegador usa Firebase Auth; as op
 
 ## Uso
 
-1. Entre no CRM com um administrador autorizado.
+1. Entre na versão HTTPS do CRM (`https://rodrigues-amr.web.app/login.html`) com um administrador autorizado.
 2. Abra **Clientes → Conectar WhatsApp → Conectar**.
 3. No telefone: **WhatsApp → Aparelhos conectados → Conectar um aparelho**. Escaneie o QR exibido na página.
 4. Aguarde a confirmação de que a sessão foi salva (o primeiro backup leva cerca de um minuto).

@@ -35,6 +35,9 @@ export function setupWhatsApp(auth) {
     finally{pending=false;}
   }
   button.addEventListener('click',()=>{
+    if(location.protocol!=='https:' && !['localhost','127.0.0.1'].includes(location.hostname)){
+      location.assign('https://rodrigues-amr.web.app/login.html');return;
+    }
     previousFocus=document.activeElement;dialog.showModal();
     toggle.disabled=true;status.textContent='Verificando conexão…';
     void refresh();timer=setInterval(refresh,3000);

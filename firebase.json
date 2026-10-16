@@ -17,5 +17,32 @@
       "database": "whatsapp-automation",
       "rules": "deployment/firestore.rules"
     }
-  ]
+  ],
+  "hosting": {
+    "site": "rodrigues-amr",
+    "public": ".hosting-public",
+    "ignore": [
+      ".*"
+    ],
+    "headers": [
+      {
+        "source": "/assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ]
+  }
 }

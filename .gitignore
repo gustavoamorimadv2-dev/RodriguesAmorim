@@ -8,3 +8,5 @@ whatsapp-service/data/
 firebase-debug.log*
 .firebase/
 deployment/runtime.json
+
+.hosting-public/
