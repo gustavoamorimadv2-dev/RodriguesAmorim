@@ -1,0 +1,5 @@
+node_modules/
+.env
+whatsapp-service/data/
+.wwebjs_cache/
+*service-account*.json

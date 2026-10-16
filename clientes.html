@@ -233,6 +233,14 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
 }
 
 </style>
+<style>
+#whatsappDialog { margin:auto; width:min(460px,94vw); max-height:90vh; overflow:auto; border:1px solid #334155; border-radius:18px; padding:24px; background:#0f172a; color:#fff; }
+#whatsappDialog::backdrop { background:rgba(0,0,0,.7); }
+#whatsappDialog p { margin:16px 0; line-height:1.6; color:#cbd5e1; }
+#whatsappQr { display:block; width:264px; max-width:100%; margin:16px auto; border-radius:8px; }
+#whatsappQr[hidden] { display:none; }
+#whatsappDialog label { display:flex; gap:10px; align-items:flex-start; margin-top:20px; line-height:1.5; }
+</style>
 </head>
 <body>
 
@@ -251,6 +259,7 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
     <header>
         <h1>Clientes</h1>
         <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="btn ghost" id="connectWhatsApp" type="button">Conectar WhatsApp</button>
             <button class="btn ghost" onclick="forcarAtualizacao()" title="Sincronizar dados com o servidor" style="padding: 10px; font-size: 16px;">🔄</button>
             <button class="btn primary" onclick="abrirModalNovoCliente()">+ Adicionar Cliente Antigo</button>
         </div>
@@ -491,7 +500,20 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
 </div>
 <div class="toast" id="toast"></div>
 
+<dialog id="whatsappDialog" aria-labelledby="whatsappTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+        <h2 id="whatsappTitle">WhatsApp do escritório</h2>
+        <button id="whatsappClose" class="btn ghost" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <p>Conecte o número que será usado nos lembretes de cobrança do Rodrigues Amorim.</p>
+    <p id="whatsappStatus" role="status" aria-live="polite"></p>
+    <img id="whatsappQr" alt="QR code para conectar o WhatsApp" hidden>
+    <button id="whatsappStart" class="btn primary" type="button">Conectar</button>
+    <label><input id="whatsappAutomation" type="checkbox" disabled> Ativar lembretes automáticos três dias antes do vencimento</label>
+    <p style="font-size:12px">O escritório usa uma única sessão. Os lembretes saem entre 9h e 18h, no horário de Brasília, mesmo com esta página fechada. Parcelas pagas são ignoradas.</p>
+</dialog>
 <script type="module">
+import { setupWhatsApp } from "./assets/whatsapp.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getFirestore, collection, query, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
@@ -510,6 +532,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+setupWhatsApp(auth);
 let storage = null;
 
 try {
