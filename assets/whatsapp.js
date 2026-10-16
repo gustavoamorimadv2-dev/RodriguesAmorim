@@ -26,10 +26,10 @@ export function setupWhatsApp(auth) {
     try {
       const data=await api();
       if(!dialog.open) return;
-      status.textContent=labels[data.state] || 'Verificando conexão…';
+      status.textContent=data.state==='connected' && !data.persisted?'WhatsApp conectado. Salvando a sessão com segurança; aguarde cerca de um minuto…':labels[data.state] || 'Verificando conexão…';
       qr.hidden=!data.qr;if(data.qr) qr.src=data.qr;else qr.removeAttribute('src');
       connect.disabled=['connected','connecting','qr'].includes(data.state);
-      toggle.disabled=false;toggle.checked=data.enabled;
+      toggle.disabled=!data.enabled && (data.state!=='connected' || !data.persisted);toggle.checked=data.enabled;
       button.textContent=data.state==='connected'?'WhatsApp conectado':'Conectar WhatsApp';
     } catch(error){status.textContent=error.message;qr.hidden=true;qr.removeAttribute('src');toggle.disabled=true;connect.disabled=!WHATSAPP_API_URL;}
     finally{pending=false;}

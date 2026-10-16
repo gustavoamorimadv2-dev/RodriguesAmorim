@@ -22,16 +22,16 @@ export function message(client, p) {
   const date = p.vencimento.split('-').reverse().join('/');
   return `Olá, ${client.nome || 'cliente'}! Aqui é do Rodrigues Amorim. Passando para lembrar que sua parcela ${p.parcela || ''}, no valor de R$ ${p.valor}, vence em ${date}, daqui a três dias. Se já efetuou o pagamento, por favor desconsidere e nos envie o comprovante. Estamos à disposição!`;
 }
-export async function runBilling({db, session, now = new Date(), isEnabled = () => true}) {
+export async function runBilling({db, logDb = db, session, now = new Date(), isEnabled = () => true}) {
   if (session.state !== 'connected' || !isEnabled()) return;
   const date = targetDate(now);
   const clients = await db.collection('clientes').get();
   for (const record of clients.docs) {
     for (const installment of (Array.isArray(record.data().honorarios) ? record.data().honorarios : [])) {
       if (!eligible(installment,date) || session.state !== 'connected' || !isEnabled()) continue;
-      const ref = db.collection('whatsapp_envios').doc(deliveryKey(record.id,installment));
+      const ref = logDb.collection('whatsapp_envios').doc(deliveryKey(record.id,installment));
       // A durable claim prevents duplicate delivery after restarts or uncertain send results.
-      const claimed = await db.runTransaction(async tx => {
+      const claimed = await logDb.runTransaction(async tx => {
         if ((await tx.get(ref)).exists) return false;
         tx.set(ref,{clientId:record.id,installmentId:installment.id_parcela,dueDate:date,status:'reserved',createdAt:new Date()});
         return true;
