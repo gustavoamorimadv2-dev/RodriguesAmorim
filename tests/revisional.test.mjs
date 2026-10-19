@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {payment,calculate,annual,selectObservation,queryURL} from '../assets/revisional-core.mjs';
+const d={net:10000,fee:100,iof:0,insurance:0,other:0,total:10100,exclude:0,reason:'',monthly:2,count:12,installment:955};
+test('Price agrees with independent amortization and zero interest',()=>{const p=payment(10000,2,12);let balance=10000;for(let n=0;n<12;n++)balance=balance*1.02-p;assert.ok(Math.abs(balance)<1e-8);assert.equal(payment(1200,0,12),100);assert.ok(Math.abs(annual(1)-12.682503013196978)<1e-10);});
+test('composition and exclusions validated',()=>{assert.throws(()=>calculate({...d,total:10200},1));assert.throws(()=>calculate({...d,exclude:101},1));assert.throws(()=>calculate({...d,exclude:50},1));assert.equal(calculate({...d,exclude:50,reason:'simulação'},1).principal,10050);});
+test('negative savings preserved',()=>assert.ok(calculate(d,10).difference<0));
+test('historical data never uses another month or missing values',()=>{assert.throws(()=>selectObservation([{data:'01/09/2024',valor:'2'}],'2024-08-13'));assert.throws(()=>selectObservation([{data:'01/08/2024',valor:''}],'2024-08-13'));assert.deepEqual(selectObservation([{data:'01/08/2024',valor:'1.99'}],'2024-08-13'),{date:'01/08/2024',value:1.99});});
+test('Selic excludes future observations; leap year query',()=>{assert.equal(selectObservation([{data:'14/08/2024',valor:'11'},{data:'12/08/2024',valor:'10.5'}],'2024-08-13',true).value,10.5);assert.ok(queryURL('25471','2024-02-13').endsWith('29/02/2024'));});
