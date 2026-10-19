@@ -2147,7 +2147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <span>CRM</span>
     </button>
 
-    <button onclick="window.location.href='revisional.html'">
+    <button onclick="window.location.href='revisional.html'" title="Revisional de contrato" aria-label="Revisional de contrato">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8M8 10h2m4 0h2M8 14h2m4 0h2M8 18h2m4 0h2"/></svg>
         <span>Revisional</span>
     </button>
 
@@ -2188,6 +2189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <header>
     <div style="display: flex; align-items: center; gap: 20px;">
         <h1>CRM</h1>
+        <a href="revisional.html" style="display:inline-flex;align-items:center;padding:10px 14px;border:1px solid rgba(255,255,255,.3);border-radius:10px;color:#fff;background:#254c95;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap">Revisional</a>
         <div id="userEmailDisplay" class="user-info"></div>
         <div class="user-info" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
             Resgatados do Funil: <strong id="countResgatadosText" style="color: #fff; margin-left: 4px;">0</strong>
