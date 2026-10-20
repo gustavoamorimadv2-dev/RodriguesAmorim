@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broker Finance — Administração</title><link rel="stylesheet" href="style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' blob:; frame-src blob: https://broker-17a8a.firebaseapp.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://firebasestorage.googleapis.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+</head>
+<body>
+<header><a class="brand" href="./">broker <span>Finance</span></a><span class="subtle">Administração</span><button id="logout" hidden>Sair</button></header>
+<main>
+<section id="login" class="login card">
+<p class="eyebrow">ACESSO RESTRITO</p><h1>Gestão com<br>transparência.</h1><p class="subtle">Revise identidades e conecte créditos ao marketplace.</p>
+<form id="login-form"><label>E-mail<input id="email" type="email" autocomplete="username" required></label><label>Senha<input id="password" type="password" autocomplete="current-password" required></label><button class="primary">Entrar</button></form><button id="reset">Esqueci minha senha</button>
+</section>
+<p id="feedback" role="status" aria-live="polite"></p>
+<section id="workspace" hidden>
+<div class="heading"><div><p class="eyebrow">BROKER FINANCE</p><h1>Visão geral</h1></div><p class="subtle" id="admin-email"></p></div>
+<div class="metrics"><article class="card"><span class="subtle">Usuários aguardando</span><strong id="count-users">—</strong></article><article class="card"><span class="subtle">Créditos em auditoria</span><strong id="count-credits">—</strong></article></div>
+<nav aria-label="Seções"><button data-tab="usuarios" class="selected">Usuários</button><button data-tab="creditos">Precatórios</button><button data-tab="novo">Cadastrar precatório</button></nav>
+<section id="usuarios" class="panel"><div class="heading"><h2>Revisão cadastral</h2><label>Status<select id="user-filter"><option value="pendente">Aguardando aprovação</option value="rascunho">Cadastro incompleto</option><option value="aprovado">Aprovados</option><option value="rejeitado">Rejeitados</option><option value="todos">Todos</option></select></label></div><div id="users-list" class="records"></div></section>
+<section id="creditos" class="panel" hidden><div class="heading"><h2>Auditoria de precatórios</h2><label>Status<select id="credit-filter"><option value="em_auditoria">Em auditoria</option><option value="publicado">Publicados</option><option value="rejeitado">Rejeitados</option><option value="rascunho">Rascunhos</option><option value="todos">Todos</option></select></label></div><div id="credits-list" class="records"></div></section>
+<section id="novo" class="panel" hidden><h2>Cadastrar precatório</h2><p class="subtle">O crédito será enviado para auditoria. Revise a documentação antes de publicar.</p><form id="credit-form" class="card grid-form">
+<label>Credor ou broker responsável<select name="ownerID" id="credit-owner" required><option value="">Selecione uma conta aprovada</option></select></label><label>Titular<input name="titular" required maxlength="150"></label><label>Tribunal / ente devedor<input name="tribunal" required maxlength="150"></label><label>Número do processo<input name="processo" required maxlength="100"></label><label>Valor de face (R$)<input name="valor" type="number" min="0.01" max="999999999999" step="0.01" required></label><label>Deságio (%)<input name="desagio" type="number" min="0" max="99.99" step="0.01" required></label><label class="check"><input name="icms" type="checkbox"> Compensação de ICMS</label><label class="check"><input name="fiscal" type="checkbox"> Dívida fiscal</label><label>Documentação (PDF, até 20 MB)<input name="pdf" type="file" accept="application/pdf" required></label><button class="primary">Salvar para auditoria</button></form></section>
+</section>
+</main>
+<dialog id="review-dialog"><div class="heading"><h2 id="review-title">Revisão</h2><button id="close-dialog" aria-label="Fechar revisão">Fechar</button></div><div id="review-content"></div><form id="review-form"><label>Parecer / motivo<textarea id="review-reason" maxlength="2000" rows="3" placeholder="Obrigatório para rejeitar. Evite reproduzir dados do RG neste campo."></textarea></label><p class="subtle">Confirme a legibilidade dos documentos e a correspondência dos dados antes de aprovar.</p><div class="actions"><button type="button" id="reject">Rejeitar</button><button type="submit" class="primary" id="approve">Aprovar</button></div></form><p id="review-error" role="alert"></p></dialog>
+<script type="module" src="app.js"></script>
+</body></html>
