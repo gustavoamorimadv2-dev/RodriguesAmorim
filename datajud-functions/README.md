@@ -27,3 +27,9 @@ Para atualizar a chave após rotação pelo CNJ, repita os passos 3 e 4. Nenhuma
 - https://www.cnj.jus.br/programas-e-acoes/numeracao-unica/perguntas-frequentes/
 
 Os metadados disponíveis podem ter defasagem em relação ao tribunal. Não encontrar um processo na API pública não prova que ele não existe ou que está sem movimentações.
+
+## Tratamento de lentidão
+
+Cada chamada ao CNJ aguarda até 35 segundos, com até três tentativas para falhas temporárias ou respostas incompletas. A função tem prazo de 120 segundos e a página aguarda até 130 segundos. A interface informa quando a consulta continua em andamento. Erros de chave, processo ausente e ausência de movimentos são diferenciados. Os registros de diagnóstico incluem apenas tribunal, tentativa, motivo e código de erro, sem nomes, números de processos ou credenciais.
+
+A fixture de regressão usa exclusivamente a resposta do processo publicado como exemplo pelo CNJ em https://datajud-wiki.cnj.jus.br/api-publica/exemplos/exemplo1.
