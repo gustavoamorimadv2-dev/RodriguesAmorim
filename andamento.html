@@ -609,6 +609,8 @@ import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-functions.js";
+
 /* ================= FIREBASE ================= */
 const firebaseConfig = {
     apiKey: "AIzaSyAr6ylk4l5Y_gOyv5tmEWAobTyFIbj8GYo",
@@ -625,6 +627,7 @@ const db = getFirestore(app);
 
 
 const auth = getAuth(app);
+const consultarAndamento = httpsCallable(getFunctions(app, "us-central1"), "gerarAndamentoDatajud", {timeout: 35000});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1069,6 +1072,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return `Olá, ${nome}! Tudo bem? Passando para atualizar você sobre o andamento do seu processo nº ${numeroProcesso}. No momento, houve a seguinte movimentação: ${descricaoAndamento}.  Seguimos acompanhando o processo de perto e, caso seja necessária alguma providência da sua parte, avisaremos você por aqui. Ficamos à disposição! Grupo Rodrigues & Amorim.`;
     }
 
+    async function gerarAndamentoDatajud(cliente, botao) {
+        if (!auth.currentUser) { showToast('Entre no sistema para consultar.'); return; }
+        const cadastro = String(cliente.processo || cliente.numeroProcesso || '').trim();
+        const numeros = [...new Set(cadastro.match(/(?<!\d)(?:\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}|\d{20})(?!\d)/g) || [])];
+        if (!numeros.length) { showToast('Cadastre o número completo do processo no padrão CNJ.'); return; }
+        let numero = numeros[0];
+        if (numeros.length > 1) {
+            const escolha = window.prompt('Qual processo deseja consultar? Digite a opção:\n' + numeros.map((n, i) => `${i + 1}: ${n}`).join('\n'));
+            if (escolha === null) return;
+            const indice = Number(escolha) - 1;
+            if (!Number.isInteger(indice) || !numeros[indice]) { showToast('Opção de processo inválida.'); return; }
+            numero = numeros[indice];
+        }
+        botao.disabled = true;
+        botao.textContent = 'Consultando DataJud…';
+        try {
+            const {data} = await consultarAndamento({numeroProcesso: numero});
+            // Só abre o editor após a consulta: falhas preservam o texto já digitado.
+            abrirModal(cliente);
+            const dataMovimento = new Date(data.movimentacao.dataHora).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'});
+            inputAndamento.value = `Olá, ${obterPrimeiroNome(cliente)}! Tudo bem?\n\nConsultamos o processo nº ${numero}. A última movimentação disponível no DataJud para o tribunal de origem (${data.tribunal.toUpperCase()}) é de ${dataMovimento}: ${data.movimentacao.nome}.\n\nSeguimos acompanhando o processo. Ficamos à disposição!\nGrupo Rodrigues & Amorim.`;
+            previewMensagemPronta.textContent = 'Fonte: DataJud/CNJ. Os dados podem ter defasagem. Revise a movimentação antes de enviar ao cliente.';
+            inputAndamento.focus();
+            showToast('Andamento preenchido. Revise antes de enviar.');
+        } catch (error) {
+            showToast(error.message || 'Não foi possível consultar o DataJud.');
+        } finally {
+            botao.disabled = false;
+            botao.textContent = 'Gerar andamento';
+        }
+    }
+
     function atualizarMensagemPronta(){
         if(!selectMensagemPronta || !previewMensagemPronta || !clienteSelecionado) return;
 
@@ -1393,11 +1428,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="card-footer">
                     <div class="queue-pass-button">
+                        <button class="btn btn-blue btn-gerar-andamento" type="button">Gerar andamento</button>
                         <button class="btn ${pendente ? 'btn-blue' : 'btn-green'} btn-abrir-andamento">💬 ${pendente ? 'Escrever Andamento' : 'Novo Andamento'}</button>
                         <button class="btn ghost queue-status-button btn-retirar-fila" title="Retirar da fila">⋮</button>
                     </div>
                 </div>`;
 
+            card.querySelector('.btn-gerar-andamento').onclick = e => { e.stopPropagation(); gerarAndamentoDatajud(cliente, e.currentTarget); };
             card.querySelector('.btn-abrir-andamento').onclick = e => { e.stopPropagation(); abrirModal(cliente); };
             card.querySelector('.btn-retirar-fila').onclick = async e => {
                 e.stopPropagation();

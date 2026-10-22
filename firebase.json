@@ -10,6 +10,18 @@
         "firebase-debug.log",
         "*.local"
       ]
+    },
+    {
+      "source": "datajud-functions",
+      "codebase": "datajud",
+      "runtime": "nodejs22",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "*.local",
+        "*.test.js"
+      ]
     }
   ],
   "firestore": [
