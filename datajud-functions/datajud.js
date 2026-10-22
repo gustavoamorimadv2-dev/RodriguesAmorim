@@ -29,14 +29,16 @@ export function extrairUltimaMovimentacao(payload, numero) {
   }
   const total = typeof payload.hits.total === 'number' ? payload.hits.total : payload.hits.total?.value;
   if (total > payload.hits.hits.length || payload.hits.total?.relation === 'gte') throw new ConsultaError('unavailable', 'Há mais registros do que o limite de consulta. Não foi possível determinar a última movimentação.');
-  const registros = payload.hits.hits.map(h => h._source).filter(s => s?.numeroProcesso === numero);
+  const registros = payload.hits.hits.map(h => h?._source).filter(s => s?.numeroProcesso === numero);
   if (!registros.length) throw new ConsultaError('not-found', 'Processo não encontrado na base pública do DataJud. Confira o número ou consulte o tribunal.', 'processo-ausente');
-  const movimentos = registros.flatMap(s => (s.movimentos || []).map(m => ({...m, grau: s.grau})))
+  const movimentos = registros.flatMap(s => (Array.isArray(s.movimentos) ? s.movimentos : []).filter(m => m && typeof m === 'object').map(m => ({...m, grau: s.grau})))
     .filter(m => typeof m.nome === 'string' && m.nome.trim() && Number.isFinite(Date.parse(m.dataHora)))
     .sort((a, b) => Date.parse(b.dataHora) - Date.parse(a.dataHora));
   if (!movimentos.length) throw new ConsultaError('not-found', 'O DataJud não disponibilizou movimentações com data para este processo.', 'movimentos-ausentes');
   const m = movimentos[0];
-  return {nome:m.nome, codigo:m.codigo ?? null, dataHora:m.dataHora, grau:m.grau ?? null};
+  const complementos = (Array.isArray(m.complementosTabelados) ? m.complementosTabelados : [])
+    .map(c => typeof c?.nome === 'string' ? c.nome.trim() : '').filter(Boolean);
+  return {nome:m.nome, codigo:m.codigo ?? null, dataHora:m.dataHora, grau:m.grau ?? null, termoTribunal:[m.nome, ...complementos].join(' - ')};
 }
 // Cada tentativa tem prazo próprio; a função e o navegador aguardam o ciclo completo.
 export const PRAZO_DATAJUD_MS = 35000;
@@ -50,7 +52,8 @@ export async function consultarDatajud(valor, chave, fetchImpl = fetch, opcoes =
       try {
         response = await fetchImpl(`https://api-publica.datajud.cnj.jus.br/api_publica_${identificacao.tribunal}/_search`, {
           method:'POST', headers:{'Content-Type':'application/json', Authorization:`APIKey ${String(chave).trim()}`},
-          body:JSON.stringify({size:100, track_total_hits:true, query:{match:{numeroProcesso:identificacao.numero}}, _source:['numeroProcesso','movimentos','grau']}),
+          // Mesmo corpo de consulta do código que já funciona no aplicativo.
+          body:JSON.stringify({query:{match:{numeroProcesso:identificacao.numero}}}),
           signal:AbortSignal.timeout(PRAZO_DATAJUD_MS),
         });
       } catch {

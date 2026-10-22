@@ -33,3 +33,13 @@ Os metadados disponíveis podem ter defasagem em relação ao tribunal. Não enc
 Cada chamada ao CNJ aguarda até 35 segundos, com até três tentativas para falhas temporárias ou respostas incompletas. A função tem prazo de 120 segundos e a página aguarda até 130 segundos. A interface informa quando a consulta continua em andamento. Erros de chave, processo ausente e ausência de movimentos são diferenciados. Os registros de diagnóstico incluem apenas tribunal, tentativa, motivo e código de erro, sem nomes, números de processos ou credenciais.
 
 A fixture de regressão usa exclusivamente a resposta do processo publicado como exemplo pelo CNJ em https://datajud-wiki.cnj.jus.br/api-publica/exemplos/exemplo1.
+
+## Integração direta com o CRM
+
+O botão envia `numeroProcesso` e `idClienteFirebase`. A função faz a consulta direta ao DataJud com o mesmo corpo simples do código fornecido pelo usuário e monta o termo com nome e complementos tabelados. Não há serviço intermediário nem etapa de IA.
+
+A função valida que o processo está cadastrado no cliente antes da consulta e grava os campos `datajudNumeroProcesso`, `datajudTribunal`, `datajudUltimaMovimentacaoEm`, `datajudUltimoAndamentoTexto`, `datajudConsultadoEm` e `datajudAtualizadoPor`. Não altera `status`, a posição na fila nem `ultimoAndamentoTexto`/`dataUltimoAndamento`, que registram o fluxo de envio no CRM. A escrita usa `update`, sem criar clientes inexistentes.
+
+Páginas antigas que enviam apenas o número continuam recebendo a prévia, sem escrita no Firestore. O novo botão atualiza os caches locais após salvar a consulta. A autenticação continua obrigatória e erros conhecidos são preservados, em vez de converter toda falha para `internal`.
+
+O endpoint direto novo é `consultarTribunalCrm`; publique com `firebase deploy --only functions:datajud:consultarTribunalCrm --project rodrigues-amr`. O endpoint antigo fica preservado para páginas anteriores. Se a página for aberta por HTTP, o botão encaminha para a versão HTTPS existente do CRM. O domínio personalizado precisa de certificado válido para servir a página com HTTPS.
