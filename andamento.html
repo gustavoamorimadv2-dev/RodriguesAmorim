@@ -627,7 +627,7 @@ const db = getFirestore(app);
 
 
 const auth = getAuth(app);
-const consultarAndamento = httpsCallable(getFunctions(app, "us-central1"), "gerarAndamentoDatajud", {timeout: 130000});
+const consultarAndamento = httpsCallable(getFunctions(app, "us-central1"), "consultarTribunalCrm", {timeout: 160000});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1073,6 +1073,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function gerarAndamentoDatajud(cliente, botao) {
+        if (window.location.protocol !== 'https:') {
+            window.location.assign('https://rodrigues-amr.web.app/andamento.html');
+            return;
+        }
         if (!auth.currentUser) { showToast('Entre no sistema para consultar.'); return; }
         const cadastro = String(cliente.processo || cliente.numeroProcesso || '').trim();
         const numeros = [...new Set(cadastro.match(/(?<!\d)(?:\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}|\d{20})(?!\d)/g) || [])];
@@ -1092,16 +1096,24 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('O DataJud está demorando. A consulta continua em andamento.');
         }, 20000);
         try {
-            const {data} = await consultarAndamento({numeroProcesso: numero});
+            const {data} = await consultarAndamento({numeroProcesso: numero, idClienteFirebase: cliente.id});
+            if (data.atualizacaoCrm) {
+                Object.assign(cliente, data.atualizacaoCrm);
+                await atualizarCachesAposGravacao(cliente.id, data.atualizacaoCrm);
+            }
             // Só abre o editor após a consulta: falhas preservam o texto já digitado.
             abrirModal(cliente);
             const dataMovimento = new Date(data.movimentacao.dataHora).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'});
-            inputAndamento.value = `Olá, ${obterPrimeiroNome(cliente)}! Tudo bem?\n\nConsultamos o processo nº ${numero}. A última movimentação disponível no DataJud para o tribunal de origem (${data.tribunal.toUpperCase()}) é de ${dataMovimento}: ${data.movimentacao.nome}.\n\nSeguimos acompanhando o processo. Ficamos à disposição!\nGrupo Rodrigues & Amorim.`;
+            const titulo = data.movimentacao.termoTribunal || data.movimentacao.nome;
+            inputAndamento.value = `Olá, ${obterPrimeiroNome(cliente)}! Tudo bem?\n\nConsultamos o processo nº ${numero}. A última movimentação disponível no DataJud para o tribunal de origem (${data.tribunal.toUpperCase()}) é de ${dataMovimento}: ${titulo}.\n\nSeguimos acompanhando o processo. Ficamos à disposição!\nGrupo Rodrigues & Amorim.`;
             previewMensagemPronta.textContent = 'Fonte: DataJud/CNJ. Os dados podem ter defasagem. Revise a movimentação antes de enviar ao cliente.';
             inputAndamento.focus();
             showToast('Andamento preenchido. Revise antes de enviar.');
         } catch (error) {
-            showToast(error.message || 'Não foi possível consultar o DataJud.');
+            const mensagem = !error.message || error.message.toLowerCase() === 'internal'
+                ? 'O servidor de consulta está temporariamente indisponível. Tente novamente em instantes.'
+                : error.message;
+            showToast(mensagem);
         } finally {
             clearTimeout(avisoDemora);
             botao.disabled = false;
