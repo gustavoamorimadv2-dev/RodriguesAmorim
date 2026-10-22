@@ -1,12 +1,18 @@
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
 import {warn, error as registrarErro} from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
-import {initializeApp, getApps} from 'firebase-admin/app';
-import {getFirestore} from 'firebase-admin/firestore';
 import {consultarDatajud, identificarTribunal, ConsultaError} from './datajud.js';
 import {validarClienteProcesso, prepararAtualizacaoCrm} from './integracao-crm.js';
 
-if (!getApps().length) initializeApp();
+// Carrega o Firestore somente na consulta autenticada, sem atrasar a descoberta da função.
+let banco;
+async function obterBanco() {
+  if (banco) return banco;
+  const [admin, firestore] = await Promise.all([import('firebase-admin/app'), import('firebase-admin/firestore')]);
+  if (!admin.getApps().length) admin.initializeApp();
+  banco = firestore.getFirestore();
+  return banco;
+}
 const datajudApiKey = defineSecret('DATAJUD_API_KEY');
 const opcoes = {
   region:'us-central1', secrets:[datajudApiKey], timeoutSeconds:150,
@@ -26,7 +32,7 @@ async function executarConsulta(request) {
         throw new ConsultaError('invalid-argument', 'Identificação do cliente inválida.');
       }
       etapa = 'leitura-cliente';
-      clienteRef = getFirestore().collection('clientes').doc(idCliente);
+      clienteRef = (await obterBanco()).collection('clientes').doc(idCliente);
       const snapshot = await clienteRef.get();
       validarClienteProcesso(snapshot.exists ? snapshot.data() : null, numero);
     }

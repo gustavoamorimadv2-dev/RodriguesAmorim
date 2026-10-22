@@ -1,6 +1,6 @@
 # Gerar andamento pelo DataJud
 
-Cloud Function de 2ª geração, publicada pelo Firebase no projeto Google Cloud `rodrigues-amr`, região `us-central1`. O botão em `andamento.html` usa o login Firebase atual e chama `gerarAndamentoDatajud`.
+Cloud Function de 2ª geração, publicada pelo Firebase no projeto Google Cloud `rodrigues-amr`, região `us-central1`. O botão em `andamento.html` usa o login Firebase atual e chama `consultarTribunalCrm`.
 
 O servidor valida o número CNJ e seu dígito verificador, identifica o tribunal de origem na variável `tribunal` pelos campos J e TR e consulta somente o endpoint oficial correspondente. Isso identifica a origem: recursos podem tramitar em tribunal superior mantendo a numeração original. Não há inferência de tribunal atual pelo número.
 
@@ -30,7 +30,7 @@ Os metadados disponíveis podem ter defasagem em relação ao tribunal. Não enc
 
 ## Tratamento de lentidão
 
-Cada chamada ao CNJ aguarda até 35 segundos, com até três tentativas para falhas temporárias ou respostas incompletas. A função tem prazo de 120 segundos e a página aguarda até 130 segundos. A interface informa quando a consulta continua em andamento. Erros de chave, processo ausente e ausência de movimentos são diferenciados. Os registros de diagnóstico incluem apenas tribunal, tentativa, motivo e código de erro, sem nomes, números de processos ou credenciais.
+Cada chamada ao CNJ aguarda até 35 segundos, com até três tentativas para falhas temporárias ou respostas incompletas. A função tem prazo de 150 segundos e a página aguarda até 160 segundos. A interface informa quando a consulta continua em andamento. Erros de chave, processo ausente e ausência de movimentos são diferenciados. Os registros de diagnóstico incluem apenas tribunal, tentativa, motivo e código de erro, sem nomes, números de processos ou credenciais.
 
 A fixture de regressão usa exclusivamente a resposta do processo publicado como exemplo pelo CNJ em https://datajud-wiki.cnj.jus.br/api-publica/exemplos/exemplo1.
 
