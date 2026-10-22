@@ -4,15 +4,8 @@ import {defineSecret} from 'firebase-functions/params';
 import {consultarDatajud, identificarTribunal, ConsultaError} from './datajud.js';
 import {validarClienteProcesso, prepararAtualizacaoCrm} from './integracao-crm.js';
 
-// Carrega o Firestore somente na consulta autenticada, sem atrasar a descoberta da função.
-let banco;
-async function obterBanco() {
-  if (banco) return banco;
-  const [admin, firestore] = await Promise.all([import('firebase-admin/app'), import('firebase-admin/firestore')]);
-  if (!admin.getApps().length) admin.initializeApp();
-  banco = firestore.getFirestore();
-  return banco;
-}
+import {obterBanco} from './firestore-client.js';
+
 const datajudApiKey = defineSecret('DATAJUD_API_KEY');
 const opcoes = {
   region:'us-central1', secrets:[datajudApiKey], timeoutSeconds:150,
