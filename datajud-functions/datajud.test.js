@@ -25,3 +25,32 @@ test('consulta somente endpoint do CNJ, enviando chave no servidor',async()=> {
  assert.equal(result.movimentacao.nome,'Recente');
  await assert.rejects(()=>consultarDatajud(n,'teste',async()=>({ok:false})),{code:'unavailable'});
 });
+test('repete falha temporária e retorna a consulta completa na segunda tentativa', async()=>{
+ let tentativas=0; const diagnosticos=[];
+ const r=await consultarDatajud(n,' teste ',async(_url, options)=>{
+  assert.equal(options.headers.Authorization,'APIKey teste');
+  assert.ok(options.signal);
+  tentativas++;
+  if(tentativas===1) return {ok:true,json:async()=>({...payload,timed_out:true})};
+  return {ok:true,json:async()=>payload};
+ },{aguardar:async()=>{},registrarFalha:d=>diagnosticos.push(d)});
+ assert.equal(tentativas,2); assert.equal(r.movimentacao.nome,'Recente');
+ assert.deepEqual(diagnosticos,[{tribunal:'tjrj',tentativa:1,motivo:'consulta-incompleta',codigo:'unavailable'}]);
+});
+test('limita tentativas quando a conexão não responde',async()=>{
+ let count=0;
+ await assert.rejects(()=>consultarDatajud(n,'teste',async()=>{count++;throw Error('timeout');},{aguardar:async()=>{}}),{code:'unavailable'});
+ assert.equal(count,3);
+});
+test('distingue credencial inválida de indisponibilidade e não repete',async()=>{
+ let count=0;
+ await assert.rejects(()=>consultarDatajud(n,'teste',async()=>{count++;return {ok:false,status:401};},{aguardar:async()=>{}}),{code:'failed-precondition',motivo:'http-401'});
+ assert.equal(count,1);
+});
+test('aceita a resposta real do processo publicado como exemplo oficial pelo CNJ', async()=>{
+ const fs=await import('node:fs');
+ // Fixture pública: protege contra diferenças entre os dados reais e os mocks.
+ const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/exemplo-cnj.json',import.meta.url),'utf8'));
+ const mov=extrairUltimaMovimentacao(fixture,'00008323520184013202');
+ assert.ok(mov.nome); assert.ok(Number.isFinite(Date.parse(mov.dataHora)));
+});

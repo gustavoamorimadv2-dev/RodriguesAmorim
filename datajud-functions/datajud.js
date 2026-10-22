@@ -1,7 +1,7 @@
 // NNNNNNN-DD.AAAA.J.TR.OOOO: J identifica o segmento; TR, o tribunal de origem.
 export const TRIBUNAIS_ESTADUAIS = ['ac','al','ap','am','ba','ce','dft','es','go','ma','mt','ms','mg','pa','pb','pr','pe','pi','rj','rn','rs','ro','rr','sc','se','sp','to'];
 export class ConsultaError extends Error {
-  constructor(code, message) { super(message); this.code = code; }
+  constructor(code, message, motivo = code) { super(message); this.code = code; this.motivo = motivo; }
 }
 export function identificarTribunal(valor) {
   if (typeof valor !== 'string' || !/^(?:\d{20}|\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})$/.test(valor.trim())) {
@@ -25,31 +25,53 @@ export function identificarTribunal(valor) {
 }
 export function extrairUltimaMovimentacao(payload, numero) {
   if (!payload?.hits || !Array.isArray(payload.hits.hits) || payload.timed_out || payload._shards?.failed > 0) {
-    throw new ConsultaError('unavailable', 'O DataJud retornou uma consulta incompleta. Tente novamente.');
+    throw new ConsultaError('unavailable', 'O DataJud retornou uma consulta incompleta. Tente novamente.', 'consulta-incompleta');
   }
   const total = typeof payload.hits.total === 'number' ? payload.hits.total : payload.hits.total?.value;
   if (total > payload.hits.hits.length || payload.hits.total?.relation === 'gte') throw new ConsultaError('unavailable', 'Há mais registros do que o limite de consulta. Não foi possível determinar a última movimentação.');
   const registros = payload.hits.hits.map(h => h._source).filter(s => s?.numeroProcesso === numero);
-  if (!registros.length) throw new ConsultaError('not-found', 'Processo não encontrado na base pública do DataJud. Confira o número ou consulte o tribunal.');
+  if (!registros.length) throw new ConsultaError('not-found', 'Processo não encontrado na base pública do DataJud. Confira o número ou consulte o tribunal.', 'processo-ausente');
   const movimentos = registros.flatMap(s => (s.movimentos || []).map(m => ({...m, grau: s.grau})))
     .filter(m => typeof m.nome === 'string' && m.nome.trim() && Number.isFinite(Date.parse(m.dataHora)))
     .sort((a, b) => Date.parse(b.dataHora) - Date.parse(a.dataHora));
-  if (!movimentos.length) throw new ConsultaError('not-found', 'O DataJud não disponibilizou movimentações com data para este processo.');
+  if (!movimentos.length) throw new ConsultaError('not-found', 'O DataJud não disponibilizou movimentações com data para este processo.', 'movimentos-ausentes');
   const m = movimentos[0];
   return {nome:m.nome, codigo:m.codigo ?? null, dataHora:m.dataHora, grau:m.grau ?? null};
 }
-export async function consultarDatajud(valor, chave, fetchImpl = fetch) {
+// Cada tentativa tem prazo próprio; a função e o navegador aguardam o ciclo completo.
+export const PRAZO_DATAJUD_MS = 35000;
+export const MAX_TENTATIVAS = 3;
+export async function consultarDatajud(valor, chave, fetchImpl = fetch, opcoes = {}) {
   const identificacao = identificarTribunal(valor);
-  let response;
-  try {
-    response = await fetchImpl(`https://api-publica.datajud.cnj.jus.br/api_publica_${identificacao.tribunal}/_search`, {
-      method:'POST', headers:{'Content-Type':'application/json', Authorization:`APIKey ${chave}`},
-      body:JSON.stringify({size:100, track_total_hits:true, query:{match:{numeroProcesso:identificacao.numero}}, _source:['numeroProcesso','movimentos','grau']}),
-      signal:AbortSignal.timeout(20000),
-    });
-  } catch { throw new ConsultaError('unavailable', 'Não foi possível conectar ao DataJud. Tente novamente em instantes.'); }
-  if (!response.ok) throw new ConsultaError('unavailable', 'O DataJud está indisponível ou a chave de acesso precisa ser atualizada.');
-  let payload;
-  try { payload = await response.json(); } catch { throw new ConsultaError('unavailable', 'Resposta inválida do DataJud. Tente novamente.'); }
-  return {...identificacao, movimentacao:extrairUltimaMovimentacao(payload, identificacao.numero), consultadoEm:new Date().toISOString()};
+  const aguardar = opcoes.aguardar || (ms => new Promise(resolve => setTimeout(resolve, ms)));
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+    try {
+      let response;
+      try {
+        response = await fetchImpl(`https://api-publica.datajud.cnj.jus.br/api_publica_${identificacao.tribunal}/_search`, {
+          method:'POST', headers:{'Content-Type':'application/json', Authorization:`APIKey ${String(chave).trim()}`},
+          body:JSON.stringify({size:100, track_total_hits:true, query:{match:{numeroProcesso:identificacao.numero}}, _source:['numeroProcesso','movimentos','grau']}),
+          signal:AbortSignal.timeout(PRAZO_DATAJUD_MS),
+        });
+      } catch {
+        throw new ConsultaError('unavailable', 'O DataJud demorou a responder ou está temporariamente indisponível. Tente novamente em instantes.', 'conexao-ou-tempo');
+      }
+      if (!response.ok) {
+        const credencial = response.status === 401 || response.status === 403;
+        throw new ConsultaError(credencial ? 'failed-precondition' : 'unavailable', credencial
+          ? 'A chave de acesso ao DataJud precisa ser atualizada no servidor.'
+          : 'O DataJud está temporariamente indisponível. Tente novamente em instantes.', `http-${response.status}`);
+      }
+      let payload;
+      try { payload = await response.json(); } catch {
+        throw new ConsultaError('unavailable', 'Resposta inválida do DataJud. Tente novamente.', 'json-invalido');
+      }
+      return {...identificacao, movimentacao:extrairUltimaMovimentacao(payload, identificacao.numero), consultadoEm:new Date().toISOString()};
+    } catch (error) {
+      // Diagnóstico sem número de processo, nome, token ou chave de acesso.
+      opcoes.registrarFalha?.({tribunal:identificacao.tribunal, tentativa, motivo:error.motivo || 'interno', codigo:error.code || 'internal'});
+      if (error.code !== 'unavailable' || tentativa === MAX_TENTATIVAS) throw error;
+      await aguardar(tentativa * 500);
+    }
+  }
 }

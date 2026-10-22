@@ -627,7 +627,7 @@ const db = getFirestore(app);
 
 
 const auth = getAuth(app);
-const consultarAndamento = httpsCallable(getFunctions(app, "us-central1"), "gerarAndamentoDatajud", {timeout: 35000});
+const consultarAndamento = httpsCallable(getFunctions(app, "us-central1"), "gerarAndamentoDatajud", {timeout: 130000});
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1087,6 +1087,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         botao.disabled = true;
         botao.textContent = 'Consultando DataJud…';
+        const avisoDemora = setTimeout(() => {
+            botao.textContent = 'Aguardando CNJ…';
+            showToast('O DataJud está demorando. A consulta continua em andamento.');
+        }, 20000);
         try {
             const {data} = await consultarAndamento({numeroProcesso: numero});
             // Só abre o editor após a consulta: falhas preservam o texto já digitado.
@@ -1099,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showToast(error.message || 'Não foi possível consultar o DataJud.');
         } finally {
+            clearTimeout(avisoDemora);
             botao.disabled = false;
             botao.textContent = 'Gerar andamento';
         }
