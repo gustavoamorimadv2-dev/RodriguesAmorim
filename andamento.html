@@ -1060,13 +1060,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return cliente?.processo || cliente?.numeroProcesso || 'Não informado';
     }
 
+    function obterMovimentacaoDatajud(cliente){
+        const texto = String(cliente?.datajudUltimoAndamentoTexto || '').trim();
+        if (!texto) return '';
+        const data = new Date(cliente.datajudUltimaMovimentacaoEm);
+        const quando = Number.isFinite(data.getTime())
+            ? ` (${data.toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'})})` : '';
+        return `${texto}${quando}`;
+    }
+
     function gerarMensagemAndamento(tipo, cliente, andamentoAtual){
         const nome = obterPrimeiroNome(cliente);
-        const numeroProcesso = obterNumeroProcesso(cliente);
-        const descricaoAndamento = String(andamentoAtual || '').trim() || '[DESCREVER O ANDAMENTO]';
+        const numeroProcesso = cliente?.datajudNumeroProcesso || obterNumeroProcesso(cliente);
+        const movimentacaoSalva = obterMovimentacaoDatajud(cliente);
+        const descricaoAndamento = movimentacaoSalva || String(andamentoAtual || '').trim() || '[DESCREVER O ANDAMENTO]';
+        const referenciaUltima = movimentacaoSalva ? ` A última movimentação disponível na consulta é: ${movimentacaoSalva}.` : '';
 
         if(tipo === 'sem_movimentacao'){
-            return `Olá, ${nome}! Tudo bem? Estamos entrando em contato para manter você atualizado(a) sobre o seu processo nº ${numeroProcesso}. No momento, não houve nova movimentação relevante no processo desde a última atualização. Continuamos acompanhando regularmente e, assim que houver qualquer novidade, informaremos você por aqui. Não é necessária nenhuma providência neste momento. Atenciosamente, Grupo Rodrigues & Amorim.`;
+            return `Olá, ${nome}! Tudo bem? Estamos entrando em contato para manter você atualizado(a) sobre o seu processo nº ${numeroProcesso}. No momento, não houve nova movimentação relevante no processo desde a última atualização.${referenciaUltima} Continuamos acompanhando regularmente e, assim que houver qualquer novidade, informaremos você por aqui. Não é necessária nenhuma providência neste momento. Atenciosamente, Grupo Rodrigues & Amorim.`;
         }
 
         return `Olá, ${nome}! Tudo bem? Passando para atualizar você sobre o andamento do seu processo nº ${numeroProcesso}. No momento, houve a seguinte movimentação: ${descricaoAndamento}.  Seguimos acompanhando o processo de perto e, caso seja necessária alguma providência da sua parte, avisaremos você por aqui. Ficamos à disposição! Grupo Rodrigues & Amorim.`;
@@ -1101,14 +1112,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 Object.assign(cliente, data.atualizacaoCrm);
                 await atualizarCachesAposGravacao(cliente.id, data.atualizacaoCrm);
             }
-            // Só abre o editor após a consulta: falhas preservam o texto já digitado.
+            // A escolha do modelo usa o rascunho salvo, inclusive ao reabrir o card.
             abrirModal(cliente);
-            const dataMovimento = new Date(data.movimentacao.dataHora).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'});
-            const titulo = data.movimentacao.termoTribunal || data.movimentacao.nome;
-            inputAndamento.value = `Olá, ${obterPrimeiroNome(cliente)}! Tudo bem?\n\nConsultamos o processo nº ${numero}. A última movimentação disponível no DataJud para o tribunal de origem (${data.tribunal.toUpperCase()}) é de ${dataMovimento}: ${titulo}.\n\nSeguimos acompanhando o processo. Ficamos à disposição!\nGrupo Rodrigues & Amorim.`;
-            previewMensagemPronta.textContent = 'Fonte: DataJud/CNJ. Os dados podem ter defasagem. Revise a movimentação antes de enviar ao cliente.';
-            inputAndamento.focus();
-            showToast('Andamento preenchido. Revise antes de enviar.');
+            showToast('Consulta salva. Escolha a mensagem e revise antes de enviar.');
         } catch (error) {
             const mensagem = !error.message || error.message.toLowerCase() === 'internal'
                 ? 'O servidor de consulta está temporariamente indisponível. Tente novamente em instantes.'
@@ -1130,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const mensagem = gerarMensagemAndamento(tipo, clienteSelecionado, inputAndamento.value);
+        const mensagem = gerarMensagemAndamento(tipo, clienteSelecionado, '');
         previewMensagemPronta.innerHTML = `<strong>Pré-visualização</strong>${mensagem.replace(/\n/g, '<br>')}`;
         inputAndamento.value = mensagem;
     }
