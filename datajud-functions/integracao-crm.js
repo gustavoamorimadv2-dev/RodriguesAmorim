@@ -12,6 +12,9 @@ export function prepararAtualizacaoCrm(resultado, uid) {
   return {
     datajudNumeroProcesso:resultado.numero,
     datajudTribunal:resultado.tribunal,
+    datajudEndpoint:resultado.endpoint || '',
+    datajudTribunalNome:resultado.tribunalNome || resultado.tribunal.toUpperCase(),
+    datajudRoteamentoFonte:resultado.fonteRoteamento || 'catalogo-local',
     datajudUltimaMovimentacaoEm:resultado.movimentacao.dataHora,
     datajudUltimoAndamentoTexto:resultado.movimentacao.termoTribunal,
     datajudConsultadoEm:resultado.consultadoEm,

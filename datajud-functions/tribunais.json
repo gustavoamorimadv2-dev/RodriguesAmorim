@@ -1,0 +1,826 @@
+{
+  "versao": 1,
+  "verificadoEm": "2026-10-26",
+  "fonte": "https://datajud-wiki.cnj.jus.br/api-publica/endpoints",
+  "tribunais": [
+    {
+      "id": "3-00",
+      "segmento": 3,
+      "codigoTribunal": 0,
+      "sigla": "stj",
+      "uf": null,
+      "nome": "Tribunal Superior de Justiça",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_stj/_search"
+    },
+    {
+      "id": "4-01",
+      "segmento": 4,
+      "codigoTribunal": 1,
+      "sigla": "trf1",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 1ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf1/_search"
+    },
+    {
+      "id": "4-02",
+      "segmento": 4,
+      "codigoTribunal": 2,
+      "sigla": "trf2",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 2ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf2/_search"
+    },
+    {
+      "id": "4-03",
+      "segmento": 4,
+      "codigoTribunal": 3,
+      "sigla": "trf3",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 3ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf3/_search"
+    },
+    {
+      "id": "4-04",
+      "segmento": 4,
+      "codigoTribunal": 4,
+      "sigla": "trf4",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 4ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf4/_search"
+    },
+    {
+      "id": "4-05",
+      "segmento": 4,
+      "codigoTribunal": 5,
+      "sigla": "trf5",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 5ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf5/_search"
+    },
+    {
+      "id": "4-06",
+      "segmento": 4,
+      "codigoTribunal": 6,
+      "sigla": "trf6",
+      "uf": null,
+      "nome": "Tribunal Regional Federal da 6ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trf6/_search"
+    },
+    {
+      "id": "5-00",
+      "segmento": 5,
+      "codigoTribunal": 0,
+      "sigla": "tst",
+      "uf": null,
+      "nome": "Tribunal Superior do Trabalho",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tst/_search"
+    },
+    {
+      "id": "5-01",
+      "segmento": 5,
+      "codigoTribunal": 1,
+      "sigla": "trt1",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 1ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt1/_search"
+    },
+    {
+      "id": "5-02",
+      "segmento": 5,
+      "codigoTribunal": 2,
+      "sigla": "trt2",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 2ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt2/_search"
+    },
+    {
+      "id": "5-03",
+      "segmento": 5,
+      "codigoTribunal": 3,
+      "sigla": "trt3",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 3ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt3/_search"
+    },
+    {
+      "id": "5-04",
+      "segmento": 5,
+      "codigoTribunal": 4,
+      "sigla": "trt4",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 4ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt4/_search"
+    },
+    {
+      "id": "5-05",
+      "segmento": 5,
+      "codigoTribunal": 5,
+      "sigla": "trt5",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 5ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt5/_search"
+    },
+    {
+      "id": "5-06",
+      "segmento": 5,
+      "codigoTribunal": 6,
+      "sigla": "trt6",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 6ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt6/_search"
+    },
+    {
+      "id": "5-07",
+      "segmento": 5,
+      "codigoTribunal": 7,
+      "sigla": "trt7",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 7ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt7/_search"
+    },
+    {
+      "id": "5-08",
+      "segmento": 5,
+      "codigoTribunal": 8,
+      "sigla": "trt8",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 8ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt8/_search"
+    },
+    {
+      "id": "5-09",
+      "segmento": 5,
+      "codigoTribunal": 9,
+      "sigla": "trt9",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 9ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt9/_search"
+    },
+    {
+      "id": "5-10",
+      "segmento": 5,
+      "codigoTribunal": 10,
+      "sigla": "trt10",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 10ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt10/_search"
+    },
+    {
+      "id": "5-11",
+      "segmento": 5,
+      "codigoTribunal": 11,
+      "sigla": "trt11",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 11ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt11/_search"
+    },
+    {
+      "id": "5-12",
+      "segmento": 5,
+      "codigoTribunal": 12,
+      "sigla": "trt12",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 12ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt12/_search"
+    },
+    {
+      "id": "5-13",
+      "segmento": 5,
+      "codigoTribunal": 13,
+      "sigla": "trt13",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 13ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt13/_search"
+    },
+    {
+      "id": "5-14",
+      "segmento": 5,
+      "codigoTribunal": 14,
+      "sigla": "trt14",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 14ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt14/_search"
+    },
+    {
+      "id": "5-15",
+      "segmento": 5,
+      "codigoTribunal": 15,
+      "sigla": "trt15",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 15ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt15/_search"
+    },
+    {
+      "id": "5-16",
+      "segmento": 5,
+      "codigoTribunal": 16,
+      "sigla": "trt16",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 16ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt16/_search"
+    },
+    {
+      "id": "5-17",
+      "segmento": 5,
+      "codigoTribunal": 17,
+      "sigla": "trt17",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 17ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt17/_search"
+    },
+    {
+      "id": "5-18",
+      "segmento": 5,
+      "codigoTribunal": 18,
+      "sigla": "trt18",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 18ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt18/_search"
+    },
+    {
+      "id": "5-19",
+      "segmento": 5,
+      "codigoTribunal": 19,
+      "sigla": "trt19",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 19ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt19/_search"
+    },
+    {
+      "id": "5-20",
+      "segmento": 5,
+      "codigoTribunal": 20,
+      "sigla": "trt20",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 20ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt20/_search"
+    },
+    {
+      "id": "5-21",
+      "segmento": 5,
+      "codigoTribunal": 21,
+      "sigla": "trt21",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 21ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt21/_search"
+    },
+    {
+      "id": "5-22",
+      "segmento": 5,
+      "codigoTribunal": 22,
+      "sigla": "trt22",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 22ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt22/_search"
+    },
+    {
+      "id": "5-23",
+      "segmento": 5,
+      "codigoTribunal": 23,
+      "sigla": "trt23",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 23ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt23/_search"
+    },
+    {
+      "id": "5-24",
+      "segmento": 5,
+      "codigoTribunal": 24,
+      "sigla": "trt24",
+      "uf": null,
+      "nome": "Tribunal Regional do Trabalho da 24ª Região",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_trt24/_search"
+    },
+    {
+      "id": "6-00",
+      "segmento": 6,
+      "codigoTribunal": 0,
+      "sigla": "tse",
+      "uf": null,
+      "nome": "Tribunal Superior Eleitoral",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tse/_search"
+    },
+    {
+      "id": "6-01",
+      "segmento": 6,
+      "codigoTribunal": 1,
+      "sigla": "tre-ac",
+      "uf": "AC",
+      "nome": "Tribunal Regional Eleitoral do Acre",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ac/_search"
+    },
+    {
+      "id": "6-02",
+      "segmento": 6,
+      "codigoTribunal": 2,
+      "sigla": "tre-al",
+      "uf": "AL",
+      "nome": "Tribunal Regional Eleitoral de Alagoas",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-al/_search"
+    },
+    {
+      "id": "6-03",
+      "segmento": 6,
+      "codigoTribunal": 3,
+      "sigla": "tre-ap",
+      "uf": "AP",
+      "nome": "Tribunal Regional Eleitoral do Amapá",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ap/_search"
+    },
+    {
+      "id": "6-04",
+      "segmento": 6,
+      "codigoTribunal": 4,
+      "sigla": "tre-am",
+      "uf": "AM",
+      "nome": "Tribunal Regional Eleitoral do Amazonas",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-am/_search"
+    },
+    {
+      "id": "6-05",
+      "segmento": 6,
+      "codigoTribunal": 5,
+      "sigla": "tre-ba",
+      "uf": "BA",
+      "nome": "Tribunal de Justiça da Bahia",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ba/_search"
+    },
+    {
+      "id": "6-06",
+      "segmento": 6,
+      "codigoTribunal": 6,
+      "sigla": "tre-ce",
+      "uf": "CE",
+      "nome": "Tribunal Regional Eleitoral do Ceará",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ce/_search"
+    },
+    {
+      "id": "6-07",
+      "segmento": 6,
+      "codigoTribunal": 7,
+      "sigla": "tre-dft",
+      "uf": "DF",
+      "nome": "Tribunal Regional Eleitoral do Distrito Federal",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-dft/_search"
+    },
+    {
+      "id": "6-08",
+      "segmento": 6,
+      "codigoTribunal": 8,
+      "sigla": "tre-es",
+      "uf": "ES",
+      "nome": "Tribunal Regional Eleitoral do Espírito Santo",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-es/_search"
+    },
+    {
+      "id": "6-09",
+      "segmento": 6,
+      "codigoTribunal": 9,
+      "sigla": "tre-go",
+      "uf": "GO",
+      "nome": "Tribunal Regional Eleitoral do Goiás",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-go/_search"
+    },
+    {
+      "id": "6-10",
+      "segmento": 6,
+      "codigoTribunal": 10,
+      "sigla": "tre-ma",
+      "uf": "MA",
+      "nome": "Tribunal Regional Eleitoral do Maranhão",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ma/_search"
+    },
+    {
+      "id": "6-11",
+      "segmento": 6,
+      "codigoTribunal": 11,
+      "sigla": "tre-mt",
+      "uf": "MT",
+      "nome": "Tribunal Regional Eleitoral do Mato Grosso",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-mt/_search"
+    },
+    {
+      "id": "6-12",
+      "segmento": 6,
+      "codigoTribunal": 12,
+      "sigla": "tre-ms",
+      "uf": "MS",
+      "nome": "Tribunal Regional Eleitoral do Mato Grosso de Sul",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ms/_search"
+    },
+    {
+      "id": "6-13",
+      "segmento": 6,
+      "codigoTribunal": 13,
+      "sigla": "tre-mg",
+      "uf": "MG",
+      "nome": "Tribunal Regional Eleitoral de Minas Gerais",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-mg/_search"
+    },
+    {
+      "id": "6-14",
+      "segmento": 6,
+      "codigoTribunal": 14,
+      "sigla": "tre-pa",
+      "uf": "PA",
+      "nome": "Tribunal Regional Eleitoral do Pará",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-pa/_search"
+    },
+    {
+      "id": "6-15",
+      "segmento": 6,
+      "codigoTribunal": 15,
+      "sigla": "tre-pb",
+      "uf": "PB",
+      "nome": "Tribunal Regional Eleitoral da Paraíba",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-pb/_search"
+    },
+    {
+      "id": "6-16",
+      "segmento": 6,
+      "codigoTribunal": 16,
+      "sigla": "tre-pr",
+      "uf": "PR",
+      "nome": "Tribunal Regional Eleitoral do Paraná",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-pr/_search"
+    },
+    {
+      "id": "6-17",
+      "segmento": 6,
+      "codigoTribunal": 17,
+      "sigla": "tre-pe",
+      "uf": "PE",
+      "nome": "Tribunal Regional Eleitoral de Pernambuco",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-pe/_search"
+    },
+    {
+      "id": "6-18",
+      "segmento": 6,
+      "codigoTribunal": 18,
+      "sigla": "tre-pi",
+      "uf": "PI",
+      "nome": "Tribunal Regional Eleitoral do Piauí",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-pi/_search"
+    },
+    {
+      "id": "6-19",
+      "segmento": 6,
+      "codigoTribunal": 19,
+      "sigla": "tre-rj",
+      "uf": "RJ",
+      "nome": "Tribunal Regional Eleitoral do Rio de Janeiro",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-rj/_search"
+    },
+    {
+      "id": "6-20",
+      "segmento": 6,
+      "codigoTribunal": 20,
+      "sigla": "tre-rn",
+      "uf": "RN",
+      "nome": "Tribunal Regional Eleitoral do Rio Grande do Norte",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-rn/_search"
+    },
+    {
+      "id": "6-21",
+      "segmento": 6,
+      "codigoTribunal": 21,
+      "sigla": "tre-rs",
+      "uf": "RS",
+      "nome": "Tribunal Regional Eleitoral do Rio Grande do Sul",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-rs/_search"
+    },
+    {
+      "id": "6-22",
+      "segmento": 6,
+      "codigoTribunal": 22,
+      "sigla": "tre-ro",
+      "uf": "RO",
+      "nome": "Tribunal Regional Eleitoral de Rondônia",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-ro/_search"
+    },
+    {
+      "id": "6-23",
+      "segmento": 6,
+      "codigoTribunal": 23,
+      "sigla": "tre-rr",
+      "uf": "RR",
+      "nome": "Tribunal Regional Eleitoral de Roraima",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-rr/_search"
+    },
+    {
+      "id": "6-24",
+      "segmento": 6,
+      "codigoTribunal": 24,
+      "sigla": "tre-sc",
+      "uf": "SC",
+      "nome": "Tribunal Regional Eleitoral de Santa Catarina",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-sc/_search"
+    },
+    {
+      "id": "6-25",
+      "segmento": 6,
+      "codigoTribunal": 25,
+      "sigla": "tre-se",
+      "uf": "SE",
+      "nome": "Tribunal Regional Eleitoral de Sergipe",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-se/_search"
+    },
+    {
+      "id": "6-26",
+      "segmento": 6,
+      "codigoTribunal": 26,
+      "sigla": "tre-sp",
+      "uf": "SP",
+      "nome": "Tribunal Regional Eleitoral de São Paulo",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-sp/_search"
+    },
+    {
+      "id": "6-27",
+      "segmento": 6,
+      "codigoTribunal": 27,
+      "sigla": "tre-to",
+      "uf": "TO",
+      "nome": "Tribunal Regional Eleitoral do Tocantins",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tre-to/_search"
+    },
+    {
+      "id": "7-00",
+      "segmento": 7,
+      "codigoTribunal": 0,
+      "sigla": "stm",
+      "uf": null,
+      "nome": "Tribunal Superior Militar",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_stm/_search"
+    },
+    {
+      "id": "8-01",
+      "segmento": 8,
+      "codigoTribunal": 1,
+      "sigla": "tjac",
+      "uf": "AC",
+      "nome": "Tribunal de Justiça do Acre",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjac/_search"
+    },
+    {
+      "id": "8-02",
+      "segmento": 8,
+      "codigoTribunal": 2,
+      "sigla": "tjal",
+      "uf": "AL",
+      "nome": "Tribunal de Justiça de Alagoas",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjal/_search"
+    },
+    {
+      "id": "8-03",
+      "segmento": 8,
+      "codigoTribunal": 3,
+      "sigla": "tjap",
+      "uf": "AP",
+      "nome": "Tribunal de Justiça do Amapá",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjap/_search"
+    },
+    {
+      "id": "8-04",
+      "segmento": 8,
+      "codigoTribunal": 4,
+      "sigla": "tjam",
+      "uf": "AM",
+      "nome": "Tribunal de Justiça do Amazonas",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjam/_search"
+    },
+    {
+      "id": "8-05",
+      "segmento": 8,
+      "codigoTribunal": 5,
+      "sigla": "tjba",
+      "uf": "BA",
+      "nome": "Tribunal de Justiça da Bahia",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjba/_search"
+    },
+    {
+      "id": "8-06",
+      "segmento": 8,
+      "codigoTribunal": 6,
+      "sigla": "tjce",
+      "uf": "CE",
+      "nome": "Tribunal de Justiça do Ceará",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjce/_search"
+    },
+    {
+      "id": "8-07",
+      "segmento": 8,
+      "codigoTribunal": 7,
+      "sigla": "tjdft",
+      "uf": "DF",
+      "nome": "TJ do Distrito Federal e Territórios",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjdft/_search"
+    },
+    {
+      "id": "8-08",
+      "segmento": 8,
+      "codigoTribunal": 8,
+      "sigla": "tjes",
+      "uf": "ES",
+      "nome": "Tribunal de Justiça do Espírito Santo",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjes/_search"
+    },
+    {
+      "id": "8-09",
+      "segmento": 8,
+      "codigoTribunal": 9,
+      "sigla": "tjgo",
+      "uf": "GO",
+      "nome": "Tribunal de Justiça do Goiás",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjgo/_search"
+    },
+    {
+      "id": "8-10",
+      "segmento": 8,
+      "codigoTribunal": 10,
+      "sigla": "tjma",
+      "uf": "MA",
+      "nome": "Tribunal de Justiça do Maranhão",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjma/_search"
+    },
+    {
+      "id": "8-11",
+      "segmento": 8,
+      "codigoTribunal": 11,
+      "sigla": "tjmt",
+      "uf": "MT",
+      "nome": "Tribunal de Justiça do Mato Grosso",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjmt/_search"
+    },
+    {
+      "id": "8-12",
+      "segmento": 8,
+      "codigoTribunal": 12,
+      "sigla": "tjms",
+      "uf": "MS",
+      "nome": "TJ do Mato Grosso de Sul",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjms/_search"
+    },
+    {
+      "id": "8-13",
+      "segmento": 8,
+      "codigoTribunal": 13,
+      "sigla": "tjmg",
+      "uf": "MG",
+      "nome": "Tribunal de Justiça de Minas Gerais",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjmg/_search"
+    },
+    {
+      "id": "8-14",
+      "segmento": 8,
+      "codigoTribunal": 14,
+      "sigla": "tjpa",
+      "uf": "PA",
+      "nome": "Tribunal de Justiça do Pará",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjpa/_search"
+    },
+    {
+      "id": "8-15",
+      "segmento": 8,
+      "codigoTribunal": 15,
+      "sigla": "tjpb",
+      "uf": "PB",
+      "nome": "Tribunal de Justiça da Paraíba",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjpb/_search"
+    },
+    {
+      "id": "8-16",
+      "segmento": 8,
+      "codigoTribunal": 16,
+      "sigla": "tjpr",
+      "uf": "PR",
+      "nome": "Tribunal de Justiça do Paraná",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjpr/_search"
+    },
+    {
+      "id": "8-17",
+      "segmento": 8,
+      "codigoTribunal": 17,
+      "sigla": "tjpe",
+      "uf": "PE",
+      "nome": "Tribunal de Justiça de Pernambuco",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjpe/_search"
+    },
+    {
+      "id": "8-18",
+      "segmento": 8,
+      "codigoTribunal": 18,
+      "sigla": "tjpi",
+      "uf": "PI",
+      "nome": "Tribunal de Justiça do Piauí",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjpi/_search"
+    },
+    {
+      "id": "8-19",
+      "segmento": 8,
+      "codigoTribunal": 19,
+      "sigla": "tjrj",
+      "uf": "RJ",
+      "nome": "Tribunal de Justiça do Rio de Janeiro",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjrj/_search"
+    },
+    {
+      "id": "8-20",
+      "segmento": 8,
+      "codigoTribunal": 20,
+      "sigla": "tjrn",
+      "uf": "RN",
+      "nome": "TJ do Rio Grande do Norte",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjrn/_search"
+    },
+    {
+      "id": "8-21",
+      "segmento": 8,
+      "codigoTribunal": 21,
+      "sigla": "tjrs",
+      "uf": "RS",
+      "nome": "Tribunal de Justiça do Rio Grande do Sul",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjrs/_search"
+    },
+    {
+      "id": "8-22",
+      "segmento": 8,
+      "codigoTribunal": 22,
+      "sigla": "tjro",
+      "uf": "RO",
+      "nome": "Tribunal de Justiça de Rondônia",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjro/_search"
+    },
+    {
+      "id": "8-23",
+      "segmento": 8,
+      "codigoTribunal": 23,
+      "sigla": "tjrr",
+      "uf": "RR",
+      "nome": "Tribunal de Justiça de Roraima",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjrr/_search"
+    },
+    {
+      "id": "8-24",
+      "segmento": 8,
+      "codigoTribunal": 24,
+      "sigla": "tjsc",
+      "uf": "SC",
+      "nome": "Tribunal de Justiça de Santa Catarina",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjsc/_search"
+    },
+    {
+      "id": "8-25",
+      "segmento": 8,
+      "codigoTribunal": 25,
+      "sigla": "tjse",
+      "uf": "SE",
+      "nome": "Tribunal de Justiça de Sergipe",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjse/_search"
+    },
+    {
+      "id": "8-26",
+      "segmento": 8,
+      "codigoTribunal": 26,
+      "sigla": "tjsp",
+      "uf": "SP",
+      "nome": "Tribunal de Justiça de São Paulo",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjsp/_search"
+    },
+    {
+      "id": "8-27",
+      "segmento": 8,
+      "codigoTribunal": 27,
+      "sigla": "tjto",
+      "uf": "TO",
+      "nome": "Tribunal de Justiça do Tocantins",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjto/_search"
+    },
+    {
+      "id": "9-13",
+      "segmento": 9,
+      "codigoTribunal": 13,
+      "sigla": "tjmmg",
+      "uf": "MG",
+      "nome": "Tribunal Justiça Militar de Minas Gerais",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjmmg/_search"
+    },
+    {
+      "id": "9-21",
+      "segmento": 9,
+      "codigoTribunal": 21,
+      "sigla": "tjmrs",
+      "uf": "RS",
+      "nome": "Tribunal Justiça Militar do Rio Grande do Sul",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjmrs/_search"
+    },
+    {
+      "id": "9-26",
+      "segmento": 9,
+      "codigoTribunal": 26,
+      "sigla": "tjmsp",
+      "uf": "SP",
+      "nome": "Tribunal Justiça Militar de São Paulo",
+      "endpoint": "https://api-publica.datajud.cnj.jus.br/api_publica_tjmsp/_search"
+    }
+  ]
+}
