@@ -43,3 +43,15 @@ A função valida que o processo está cadastrado no cliente antes da consulta e
 Páginas antigas que enviam apenas o número continuam recebendo a prévia, sem escrita no Firestore. O novo botão atualiza os caches locais após salvar a consulta. A autenticação continua obrigatória e erros conhecidos são preservados, em vez de converter toda falha para `internal`.
 
 O endpoint direto novo é `consultarTribunalCrm`; publique com `firebase deploy --only functions:datajud:consultarTribunalCrm --project rodrigues-amr`. O endpoint antigo fica preservado para páginas anteriores. Se a página for aberta por HTTP, o botão encaminha para a versão HTTPS existente do CRM. O domínio personalizado precisa de certificado válido para servir a página com HTTPS.
+
+## Banco de endpoints por tribunal
+
+A coleção `datajudTribunais` do Firestore contém 91 registros, identificados pelos campos J e TR do número CNJ, como `8-11` para o TJMT. Cada registro guarda sigla, nome, UF, URL oficial e fonte. O arquivo `tribunais.json` é a referência versionada, conferida com os endpoints oficiais do CNJ em 26/10/2026. Abrange 27 TJs, 27 TREs, 24 TRTs, 6 TRFs, 4 tribunais superiores e 3 tribunais militares estaduais.
+
+Para criar/atualizar somente esse catálogo, execute `GOOGLE_CLOUD_QUOTA_PROJECT=rodrigues-amr node deployment/sync-datajud-tribunais.cjs --apply`. Sem `--apply`, o script apenas informa o que seria feito. Não altera clientes, regras nem permissões.
+
+A função lê a rota correspondente ao segmento e código, valida o endpoint e usa o catálogo local se a configuração do banco estiver ausente ou indisponível. Uma configuração de outro tribunal ou host externo é recusada. Os dados salvos do cliente incluem o endpoint, o nome do tribunal e a origem do roteamento.
+
+O registro `Resposta DataJud por tribunal` informa URL, tribunal, total retornado e existência de consulta parcial, sem número do processo, nome ou credenciais. Retornos com numeração mascarada são normalizados; uma numeração diferente gera erro de integridade em vez de ser tratada como ausência do processo. As mensagens de resultado vazio indicam o tribunal consultado.
+
+A tela Swift de referência utiliza `consultarTribunal` em outro projeto Firebase. Essa função não é chamada pelo CRM: o fluxo continua direto entre a função do CRM, o DataJud e o Firestore do CRM, sem serviços intermediários.

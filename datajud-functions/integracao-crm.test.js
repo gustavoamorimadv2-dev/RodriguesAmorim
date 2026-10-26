@@ -16,6 +16,6 @@ test('salva a consulta direta sem mudar status, fila e histórico de envio',()=>
  for(const k of ['status','dataUltimoAndamento','ultimoAndamentoTexto','filaOrdem','filaUltimaPassagem','iaTituloAmigavel']) assert.equal(Object.hasOwn(p,k),false);
 });
 test('inclui complementos na movimentação disponível no CRM',()=>{
- const p={hits:{hits:[{_source:{numeroProcesso:'n',movimentos:[{nome:'Conclusão',dataHora:'2026-01-01T00:00:00Z',complementosTabelados:[{nome:'decisão'}]}]}}]}};
- assert.equal(extrairUltimaMovimentacao(p,'n').termoTribunal,termo);
+ const p={hits:{hits:[{_source:{numeroProcesso:'00008323520184013202',movimentos:[{nome:'Conclusão',dataHora:'2026-01-01T00:00:00Z',complementosTabelados:[{nome:'decisão'}]}]}}]}};
+ assert.equal(extrairUltimaMovimentacao(p,'00008323520184013202').termoTribunal,termo);
 });

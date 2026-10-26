@@ -1,10 +1,11 @@
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
-import {warn, error as registrarErro} from 'firebase-functions/logger';
+import {warn, info, error as registrarErro} from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {consultarDatajud, identificarTribunal, ConsultaError} from './datajud.js';
 import {validarClienteProcesso, prepararAtualizacaoCrm} from './integracao-crm.js';
 
 import {obterBanco} from './firestore-client.js';
+import {carregarRotaTribunal} from './roteamento.js';
 
 const datajudApiKey = defineSecret('DATAJUD_API_KEY');
 const opcoes = {
@@ -16,7 +17,8 @@ async function executarConsulta(request) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Entre no sistema para consultar o DataJud.');
   let etapa = 'validacao';
   try {
-    const {numero} = identificarTribunal(request.data?.numeroProcesso);
+    const identificacao = identificarTribunal(request.data?.numeroProcesso);
+    const {numero} = identificacao;
     const idCliente = request.data?.idClienteFirebase;
     let clienteRef;
     // Compatibilidade com páginas antigas: sem ID, retorna apenas a prévia.
@@ -29,9 +31,12 @@ async function executarConsulta(request) {
       const snapshot = await clienteRef.get();
       validarClienteProcesso(snapshot.exists ? snapshot.data() : null, numero);
     }
+    etapa = 'roteamento';
+    const rota = await carregarRotaTribunal(await obterBanco(), identificacao, detalhes => warn('Catálogo DataJud local utilizado', detalhes));
     etapa = 'datajud';
     const resultado = await consultarDatajud(numero, datajudApiKey.value(), fetch,
-      {registrarFalha:detalhes => warn('Consulta DataJud sem resultado', detalhes)});
+      {rota, registrarFalha:detalhes => warn('Consulta DataJud sem resultado', detalhes),
+        registrarResposta:detalhes => info('Resposta DataJud por tribunal', detalhes)});
     const atualizacaoCrm = prepararAtualizacaoCrm(resultado, request.auth.uid);
     if (clienteRef) {
       etapa = 'gravar-rascunho';
@@ -41,7 +46,7 @@ async function executarConsulta(request) {
   } catch (erro) {
     // Preserva not-found/unavailable. O código enviado convertia tudo em internal.
     if (erro instanceof HttpsError) throw erro;
-    if (erro instanceof ConsultaError) throw new HttpsError(erro.code, erro.message);
+    if (erro instanceof ConsultaError) throw new HttpsError(erro.code, erro.message, erro.detalhes);
     registrarErro('Falha na integração DataJud CRM', {etapa, tipo:erro?.name || 'Error', codigo:String(erro?.code || 'desconhecido')});
     throw new HttpsError('internal', `Não foi possível concluir a atualização (${etapa}). Tente novamente.`);
   }
