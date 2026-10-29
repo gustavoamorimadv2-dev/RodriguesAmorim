@@ -706,6 +706,7 @@ import {
     deleteDoc,
     query,
     where,
+    arrayUnion,
     enableIndexedDbPersistence // <-- ADICIONADO: Importação do Cache Offline
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
@@ -722,6 +723,8 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
+
+import {centavosHonorarios, valorHonorarios, hojeHonorarios, gerarParcelasCrm, totalHonorariosCrm} from './assets/crm-honorarios.mjs';
 
 /* ================= CONFIGURAÇÃO DE DOCUMENTOS DO CLIENTE ================= */
 const DOCUMENTOS_CONFIG = [
@@ -895,6 +898,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const docsListContainer = document.getElementById('docsListContainer');
     const uploadProgress = document.getElementById('uploadProgress');
     
+    const honTotal = document.getElementById('crmHonTotal');
+    const honForma = document.getElementById('crmHonForma');
+    const honEntrada = document.getElementById('crmHonEntrada');
+    const honQuantidade = document.getElementById('crmHonQuantidade');
+    const honVencimento = document.getElementById('crmHonVencimento');
+    let honorariosPreparados = null;
+
+    function atualizarFormaHonorarios() {
+        const parcelado = honForma.value === 'parcelado';
+        document.getElementById('crmHonParcelamento').hidden = !parcelado;
+        honEntrada.disabled = !parcelado; honQuantidade.disabled = !parcelado;
+        document.getElementById('crmHonLabelVencimento').textContent = parcelado ? 'Vencimento da 1ª parcela do saldo' : 'Vencimento';
+    }
+    honForma.addEventListener('change', atualizarFormaHonorarios);
+    for (const input of [honTotal, honEntrada]) {
+        input.addEventListener('blur', () => {
+            if (!input.value.trim()) return;
+            try { input.value = valorHonorarios(centavosHonorarios(input.value)); } catch { /* A validação ao salvar mostra o erro. */ }
+        });
+    }
+    function prepararHonorariosFormulario() {
+        if (!honTotal.value.trim()) {
+            if (honForma.value === 'parcelado' && (honEntrada.value.trim() || honQuantidade.value.trim())) throw new Error('Preencha o valor total dos honorários.');
+            return [];
+        }
+        const dados = {total:honTotal.value, forma:honForma.value, entrada:honEntrada.value, quantidade:honQuantidade.value, vencimento:honVencimento.value};
+        const chave = JSON.stringify(dados);
+        if (honorariosPreparados?.chave === chave) return honorariosPreparados.parcelas;
+        const parcelas = gerarParcelasCrm(dados, {id:globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`});
+        honorariosPreparados = {chave, parcelas};
+        return parcelas;
+    }
+    function carregarHonorariosFormulario(cliente) {
+        honTotal.value = ''; honEntrada.value = ''; honQuantidade.value = '';
+        honForma.value = 'avista'; honVencimento.value = hojeHonorarios();
+        honorariosPreparados = null;
+        atualizarFormaHonorarios();
+        const lista = document.getElementById('crmHonExistentes');
+        lista.replaceChildren();
+        const parcelas = Array.isArray(cliente?.honorarios) ? cliente.honorarios : [];
+        document.getElementById('crmHonResumo').textContent = parcelas.length
+            ? `Honorários já registrados: R$ ${valorHonorarios(totalHonorariosCrm(parcelas))}` : 'Nenhum honorário registrado.';
+        for (const h of parcelas) {
+            const linha = document.createElement('p');
+            linha.textContent = `${h.parcela || 'Parcela'} · R$ ${h.valor || '0,00'} · ${h.vencimento || 'Sem vencimento'} · ${h.status || 'Pendente'}`;
+            lista.appendChild(linha);
+        }
+    }
+
     let currentDocs = {}; 
     window.currentUploadDocId = null; 
 
@@ -993,7 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function saveCliente(cliente){
+    async function saveCliente(cliente, novasParcelas = []){
         if(!currentUser){
             return;
         }
@@ -1001,8 +1053,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if(cliente.id){
             const docRef = doc(db,"clientes",cliente.id);
-            await setDoc(docRef,cliente);
+            const payload = {...cliente};
+            delete payload.id;
+            // Acrescenta cobranças sem substituir parcelas/pagamentos atualizados em Clientes.
+            if (novasParcelas.length) payload.honorarios = arrayUnion(...novasParcelas);
+            await setDoc(docRef, payload, {merge:true});
+            const anterior = todosClientesCache.find(c => c.id === cliente.id) || clientesGlobaisCache.find(c => c.id === cliente.id);
+            Object.assign(cliente, {...anterior, ...cliente});
+            if (novasParcelas.length) cliente.honorarios = [...(Array.isArray(anterior?.honorarios) ? anterior.honorarios : []), ...novasParcelas];
         }else{
+            if (novasParcelas.length) cliente.honorarios = novasParcelas;
             const docRef = await addDoc(
                 collection(db,"clientes"),
                 cliente
@@ -1306,6 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             infoExtra.style.display = 'none';
         }
 
+        carregarHonorariosFormulario(edit ? data : null);
         renderDocsList();
     }
 
@@ -1636,6 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>Estado:</strong> ${cliente.estado || '-'}</p>
             <p><strong>Processo:</strong> ${primeiroProcesso}</p>
             <p><strong>Valor:</strong> R$ ${valorCardFormatado}</p>
+            <p><strong>Honorários:</strong> R$ ${valorHonorarios(totalHonorariosCrm(cliente.honorarios))}</p>
             <p><strong>Pipeline:</strong> ${textoPipeline}</p>
         `;
 
@@ -1799,6 +1861,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const nome = inputNome.value.trim();
             if(!nome){ showToast("Nome obrigatório"); return; }
 
+            let novasParcelas;
+            try { novasParcelas = prepararHonorariosFormulario(); }
+            catch (erro) { showToast(erro.message); return; }
+
             const processos = Array.from(document.querySelectorAll('.inputProcesso')).map(i => i.value.trim()).filter(v => v);
             if (processos.length > 0) {
                 if (!clientesGlobaisCarregados) {
@@ -1864,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     novo.dataContratoAssinado = antigo.dataContratoAssinado || null;
                     novo.status = antigo.status || "lista-fria";
                 }
-                await saveCliente(novo);
+                await saveCliente(novo, novasParcelas);
                 showToast("Cliente atualizado!");
 
                 // Atualiza a memória e recria só esse card (Zero leituras na nuvem)
@@ -1882,7 +1948,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }else{
                 novo.dataCadastro = new Date().toISOString();
                 novo.status = "lista-fria";
-                await saveCliente(novo);
+                await saveCliente(novo, novasParcelas);
                 showToast("Cliente adicionado!");
                 
                 // Adiciona na memória local (Zero leituras na nuvem)
@@ -2305,6 +2371,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 </select>
             </div>
 
+            <fieldset style="border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;margin:0 0 16px;min-width:0;">
+                <legend style="padding:0 6px;font-weight:700;">Honorários cobrados</legend>
+                <p id="crmHonResumo" style="font-size:13px;margin-bottom:8px;"></p>
+                <div id="crmHonExistentes" style="font-size:12px;max-height:130px;overflow:auto;margin-bottom:12px;"></div>
+                <p style="font-size:12px;color:#cbd5e1;margin-bottom:12px;">Preencha para adicionar uma cobrança. Ela será salva junto com o cliente e aparecerá também na página Clientes.</p>
+                <div class="row">
+                    <label for="crmHonTotal">Valor total dos honorários (R$)</label>
+                    <input id="crmHonTotal" type="text" inputmode="decimal" placeholder="Ex.: 1.500,00" />
+                </div>
+                <div class="row">
+                    <label for="crmHonForma">Forma de pagamento</label>
+                    <select id="crmHonForma"><option value="avista">À vista</option><option value="parcelado">Parcelado</option></select>
+                </div>
+                <div id="crmHonParcelamento" hidden>
+                    <div class="row">
+                        <label for="crmHonEntrada">Entrada (R$, opcional; vencimento hoje)</label>
+                        <input id="crmHonEntrada" type="text" inputmode="decimal" placeholder="0,00" />
+                    </div>
+                    <div class="row">
+                        <label for="crmHonQuantidade">Quantidade de parcelas do saldo</label>
+                        <input id="crmHonQuantidade" type="number" min="1" max="120" step="1" placeholder="Ex.: 3" />
+                    </div>
+                </div>
+                <div class="row">
+                    <label id="crmHonLabelVencimento" for="crmHonVencimento">Vencimento</label>
+                    <input id="crmHonVencimento" type="date" />
+                </div>
+                <small style="color:#cbd5e1;">Os lançamentos serão registrados como pendentes. Confirme o recebimento na página Clientes.</small>
+            </fieldset>
+
             <!-- NOVA SEÇÃO DE DOCUMENTOS -->
             <div class="docs-section">
                 <h4>Documentos do Cliente</h4>
@@ -2365,3 +2461,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
