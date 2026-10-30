@@ -312,6 +312,7 @@ textarea { resize: vertical; }
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getFirestore, collection, query, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -326,6 +327,28 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+// Aguarda a recuperação da sessão persistida pelo login antes de acessar o banco.
+const autenticacaoPronta = new Promise(resolve => {
+    let parar = () => {};
+    parar = onAuthStateChanged(auth, () => {
+        parar();
+        resolve();
+    }, erro => {
+        console.error('Falha ao restaurar sessão do Jurídico:', erro?.code || 'desconhecido');
+        parar();
+        resolve();
+    });
+});
+
+async function exigirUsuarioJuridico() {
+    await autenticacaoPronta;
+    if (!auth.currentUser) {
+        const erro = new Error('Entre novamente no CRM para salvar o lançamento.');
+        erro.code = 'auth/unauthenticated';
+        throw erro;
+    }
+}
 
 
 const storage = getStorage(app);
@@ -573,44 +596,48 @@ window.aplicarFiltrosEOrdenacao = function() {
 inputBusca.addEventListener('input', aplicarFiltrosEOrdenacao);
 
 // ================= MARCAR COMO LANÇADO =================
-window.toggleLancamento = async function(id, currentState) {
-    const newState = !currentState;
-    
-    const cardEl = document.getElementById(`card-cliente-${id}`);
-    const btnEl = document.getElementById(`btnLancamento-${id}`);
-    
-    if (newState) {
-        cardEl.classList.add('lancado');
-        btnEl.innerHTML = "✔️";
-        btnEl.title = "Desmarcar Lançamento";
-    } else {
-        cardEl.classList.remove('lancado');
-        btnEl.innerHTML = "⏳";
-        btnEl.title = "Marcar como Lançado";
+const lancamentosEmGravacao = new Set();
+window.toggleLancamento = async function(id) {
+    if (lancamentosEmGravacao.has(id)) return;
+    const cliente = clientesData.find(c => c.id === id);
+    if (!cliente) {
+        showToast('Cliente não encontrado nesta lista. Sincronize os dados e tente novamente.');
+        return;
     }
+    const btnEl = document.getElementById(`btnLancamento-${id}`);
+    lancamentosEmGravacao.add(id);
+    if (btnEl) btnEl.disabled = true;
 
     try {
-        const clienteRef = doc(db, "clientes", id);
-        await updateDoc(clienteRef, { lancadoSistemaInterno: newState });
-        
-        const idx = clientesData.findIndex(c => c.id === id);
-        if (idx > -1) {
-            clientesData[idx].lancadoSistemaInterno = newState;
-            atualizarCacheLocal();
-        }
-        
+        await exigirUsuarioJuridico();
+        const newState = cliente.lancadoSistemaInterno !== true;
+        await updateDoc(doc(db, "clientes", id), { lancadoSistemaInterno: newState });
+        // Só muda a memória e o card depois da confirmação do Firestore.
+        cliente.lancadoSistemaInterno = newState;
+        atualizarCacheLocal();
+        aplicarFiltrosEOrdenacao();
         showToast(newState ? "Card marcado como Lançado!" : "Lançamento desmarcado!");
-        
-        setTimeout(() => { aplicarFiltrosEOrdenacao(); }, 1500);
-
-    } catch(err) {
-        console.error(err);
-        showToast("Erro ao atualizar o card.");
+    } catch (erro) {
+        const codigo = String(erro?.code || 'desconhecido').replace(/^firestore\//, '');
+        console.error('Falha ao salvar lançamento jurídico:', codigo);
+        if (codigo === 'auth/unauthenticated' || codigo === 'unauthenticated') {
+            showToast('Sua sessão não está ativa. Entre novamente no CRM para salvar o lançamento.');
+        } else if (codigo === 'permission-denied') {
+            showToast('Sua conta não tem permissão para alterar este cliente. Verifique o acesso da equipe com o administrador.');
+        } else if (codigo === 'not-found') {
+            showToast('Este cliente não foi encontrado no servidor. Sincronize a lista.');
+        } else {
+            showToast('Não foi possível salvar o lançamento. Confira a conexão e tente novamente.');
+        }
+    } finally {
+        lancamentosEmGravacao.delete(id);
+        if (btnEl) btnEl.disabled = false;
     }
-}
+};
 
 // ================= CARREGAR E RENDERIZAR CARDS =================
 async function carregarClientes(opcoes = {}) {
+    await autenticacaoPronta;
     const forcarServidor = Boolean(opcoes.forcarServidor);
 
     if (carregarClientesPromise) {
@@ -712,7 +739,7 @@ function exibirClientes(lista) {
                 
                 <div class="action-badges">
                     <div class="badge-btn badge-lancamento" title="${btnTitle}" id="btnLancamento-${cliente.id}" 
-                         onclick="event.stopPropagation(); toggleLancamento('${cliente.id}', ${isLancado})">
+                         onclick="event.stopPropagation(); toggleLancamento('${cliente.id}')">
                         ${btnIcon}
                     </div>
                 </div>
@@ -1022,3 +1049,4 @@ carregarClientes();
 </script>
 </body>
 </html>
+
