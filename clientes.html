@@ -379,6 +379,27 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
                 <h4 class="section-title">Dados Pessoais</h4>
                 <div class="info-pessoal" id="dadosPessoaisContainer"></div>
 
+                <button type="button" class="btn ghost" id="btnEditarDadosCliente" onclick="editarDadosCliente()" style="margin:12px 0;">Editar dados</button>
+                <form id="formEditarDadosCliente" hidden style="margin:12px 0;padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:12px;">
+                    <h4 class="section-title">Editar dados do cliente</h4>
+                    <div class="form-grid">
+                        <div class="full-width"><label for="dadosCliente_nome">Nome do cliente</label><input id="dadosCliente_nome" name="nome" type="text" required /></div>
+                        <div><label for="dadosCliente_cpf">CPF/CNPJ</label><input id="dadosCliente_cpf" name="cpf" type="text" /></div>
+                        <div><label for="dadosCliente_email">E-mail</label><input id="dadosCliente_email" name="email" type="email" /></div>
+                        <div><label for="dadosCliente_numeros">Telefone(s)</label><input id="dadosCliente_numeros" name="numeros" type="text" /></div>
+                        <div class="full-width"><label for="dadosCliente_processo">Processo(s)</label><input id="dadosCliente_processo" name="processo" type="text" /></div>
+                        <div class="full-width"><label for="dadosCliente_endereco">Endereço</label><input id="dadosCliente_endereco" name="endereco" type="text" /></div>
+                        <div><label for="dadosCliente_cidade">Cidade</label><input id="dadosCliente_cidade" name="cidade" type="text" /></div>
+                        <div><label for="dadosCliente_estado">Estado</label><input id="dadosCliente_estado" name="estado" type="text" /></div>
+                        <div><label for="dadosCliente_cep">CEP</label><input id="dadosCliente_cep" name="cep" type="text" /></div>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn primary" id="btnSalvarDadosCliente">Salvar dados</button>
+                        <button type="button" class="btn ghost" onclick="cancelarEdicaoDadosCliente()">Cancelar</button>
+                    </div>
+                </form>
+
+
                 <!-- NOVA SEÇÃO: OBSERVAÇÕES -->
                 <h4 class="section-title" style="margin-top: 25px;">Observações</h4>
                 <div class="honorarios-box">
@@ -1232,9 +1253,9 @@ function exibirClientes(lista) {
                     ${badgeStatus}
                     ${dataFechamentoStr ? `<span class="card-date">${isFechado ? 'Fechado em:' : 'Data:'} ${dataFechamentoStr}</span>` : ''}
                 </div>
-                <h2>${cliente.nome || "Sem nome"}</h2>
+                <h2>${escapePrevisao(cliente.nome || "Sem nome")}</h2>
                 ${avisoProximo ? `<div class="aviso-vencimento">⚠️ Próxima parcela ${diasAteVencimento===0?'vence hoje':`vence em ${diasAteVencimento} dia(s)`} · ${dataProxima.toLocaleDateString('pt-BR')} · ${formatarFloatParaMoeda(converterMoedaParaFloat(String(proxima.valor||'0'))||0)}</div>` : ''}
-                <p><strong>CPF:</strong> ${cliente.cpf || "-"}</p>
+                <p><strong>CPF:</strong> ${escapePrevisao(cliente.cpf || "-")}</p>
                 <p><strong>Vendedor:</strong> ${cliente.vendedor || "Não informado"}</p>
                 ${cliente.observacoes ? `<p style="font-size:11px; margin-top:6px; margin-bottom:6px; padding:6px; border-radius:6px; background:rgba(255,255,255,0.05); border-left:3px solid #f59e0b; color:rgba(255,255,255,0.8); line-height: 1.4;"><strong>Obs:</strong> ${cliente.observacoes.substring(0, 65)}${cliente.observacoes.length > 65 ? '...' : ''}</p>` : ''}
                 
@@ -1355,18 +1376,98 @@ window.salvarNovoCliente = async function() {
 // ================= MODAL DE INFORMAÇÃO COMPLETA =================
 const modalClienteCompleto = document.getElementById('modalClienteCompleto');
 
+function renderizarDadosCliente(cliente) {
+    document.getElementById('infoCompletaNome').textContent = cliente.nome || 'Cliente sem nome';
+    const container = document.getElementById('dadosPessoaisContainer');
+    container.replaceChildren();
+    const linhas = [
+        ['CPF/CNPJ', cliente.cpf], ['E-mail', cliente.email], ['Telefone', cliente.numeros],
+        ['Processo', cliente.processo], ['Endereço', [cliente.endereco, cliente.cidade, cliente.estado].filter(Boolean).join(', ')], ['CEP', cliente.cep]
+    ];
+    for (const [rotulo, valor] of linhas) {
+        const linha = document.createElement('p');
+        const titulo = document.createElement('strong');
+        titulo.textContent = `${rotulo}: `;
+        linha.appendChild(titulo);
+        linha.appendChild(document.createTextNode(String(valor || 'Não informado')));
+        container.appendChild(linha);
+    }
+}
+
+const camposDadosCliente = ['nome','cpf','email','numeros','processo','endereco','cidade','estado','cep'];
+const formEditarDadosCliente = document.getElementById('formEditarDadosCliente');
+let dadosOriginaisEdicao = null;
+let salvandoDadosCliente = false;
+window.editarDadosCliente = function() {
+    if (!clienteAtual || salvandoDadosCliente) return;
+    dadosOriginaisEdicao = {};
+    for (const campo of camposDadosCliente) {
+        const valor = String(clienteAtual[campo] ?? '');
+        dadosOriginaisEdicao[campo] = valor;
+        document.getElementById(`dadosCliente_${campo}`).value = valor;
+    }
+    formEditarDadosCliente.hidden = false;
+    document.getElementById('btnEditarDadosCliente').hidden = true;
+    document.getElementById('dadosCliente_nome').focus();
+};
+window.cancelarEdicaoDadosCliente = function() {
+    formEditarDadosCliente.hidden = true;
+    document.getElementById('btnEditarDadosCliente').hidden = false;
+    dadosOriginaisEdicao = null;
+};
+formEditarDadosCliente.onsubmit = async function(event) {
+    event.preventDefault();
+    if (!clienteAtual || !dadosOriginaisEdicao || salvandoDadosCliente) return;
+    if (!formEditarDadosCliente.reportValidity()) return;
+    const cliente = clienteAtual;
+    const updates = {};
+    for (const campo of camposDadosCliente) {
+        const valor = document.getElementById(`dadosCliente_${campo}`).value.trim();
+        if (valor !== dadosOriginaisEdicao[campo]) updates[campo] = valor;
+    }
+    if (!String(document.getElementById('dadosCliente_nome').value).trim()) {
+        showToast('Informe o nome do cliente.');
+        return;
+    }
+    if (!Object.keys(updates).length) {
+        cancelarEdicaoDadosCliente();
+        return;
+    }
+    const btn = document.getElementById('btnSalvarDadosCliente');
+    salvandoDadosCliente = true;
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+    try {
+        const usuario = await obterUsuarioAutenticado();
+        if (!usuario) { showToast('Entre novamente no CRM para editar o cliente.'); return; }
+        await updateDoc(doc(db, 'clientes', cliente.id), updates);
+        Object.assign(cliente, updates);
+        const idx = clientesData.findIndex(c => c.id === cliente.id);
+        if (idx > -1) Object.assign(clientesData[idx], updates);
+        atualizarCacheLocal();
+        aplicarFiltros();
+        if (clienteAtual === cliente) {
+            renderizarDadosCliente(cliente);
+            cancelarEdicaoDadosCliente();
+        }
+        showToast('Dados do cliente atualizados!');
+    } catch (erro) {
+        console.error('Falha ao editar dados do cliente:', erro?.code || 'desconhecido');
+        showToast(erro?.code === 'permission-denied'
+            ? 'Sua conta não tem permissão para editar este cliente.'
+            : 'Não foi possível salvar os dados. Confira a conexão e tente novamente.');
+    } finally {
+        salvandoDadosCliente = false;
+        btn.disabled = false;
+        btn.textContent = 'Salvar dados';
+    }
+};
+
 window.abrirModalCompleto = function(cliente) {
     clienteAtual = cliente;
     
-    document.getElementById('infoCompletaNome').textContent = cliente.nome || "Cliente sem nome";
-    document.getElementById('dadosPessoaisContainer').innerHTML = `
-        <p><strong>CPF/CNPJ:</strong> ${cliente.cpf || "Não informado"}</p>
-        <p><strong>E-mail:</strong> ${cliente.email || "Não informado"}</p>
-        <p><strong>Telefone:</strong> ${cliente.numeros || "Não informado"}</p>
-        <p><strong>Processo:</strong> ${cliente.processo || "Não informado"}</p>
-        <p><strong>Endereço:</strong> ${cliente.endereco || ""}, ${cliente.cidade || ""} - ${cliente.estado || ""}</p>
-        <p><strong>CEP:</strong> ${cliente.cep || "Não informado"}</p>
-    `;
+    cancelarEdicaoDadosCliente();
+    renderizarDadosCliente(cliente);
 
     try {
         if (cliente.dataFechamento) {
@@ -1423,6 +1524,7 @@ window.abrirModalCompleto = function(cliente) {
 }
 
 window.fecharModalCompleto = function() {
+    cancelarEdicaoDadosCliente();
     modalClienteCompleto.style.display = "none";
     clienteAtual = null;
     aplicarFiltros();
@@ -1908,3 +2010,4 @@ carregarClientes();
 </script>
 </body>
 </html>
+
