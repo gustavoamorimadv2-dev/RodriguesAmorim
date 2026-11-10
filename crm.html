@@ -1047,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveCliente(cliente, novasParcelas = []){
         if(!currentUser){
-            return;
+            throw new Error("auth/usuario-nao-autenticado");
         }
         cliente.userId = currentUser.uid;
 
@@ -1870,13 +1870,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!clientesGlobaisCarregados) {
                     const carregouGlobal = await carregarClientesGlobais(false);
                     if (!carregouGlobal) {
-                        showToast("Não foi possível validar o processo na base geral. O cliente não foi salvo.");
-                        return;
+                        // A consulta global não é necessária para gravar um cliente.
+                        // Mantém a verificação contra os clientes já carregados na sessão.
+                        console.warn("Verificação global de processos indisponível; usando clientes da sessão.");
                     }
                 }
 
                 let processoDuplicado = null;
-                const baseDuplicidade = clientesGlobaisCache;
+                const baseDuplicidade = clientesGlobaisCarregados ? clientesGlobaisCache : todosClientesCache;
                 
                 for (let proc of processos) {
                     const cleanInputProc = proc.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -1964,7 +1965,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // REMOVIDO o "await render()" que causava o vazamento de leituras!
             
         } catch (error) {
-            showToast("Erro inesperado ao salvar!");
+            console.error("Falha ao salvar cliente no CRM:", error);
+            const codigo = error?.code || error?.message || "";
+            if (codigo === "permission-denied" || codigo === "firestore/permission-denied") {
+                showToast("Firebase bloqueou o salvamento: permissão negada. Consulte o administrador.");
+            } else if (codigo === "auth/usuario-nao-autenticado" || codigo === "unauthenticated") {
+                showToast("Sua sessão expirou. Entre novamente no CRM antes de salvar.");
+            } else if (codigo === "unavailable" || codigo === "firestore/unavailable") {
+                showToast("Firebase indisponível. Verifique a conexão e tente novamente.");
+            } else {
+                showToast("Não foi possível salvar o cliente. Consulte o erro no console.");
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = originalBtnText;
