@@ -27,3 +27,22 @@ test('backup e restauração usam somente o objeto privado da sessão',async()=>
  assert.equal(calls[0][1],'/tmp/ra-auth-test/RemoteAuth-office.zip');assert.equal(calls[0][2].destination,file.name);assert.equal(calls[0][2].metadata.cacheControl,'no-store');assert.deepEqual(calls[1],['download',{destination:'/tmp/restored.zip'}]);
  assert.throws(()=>store.file('../other-session'),/Invalid session/);
 });
+
+test('restaura backup em instância nova sem pasta temporária preexistente',async()=>{
+ const {mkdtemp,writeFile,readFile,rm}=await import('node:fs/promises');
+ const os=await import('node:os');const path=await import('node:path');
+ const root=await mkdtemp(path.join(os.tmpdir(),'ra-restore-test-'));
+ try{
+  const destination=path.join(root,'new-instance','auth','RemoteAuth-office.zip');
+  const bucket={file:()=>({download:async({destination})=>writeFile(destination,'dummy-backup')})};
+  const store=new CloudSessionStore(bucket,path.dirname(destination));await store.extract({session:'RemoteAuth-office',path:destination});
+  assert.equal(await readFile(destination,'utf8'),'dummy-backup');
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('upload periódico confirma persistência; upload que falha não confirma',async()=>{
+ let saved=0;let fail=false;
+ const store=new CloudSessionStore({file:()=>({name:'sessions/RemoteAuth-office.zip'}),upload:async()=>{if(fail)throw Error('upload failed');}},'/tmp/auth',{onSaved:()=>{saved++;}});
+ await store.save({session:'RemoteAuth-office'});assert.equal(saved,1);fail=true;
+ await assert.rejects(store.save({session:'RemoteAuth-office'}));assert.equal(saved,1);
+});

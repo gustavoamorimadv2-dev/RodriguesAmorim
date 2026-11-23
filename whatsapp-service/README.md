@@ -40,3 +40,15 @@ O WhatsApp pode revogar a sessão; nesse caso o administrador precisa reconectar
 Para testes: `npm test`. Valida datas em Brasília, telefones, seleção, pagamento durante processamento, deduplicação, falha ambígua, desativação, coordenação de instâncias e armazenamento da sessão. Rode `npm audit` antes de atualizar dependências. Faça alterações de biblioteca inicialmente com um número de teste.
 
 Referências: https://wwebjs.dev/guide/creating-your-bot/authentication.html e https://firebase.google.com/docs/functions/schedule-functions.
+
+## Recuperação da conexão
+
+A restauração cria a pasta de destino antes de baixar o ZIP, pois o diretório temporário não existe em uma instância nova do Cloud Run. Cada upload periódico confirma que a sessão foi persistida, mesmo quando a biblioteca não emite `remote_session_saved` por já existir um backup anterior.
+
+O início da conexão tem prazo de 90 segundos. Falhas e desconexões encerram o navegador anterior antes de permitir outra tentativa, e eventos atrasados de uma tentativa antiga não alteram a nova. Na página de clientes, **Gerar novo QR** permite novo pareamento após confirmação. O backup anterior não é apagado por uma tentativa nova que falha; só é substituído quando a nova sessão é efetivamente salva.
+
+O painel informa separadamente se o WhatsApp está conectado e se os lembretes estão ativados. Conectar o telefone não ativa os envios automaticamente.
+
+A biblioteca foi atualizada para whatsapp-web.js 1.34.8, que aguarda o carregamento do estado do WhatsApp Web antes de acessar o Socket. O serviço não reutiliza cópias locais do HTML do WhatsApp Web. O build valida um QR real com RemoteAuth e armazenamento descartável antes de publicar a imagem, sem parear telefone nem enviar mensagens. As correções compatíveis de dependências foram aplicadas; permanecem alertas moderados de glob/minimatch na cadeia de arquivamento, cuja atualização automática exigiria versões principais incompatíveis da estratégia RemoteAuth.
+
+A página atual de login já apresenta o QR em `data-ref` antes de carregar `WAWebSocketModel`. O adaptador monitora esse QR oficial e suas rotações; a autenticação e o estado conectado continuam dependendo dos eventos reais da biblioteca após o pareamento, sem simular sucesso. O monitor é cancelado quando o navegador fecha. O identificador do navegador usa a versão do Chromium instalado, em vez do Chrome 101 fixo da biblioteca. Nenhum HTML de terceiros é carregado para contornar a incompatibilidade.

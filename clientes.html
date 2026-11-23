@@ -238,7 +238,8 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
 #whatsappDialog::backdrop { background:rgba(0,0,0,.7); }
 #whatsappDialog p { margin:16px 0; line-height:1.6; color:#cbd5e1; }
 #whatsappQr { display:block; width:264px; max-width:100%; margin:16px auto; border-radius:8px; }
-#whatsappQr[hidden] { display:none; }
+#whatsappQr[hidden], #whatsappFresh[hidden] { display:none; }
+#whatsappDialog input[type="checkbox"] { width:18px; height:18px; padding:0; flex:0 0 18px; margin-top:2px; }
 #whatsappDialog label { display:flex; gap:10px; align-items:flex-start; margin-top:20px; line-height:1.5; }
 </style>
 </head>
@@ -530,11 +531,13 @@ input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); co
     <p id="whatsappStatus" role="status" aria-live="polite"></p>
     <img id="whatsappQr" alt="QR code para conectar o WhatsApp" hidden>
     <button id="whatsappStart" class="btn primary" type="button">Conectar</button>
+    <button id="whatsappFresh" class="btn ghost" type="button" hidden>Gerar novo QR</button>
     <label><input id="whatsappAutomation" type="checkbox" disabled> Ativar lembretes automáticos três dias antes do vencimento</label>
+    <p id="whatsappBillingStatus" role="status" style="font-size:12px"></p>
     <p style="font-size:12px">O escritório usa uma única sessão. Os lembretes saem entre 9h e 18h, no horário de Brasília, mesmo com esta página fechada. Parcelas pagas são ignoradas.</p>
 </dialog>
 <script type="module">
-import { setupWhatsApp } from "./assets/whatsapp.js";
+import { setupWhatsApp } from "./assets/whatsapp.js?v=20261123";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import { getFirestore, collection, query, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
