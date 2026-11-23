@@ -37,3 +37,11 @@ test('backup periódico confirma sessão mesmo sem evento inicial da biblioteca'
  f.controller.connect();await flush();const c=f.clients[0];c.emit('qr','reauth');await flush();c.emit('authenticated');c.emit('ready');assert.equal(f.controller.persisted,false);
  onSaved();assert.equal(f.controller.persisted,true);await f.controller.stop();
 });
+
+test('identifica a versão real do Chromium em vez do Chrome 101 fixo da biblioteca',async()=>{
+ const {chromiumUserAgent}=await import('../session.js');
+ assert.match(chromiumUserAgent('Chromium 142.0.7444.175 built on Debian'),/Chrome\/142\.0\.7444\.175/);
+ assert.match(chromiumUserAgent('HeadlessChrome/143.0.7499.40'),/Chrome\/143\.0\.7499\.40/);
+ assert.doesNotMatch(chromiumUserAgent('HeadlessChrome/143.0.7499.40'),/HeadlessChrome/);
+ assert.throws(()=>chromiumUserAgent(''),/Could not detect/);
+});

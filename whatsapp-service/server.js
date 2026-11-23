@@ -1,4 +1,5 @@
 import express from 'express';
+import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {initializeApp,applicationDefault} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
@@ -10,8 +11,9 @@ import whatsapp from 'whatsapp-web.js';
 import {runBilling} from './billing.js';
 import {CloudSessionStore} from './cloud-store.js';
 import {SessionLease} from './lease.js';
-import {WhatsAppSession} from './session.js';
-const {Client,RemoteAuth}=whatsapp;
+import {WhatsAppSession,chromiumUserAgent} from './session.js';
+import {CompatibleClient} from './client.js';
+const {RemoteAuth}=whatsapp;
 initializeApp({credential:applicationDefault(),projectId:process.env.GOOGLE_CLOUD_PROJECT || 'rodrigues-amr'});
 const db=getFirestore();
 // Separate database: client SDKs have no access to session coordination or logs.
@@ -28,8 +30,9 @@ const session=new WhatsAppSession({
   hasBackup:()=>new CloudSessionStore(bucket,dataPath).sessionExists({session:'RemoteAuth-office'}),
   canRun:()=>!stopping && leader && lease.valid(),
   encodeQr:value=>QRCode.toDataURL(value),
-  createClient:({fresh,onSaved})=>new Client({
+  createClient:({fresh,onSaved})=>new CompatibleClient({
     authStrategy:new RemoteAuth({clientId:'office',dataPath,store:new CloudSessionStore(bucket,dataPath,{fresh,onSaved}),backupSyncIntervalMs:60_000}),
+    userAgent:chromiumUserAgent(execFileSync(process.env.CHROME_PATH || '/usr/bin/chromium',['--version'],{encoding:'utf8',timeout:5000})),
     authTimeoutMs:60_000,
     webVersionCache:{type:'none'},
     puppeteer:{headless:true,executablePath:process.env.CHROME_PATH || '/usr/bin/chromium',timeout:60_000,args:process.env.K_SERVICE?['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']:[]}

@@ -53,3 +53,10 @@ export class WhatsAppSession {
   }
   async stop(){this.clearDeadline();this.generation++;this.qrSequence++;this.qr=null;this.state='disconnected';const client=this.client;this.client=null;await this.dispose(client);}
 }
+
+// Keep browser identity aligned instead of the library's fixed Chrome 101 default.
+export function chromiumUserAgent(version){
+  const value=String(version).match(/\b\d+\.\d+\.\d+\.\d+\b/)?.[0];
+  if(!value)throw new Error('Could not detect installed Chromium version');
+  return `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${value} Safari/537.36`;
+}

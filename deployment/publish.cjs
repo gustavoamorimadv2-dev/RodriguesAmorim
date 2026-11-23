@@ -13,7 +13,7 @@ async function main(){
  const serviceName=`projects/${project}/locations/${region}/services/ra-whatsapp`;
  if(!state.buildId || process.argv.includes('--rebuild')){
   const archive=path.join(os.tmpdir(),'ra-whatsapp-source.tgz');
-  execFileSync('tar',['-czf',archive,'Dockerfile','package.json','package-lock.json','server.js','billing.js','lease.js','cloud-store.js','session.js','smoke.cjs'],{cwd:path.join(__dirname,'../whatsapp-service')});
+  execFileSync('tar',['-czf',archive,'Dockerfile','package.json','package-lock.json','server.js','billing.js','lease.js','cloud-store.js','session.js','client.js','smoke.cjs'],{cwd:path.join(__dirname,'../whatsapp-service')});
   const object=`source/${Date.now()}.tgz`;
   await upload(`https://storage.googleapis.com/upload/storage/v1/b/${state.sourceBucket}/o?uploadType=media&name=${encodeURIComponent(object)}`,fs.readFileSync(archive));
   state.image=`${region}-docker.pkg.dev/${project}/whatsapp/bridge:${Date.now()}`;
