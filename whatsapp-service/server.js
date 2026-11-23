@@ -31,6 +31,7 @@ const session=new WhatsAppSession({
   createClient:({fresh,onSaved})=>new Client({
     authStrategy:new RemoteAuth({clientId:'office',dataPath,store:new CloudSessionStore(bucket,dataPath,{fresh,onSaved}),backupSyncIntervalMs:60_000}),
     authTimeoutMs:60_000,
+    webVersionCache:{type:'none'},
     puppeteer:{headless:true,executablePath:process.env.CHROME_PATH || '/usr/bin/chromium',timeout:60_000,args:process.env.K_SERVICE?['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']:[]}
   }),
   log:(event,error)=>(event==='error'?console.error:console.log)('WhatsApp session:',event,error?String(error.stack || error.message || error.name).replace(/https?:\/\/[^\s]+/g,'[URL]').slice(0,1600):''),
