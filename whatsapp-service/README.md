@@ -40,3 +40,11 @@ O WhatsApp pode revogar a sessão; nesse caso o administrador precisa reconectar
 Para testes: `npm test`. Valida datas em Brasília, telefones, seleção, pagamento durante processamento, deduplicação, falha ambígua, desativação, coordenação de instâncias e armazenamento da sessão. Rode `npm audit` antes de atualizar dependências. Faça alterações de biblioteca inicialmente com um número de teste.
 
 Referências: https://wwebjs.dev/guide/creating-your-bot/authentication.html e https://firebase.google.com/docs/functions/schedule-functions.
+
+## Recuperação da conexão
+
+A restauração cria a pasta de destino antes de baixar o ZIP, pois o diretório temporário não existe em uma instância nova do Cloud Run. Cada upload periódico confirma que a sessão foi persistida, mesmo quando a biblioteca não emite `remote_session_saved` por já existir um backup anterior.
+
+O início da conexão tem prazo de 90 segundos. Falhas e desconexões encerram o navegador anterior antes de permitir outra tentativa, e eventos atrasados de uma tentativa antiga não alteram a nova. Na página de clientes, **Gerar novo QR** permite novo pareamento após confirmação. O backup anterior não é apagado por uma tentativa nova que falha; só é substituído quando a nova sessão é efetivamente salva.
+
+O painel informa separadamente se o WhatsApp está conectado e se os lembretes estão ativados. Conectar o telefone não ativa os envios automaticamente.

@@ -10,6 +10,7 @@ import whatsapp from 'whatsapp-web.js';
 import {runBilling} from './billing.js';
 import {CloudSessionStore} from './cloud-store.js';
 import {SessionLease} from './lease.js';
+import {WhatsAppSession} from './session.js';
 const {Client,RemoteAuth}=whatsapp;
 initializeApp({credential:applicationDefault(),projectId:process.env.GOOGLE_CLOUD_PROJECT || 'rodrigues-amr'});
 const db=getFirestore();
@@ -21,9 +22,20 @@ if(!allowed.size || !origins.size || !process.env.SESSION_BUCKET || !process.env
 const config=privateDb.collection('whatsapp_config').doc('office');
 const lease=new SessionLease(privateDb.collection('whatsapp_locks').doc('office'),randomUUID());
 const dataPath=process.env.SESSION_PATH || '/tmp/whatsapp-auth';
-const store=new CloudSessionStore(getStorage().bucket(process.env.SESSION_BUCKET),dataPath);
-const session={state:'disconnected',qr:null,client:null,persisted:false};
-let busy=false,starting=null,stopping=false,leader=false;
+const bucket=getStorage().bucket(process.env.SESSION_BUCKET);
+let busy=false,stopping=false,leader=false;
+const session=new WhatsAppSession({
+  hasBackup:()=>new CloudSessionStore(bucket,dataPath).sessionExists({session:'RemoteAuth-office'}),
+  canRun:()=>!stopping && leader && lease.valid(),
+  encodeQr:value=>QRCode.toDataURL(value),
+  createClient:({fresh,onSaved})=>new Client({
+    authStrategy:new RemoteAuth({clientId:'office',dataPath,store:new CloudSessionStore(bucket,dataPath,{fresh,onSaved}),backupSyncIntervalMs:60_000}),
+    authTimeoutMs:60_000,
+    puppeteer:{headless:true,executablePath:process.env.CHROME_PATH || '/usr/bin/chromium',timeout:60_000,args:process.env.K_SERVICE?['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']:[]}
+  }),
+  log:(event,error)=>(event==='error'?console.error:console.log)('WhatsApp session:',event,error?String(error.stack || error.message || error.name).replace(/https?:\/\/[^\s]+/g,'[URL]').slice(0,1600):''),
+  onStopFailure:()=>void shutdown()
+});
 const app=express();
 app.disable('x-powered-by');
 app.use((req,res,next)=>{
@@ -69,36 +81,10 @@ app.use('/api',async(req,res,next)=>{
   if(!leader || !lease.valid()) return res.status(503).json({error:'Serviço em atualização. Aguarde um momento.'});
   next();
 });
-function startSession(){
-  if(stopping || !lease.valid() || starting || ['connected','connecting','qr'].includes(session.state)) return starting;
-  starting=(async()=>{
-    const old=session.client;session.client=null;
-    if(old) await old.destroy().catch(()=>{});
-    if(stopping || !lease.valid()) return;
-    session.state='connecting';session.qr=null;
-    session.persisted=await store.sessionExists({session:'RemoteAuth-office'});
-    const client=new Client({
-      authStrategy:new RemoteAuth({clientId:'office',dataPath,store,backupSyncIntervalMs:60_000}),
-      puppeteer:{headless:true,executablePath:process.env.CHROME_PATH || '/usr/bin/chromium',args:process.env.K_SERVICE?['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']:[]}
-    });
-    session.client=client;
-    const current=()=>session.client===client && !stopping && lease.valid();
-    client.on('qr',async qr=>{
-      try{const image=await QRCode.toDataURL(qr);if(current()){session.qr=image;session.state='qr';session.persisted=false;}}
-      catch{if(current()) session.state='error';}
-    });
-    client.on('authenticated',()=>{if(current()){session.qr=null;session.state='connecting';}});
-    client.on('ready',()=>{if(current()){session.qr=null;session.state='connected';}});
-    client.on('remote_session_saved',()=>{if(current()) session.persisted=true;});
-    client.on('auth_failure',()=>{if(current()){session.qr=null;session.state='error';}});
-    client.on('disconnected',()=>{if(current()){session.qr=null;session.state='disconnected';}});
-    await client.initialize();
-  })().catch(error=>{console.error('WhatsApp initialization:',error.name);session.state='error';session.qr=null;}).finally(()=>{starting=null;});
-  return starting;
-}
-app.get('/api/whatsapp',async(_req,res)=>res.json({state:session.state,qr:session.qr,persisted:session.persisted,enabled:(await config.get()).data()?.enabled===true}));
-app.post('/api/whatsapp/connect',async(_req,res)=>{
-  await config.set({connectedOnce:true},{merge:true});void startSession();res.status(202).json({ok:true});
+app.get('/api/whatsapp',async(_req,res)=>res.json({state:session.state,qr:session.qr,persisted:session.persisted,error:session.error,enabled:(await config.get()).data()?.enabled===true}));
+app.post('/api/whatsapp/connect',async(req,res)=>{
+  if(req.body.fresh!==undefined && typeof req.body.fresh!=='boolean') return res.sendStatus(400);
+  await config.set({connectedOnce:true},{merge:true});session.connect({fresh:req.body.fresh===true});res.status(202).json({ok:true});
 });
 app.post('/api/whatsapp/automation',async(req,res)=>{
   if(typeof req.body.enabled!=='boolean') return res.sendStatus(400);
@@ -114,7 +100,7 @@ async function coordinate(){
   try{
     const wasLeader=leader;leader=await lease.acquire();
     if(!leader && wasLeader) return void shutdown();
-    if(leader && !wasLeader && (await config.get()).data()?.connectedOnce) void startSession();
+    if(leader && !wasLeader && (await config.get()).data()?.connectedOnce) session.connect();
   }catch(error){console.error('Session coordination:',error.code || error.name);if(leader) void shutdown();}
   finally{coordinating=false;}
 }
@@ -123,7 +109,7 @@ const heartbeat=setInterval(coordinate,10_000);void coordinate();
 async function shutdown(){
   if(stopping) return;stopping=true;leader=false;clearInterval(heartbeat);session.qr=null;
   const deadline=setTimeout(()=>process.exit(1),8000);deadline.unref();
-  try{await session.client?.destroy();await lease.release();}catch{ /* Let TTL expire if Chrome cannot be stopped. */ }
+  try{await session.stop();await lease.release();}catch{ /* Let TTL expire if Chrome cannot be stopped. */ }
   server.close(()=>process.exit(0));
 }
 process.on('SIGTERM',shutdown);process.on('SIGINT',shutdown);
